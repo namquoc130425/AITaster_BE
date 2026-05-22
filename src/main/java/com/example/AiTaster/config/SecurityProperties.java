@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "app.security")
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PUBLIC)
 public class SecurityProperties {
     List<String> publicEndpoints = new ArrayList<>();
 }

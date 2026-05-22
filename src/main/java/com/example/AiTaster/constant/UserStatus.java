@@ -1,5 +1,5 @@
 package com.example.AiTaster.constant;
 
 public enum UserStatus {
-    ACTIVE,INATIVE,BANNED
+    ACTIVE,INACTIVE,BANNED, LOCKED
 }
