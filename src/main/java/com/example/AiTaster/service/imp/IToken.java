@@ -8,5 +8,5 @@ public interface IToken {
     String generateAccessToken(User user);
 
 
-    SignedJWT verifyAccessToken(String token);
+    User verifyAccessToken(String token);
 }

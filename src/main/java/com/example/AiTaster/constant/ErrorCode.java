@@ -14,7 +14,10 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     FIELD_REQUIRED("Cannot be blank", HttpStatus.BAD_REQUEST),
     INVALID_SIZE("Must be between 1 and 50",HttpStatus.BAD_REQUEST),
-    INVALID_FORMART("Invalid format",HttpStatus.BAD_REQUEST),;
+    INVALID_FORMART("Invalid format",HttpStatus.BAD_REQUEST),
+    NOT_FOUND("Not Found",HttpStatus.NOT_FOUND),
+    INVALID_TOKEN("Invalid Token",HttpStatus.UNAUTHORIZED),
+    INVALID_ROLE("Invalid Role",HttpStatus.BAD_REQUEST),;
 
 
     final String message;

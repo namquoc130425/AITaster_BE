@@ -1,26 +1,26 @@
 package com.example.AiTaster.mapper;
 
 import com.example.AiTaster.dto.request.ClientProfileRequest;
+import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import org.mapstruct.*;
-import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+
+@Mapper(componentModel = "spring",uses = UserMapper.class)
 public interface ClientProfileMapper {
 
-    ClientProfileMapper INSTANCE = Mappers.getMapper(ClientProfileMapper.class);
+
 
     // Request -> Entity
-    @Mapping(target = "user", ignore = true)
     @Mapping(target = "clientProfileId", ignore = true)
+    @Mapping(target = "user", ignore = true)
     @Mapping(target = "createAt", ignore = true)
     @Mapping(target = "updateAt", ignore = true)
-    ClientProfile toEntity(ClientProfileRequest request);
+    ClientProfile registerToEntity(ClientRegisterRequest request);
 
     // Entity -> Response
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "clientProfileId", source = "clientProfileId")
+
     ClientProfileResponse toResponse(ClientProfile clientProfile);
 
     // Update existing entity

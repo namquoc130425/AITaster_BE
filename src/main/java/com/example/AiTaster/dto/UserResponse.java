@@ -17,24 +17,12 @@ import lombok.experimental.FieldDefaults;
 @Data
 //@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserResponse {
-
-    Long id;
-
-    String name;
-
+    Long userId;
     String username;
-
-    int age;
-
-    String address;
-
+    String fullName;
+    String email;
     String phone;
-
-    @Enumerated(EnumType.STRING) // lưu xuongs db sẽ là dạng chữ thay vì số
-    Gender gender;
-
-    @Enumerated(EnumType.STRING)
-    UserStatus userStatus;
+    String avatarUrl;
 
     String accessToken;
 }

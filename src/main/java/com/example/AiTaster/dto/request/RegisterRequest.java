@@ -1,6 +1,7 @@
 package com.example.AiTaster.dto.request;
 
 import com.example.AiTaster.constant.Gender;
+import com.example.AiTaster.constant.Role;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
@@ -45,4 +46,7 @@ public class RegisterRequest {
     @NotNull(message =  "FIELD_REQUIRED")  // enum -> phải dùng not null -> không null + không rỗng
     @Enumerated(EnumType.STRING) // lưu xuongs db sẽ là dạng chữ thay vì số
             Gender gender;
+    @NotNull(message =  "FIELD_REQUIRED")
+    @Enumerated(EnumType.STRING)
+    Role role;
 }

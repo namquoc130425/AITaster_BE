@@ -1,5 +1,7 @@
 package com.example.AiTaster.entity;
 
+import com.example.AiTaster.constant.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,8 +20,9 @@ public class ClientProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long clientProfileId;
 
+    @JsonIgnore //chống vòng lặp
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     User user;
 
     String companyName;
@@ -30,6 +33,9 @@ public class ClientProfile {
 
     String businessField;
     String address;
+
+//    @Enumerated(EnumType.STRING)  nên bỏ vì set bên User rồi . sau này cần lấy thì join bảng để lấy ra
+//    Role role;
 
     LocalDateTime createAt;
     LocalDateTime updateAt;

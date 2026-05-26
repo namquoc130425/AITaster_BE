@@ -1,9 +1,16 @@
 package com.example.AiTaster.controller;
 
+import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.dto.UserResponse;
+import com.example.AiTaster.dto.request.ClientRegisterRequest;
+import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.request.LoginRequest;
-import com.example.AiTaster.dto.request.RegisterRequest;
+
 import com.example.AiTaster.dto.response.APIResponse;
+import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -21,11 +28,21 @@ public class AuthController {
     @Autowired
     AuthenticationService authenticationService;
     // tạo API register
-    @PostMapping("register")
-    public ResponseEntity<APIResponse<UserResponse>> register (@RequestBody @Valid RegisterRequest request) {
-        UserResponse response = authenticationService.register(request);
+    @PostMapping("/register/client")
+    public ResponseEntity<APIResponse<ClientProfileResponse>> register (@RequestBody @Valid ClientRegisterRequest request ) {
+             ClientProfileResponse response = authenticationService.registerClient(request);
+            return ResponseEntity.status(201).body
+                    (APIResponse.response(201,"Register sucessfully",response)
+                    );
+
+    }
+
+    @PostMapping("/register/expert")
+    public ResponseEntity<APIResponse<ExpertProfileResponse>> registerExpert(@Valid @RequestBody ExpertRegisterRequest expertRegisterRequest
+    ){
+        ExpertProfileResponse response = authenticationService.registerExpert(expertRegisterRequest);
         return ResponseEntity.status(201).body
-                (APIResponse.response(201,"Register sucessfully",response)
+                (APIResponse.response(201,"Register Expert sucessfully",response)
                 );
     }
     // API login

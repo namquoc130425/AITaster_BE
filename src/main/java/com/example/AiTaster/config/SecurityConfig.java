@@ -1,5 +1,8 @@
 package com.example.AiTaster.config;
 
+import com.example.AiTaster.Security.Filter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -15,6 +18,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.List;
 
@@ -25,6 +29,9 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @Slf4j
 public class SecurityConfig {
+    SecurityProperties securityProperties;
+
+    Filter filter;
     private static final String[] SWAGGER = {
             "/swagger-ui.html",
             "/swagger-ui/**",
@@ -33,6 +40,17 @@ public class SecurityConfig {
             "/v3/api-docs.yaml",
             "/webjars/**"
     };
+
+    @Configuration
+    @SecurityScheme(
+            name = "api",
+            type = SecuritySchemeType.HTTP,
+            scheme = "bearer",
+            bearerFormat = "JWT"
+    )
+    public class OpenApiConfig {
+    }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -45,7 +63,7 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-    SecurityProperties securityProperties;
+
 
 
     @Bean
@@ -55,6 +73,7 @@ public class SecurityConfig {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER).permitAll()
                         .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll()
@@ -62,6 +81,7 @@ public class SecurityConfig {
                 )
 
                 .httpBasic(AbstractHttpConfigurer::disable);
+
 
         return http.build();
     }

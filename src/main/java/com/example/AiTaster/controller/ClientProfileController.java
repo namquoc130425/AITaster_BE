@@ -1,49 +1,55 @@
 package com.example.AiTaster.controller;
 
 import com.example.AiTaster.dto.request.ClientProfileRequest;
+import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 
+
 import com.example.AiTaster.service.ClientProfileService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/client-profiles")
+@CrossOrigin("*")
+@SecurityRequirement(name = "api")
 public class ClientProfileController {
 
-    private final ClientProfileService clientProfileService;
+@Autowired
+ClientProfileService clientProfileService;
 
-    public ClientProfileController(ClientProfileService clientProfileService) {
-        this.clientProfileService = clientProfileService;
-    }
+
 
     @GetMapping
-    public List<ClientProfileResponse> getAll() {
-        return clientProfileService.getAll();
+    public ResponseEntity<APIResponse<List<ClientProfileResponse>>> getAll() {
+        List<ClientProfileResponse> responses = clientProfileService.getAll();
+        return ResponseEntity.ok(APIResponse.response(201, "Get all client successfully", responses));
     }
 
     @GetMapping("/{id}")
-    public ClientProfileResponse getById(@PathVariable Long id) {
-        return clientProfileService.getByClientId(id);
-    }
+    public ResponseEntity<APIResponse<ClientProfileResponse>> getById( @PathVariable Long id) {
 
-    @PostMapping
-    public ClientProfileResponse create(@RequestBody ClientProfileRequest request) {
-        return clientProfileService.create(request);
+          ClientProfileResponse response =  clientProfileService.getByClientId(id);
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Get successfully",response));
+
     }
 
     @PutMapping("/{id}")
-    public ClientProfileResponse update(
-            @PathVariable Long id,
-            @RequestBody ClientProfileRequest request
+    public ResponseEntity<APIResponse<ClientProfileResponse>> update(@Valid@PathVariable Long id, @RequestBody ClientProfileRequest request
     ) {
-        return clientProfileService.update(id, request);
+        ClientProfileResponse response =  clientProfileService.update(id,request);
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Update Client successfully",response));
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
+    public ResponseEntity<APIResponse<ClientProfileResponse>> delete(@PathVariable Long id) {
         clientProfileService.delete(id);
-        return "Deleted successfully";
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Deleted Client successfully",null));
     }
 }

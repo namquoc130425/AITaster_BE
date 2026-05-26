@@ -3,13 +3,16 @@ package com.example.AiTaster.service;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.dto.UserResponse;
-import com.example.AiTaster.dto.request.LoginRequest;
-import com.example.AiTaster.dto.request.RegisterRequest;
+import com.example.AiTaster.dto.request.*;
+import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
+import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -32,40 +35,75 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Autowired
     PasswordEncoder passwordEncoder;
     @Autowired
-    private AuthenticationManager authenticationManager;
+     AuthenticationManager authenticationManager;
     @Autowired
-    private TokenService tokenService;
+     TokenService tokenService;
 
-    public UserResponse register(RegisterRequest registerRequest) {
-        // kiểm tra username và Phone đã tồn tại hay chưa ( validation ) : existsBy.....
-        if (userRepo.existsByPhone(registerRequest.getPhone())) {
-            // xữ lý lỗi nếu phone tồn tại
+    @Autowired
+    ClientProfileService clientProfileService;
+    @Autowired
+    private ExpertProfileService expertProfileService;
+
+
+    // đăng ký client
+    @Transactional
+    public ClientProfileResponse registerClient(ClientRegisterRequest request) {
+
+        validateRegister(request.getEmail(), request.getPhone());
+
+        //tạo User
+        User user = userMapper.clientRegisterToUser(request);
+        //setRole , mã hóa Password, setStatus
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.CLIENT);
+        user.setUserStatus(UserStatus.ACTIVE);
+        // lưu xuống db
+        User savedUser = userRepo.save(user);
+
+        //chuyển User vừa lưu thành ClientProfile và lưu xuống db
+        ClientProfileResponse response =clientProfileService.createForRegister(savedUser, request);
+
+        return response;
+    }
+
+
+    // đăng ký expert
+    @Transactional
+    public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
+        validateRegister(request.getEmail(), request.getPhone());
+
+        // tạo user
+        User user = userMapper.expertRegisterToUser(request);
+        //setRole , mã hóa pass , setStatus
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.EXPERT);
+        user.setUserStatus(UserStatus.ACTIVE);
+        // lưu xuong db
+        User savedUser = userRepo.save(user);
+
+        // chuyen use vừa lưu qua cho tk ExpertProfile và lưu xuong dbb
+        ExpertProfileResponse response = expertProfileService.createForRegister(savedUser, request);
+
+        return response;
+    }
+
+
+    private void validateRegister(String email, String phone) {
+
+        if (userRepo.existsByPhone(phone)) {
             throw new GlobalException(400, "Duplicate phone number");
         }
 
-        if (userRepo.existsByUsername(registerRequest.getUsername()))
-            {
-                // xữ lý lỗi nếu name tồn tại
-                throw new GlobalException(400, "Duplicate UserName ");
-            }
-
-            //mapper từ request sang entity
-            User entity = userMapper.toEntity(registerRequest);
-            entity.setRole(Role.CUSTOMER);
-            entity.setUserStatus(UserStatus.ACTIVE);
-
-            // mã hóa password trước khi lưu vào database
-            entity.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-
-            // lưu xuống database
-            User user = userRepo.save(entity);
-            //chuyển qua userResponse
-            UserResponse response = userMapper.toResponser(user);
-
-            return response;
-
-
+        if (userRepo.existsByEmail(email)) {
+            throw new GlobalException(400, "Duplicate email");
+        }
     }
+
+
+
+
+
+    //login
     @Override
     public UserResponse login(LoginRequest loginRequest) {
         try{
@@ -107,7 +145,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     //lấy username
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        User user = userRepo.findByUsername(userName);
+        User user = userRepo.findByEmail(userName);
 
         if(user == null){
             throw new UsernameNotFoundException(
