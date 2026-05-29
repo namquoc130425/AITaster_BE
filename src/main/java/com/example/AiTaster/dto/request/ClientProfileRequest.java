@@ -23,6 +23,8 @@ public class ClientProfileRequest {
     @NotBlank(message = "fullName is required")
     @Size(max = 50, message = "fullName max 50 characters")
     String fullName;
+
+
     String avatarUrl;
 
     @NotBlank(message = "phone is required")
