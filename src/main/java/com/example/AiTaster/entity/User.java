@@ -23,6 +23,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) //khi tạo đối tượng sẽ tự động tạo khóa chính
@@ -35,6 +36,8 @@ public class User implements UserDetails {
 
     String fullName;
 
+    //cho phep luu url
+    @Column(columnDefinition = "TEXT")
     String avatarUrl;
 
     @Column(unique = true)
@@ -51,10 +54,15 @@ public class User implements UserDetails {
    LocalDateTime updateAt;
 
     // 1 user có thể liên kết với 1 clientProfile hoặc 1 expertProfile, nhưng không thể có cả hai cùng lúc
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user"
+    ,cascade = CascadeType.ALL
+            ,orphanRemoval = true
+    )
     private ClientProfile clientProfile;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true)
     private ExpertProfile expertProfile;
 
 

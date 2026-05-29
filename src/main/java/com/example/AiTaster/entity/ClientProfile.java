@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class ClientProfile {
 
     @Id
@@ -31,7 +32,7 @@ public class ClientProfile {
     @Column(columnDefinition = "TEXT")
     String description;
 
-    String businessField;
+    String bussinessField;
     String address;
 
 //    @Enumerated(EnumType.STRING)  nên bỏ vì set bên User rồi . sau này cần lấy thì join bảng để lấy ra

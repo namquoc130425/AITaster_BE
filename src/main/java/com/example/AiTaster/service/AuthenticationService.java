@@ -6,13 +6,17 @@ import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.entity.ClientProfile;
+import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
+import com.example.AiTaster.mapper.ClientProfileMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
 import jakarta.transaction.Transactional;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -23,8 +27,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Slf4j
 @Service
+
 public class AuthenticationService implements UserDetailsService, IAuthentication {
 
     @Autowired
@@ -35,14 +42,18 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Autowired
     PasswordEncoder passwordEncoder;
     @Autowired
-     AuthenticationManager authenticationManager;
+    AuthenticationManager authenticationManager;
     @Autowired
-     TokenService tokenService;
+    TokenService tokenService;
 
     @Autowired
     ClientProfileService clientProfileService;
     @Autowired
     private ExpertProfileService expertProfileService;
+    @Autowired
+    private ClientProfileMapper clientProfileMapper;
+    @Autowired
+    private ExpertProfileMapper expertProfileMapper;
 
 
     // đăng ký client
@@ -58,12 +69,24 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         user.setRole(Role.CLIENT);
         user.setUserStatus(UserStatus.ACTIVE);
         // lưu xuống db
-        User savedUser = userRepo.save(user);
+
+
+        ClientProfile clientProfile = ClientProfile.builder()
+                .user(user)
+                .companyName(request.getCompanyName())
+                .contactName(request.getContactName())
+                .description(request.getDescription())
+                .bussinessField(request.getBusinessField())
+                .address(request.getAddress()).build();
+
+        user.setClientProfile(clientProfile);
+        userRepo.save(user);
+
 
         //chuyển User vừa lưu thành ClientProfile và lưu xuống db
-        ClientProfileResponse response =clientProfileService.createForRegister(savedUser, request);
+//        ClientProfileResponse response = clientProfileService.createForRegister(savedUser, request);
 
-        return response;
+        return clientProfileMapper.toResponse(clientProfile);
     }
 
 
@@ -78,13 +101,25 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.EXPERT);
         user.setUserStatus(UserStatus.ACTIVE);
+
+        ExpertProfile expertProfile = ExpertProfile.builder()
+                .user(user)
+                .bio(request.getBio())
+                .yearOfExperience(request.getYearOfExperience())
+                .rating(BigDecimal.ZERO)
+                .completedProjects(0)
+                .portfolioUrl(request.getPortfolioUrl())
+
+                .build();
         // lưu xuong db
-        User savedUser = userRepo.save(user);
+        user.setExpertProfile(expertProfile);
+        userRepo.save(user);
 
         // chuyen use vừa lưu qua cho tk ExpertProfile và lưu xuong dbb
-        ExpertProfileResponse response = expertProfileService.createForRegister(savedUser, request);
+//        ExpertProfileResponse response = expertProfileService.createForRegister(savedUser, request);
 
-        return response;
+
+        return expertProfileMapper.toResponse(expertProfile);
     }
 
 
@@ -100,13 +135,10 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     }
 
 
-
-
-
     //login
     @Override
     public UserResponse login(LoginRequest loginRequest) {
-        try{
+        try {
             // xác thực bằng Spring security
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -123,19 +155,13 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             response.setAccessToken(accessToken);
             return response;
 
-        }
-        catch (LockedException e) {
-            throw new GlobalException(403,"Account is locked");
-        }
-        catch (DisabledException e) {
-            throw new GlobalException(403,"Account is disabled");
-        }
-        catch (BadCredentialsException e) {
-            throw new GlobalException(400,"Invalid username or password");
-        }
-
-
-        catch (Exception e) {
+        } catch (LockedException e) {
+            throw new GlobalException(403, "Account is locked");
+        } catch (DisabledException e) {
+            throw new GlobalException(403, "Account is disabled");
+        } catch (BadCredentialsException e) {
+            throw new GlobalException(400, "Invalid username or password");
+        } catch (Exception e) {
             log.info(e.getMessage());
             throw new GlobalException(e.getMessage());
         }
@@ -147,7 +173,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
         User user = userRepo.findByEmail(userName);
 
-        if(user == null){
+        if (user == null) {
             throw new UsernameNotFoundException(
                     "User not found: " + userName
             );
