@@ -156,5 +156,21 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         return user;
     }
 
+    @Transactional
+    public UserResponse registerAdmin(AdminRegisterRequest request) {
+
+        validateRegister(request.getEmail(), request.getPhone());
+
+        User user = userMapper.adminRegisterToUser(request);
+
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.ADMIN);
+        user.setUserStatus(UserStatus.ACTIVE);
+
+        User savedUser = userRepo.save(user);
+
+        return userMapper.toResponser(savedUser);
+    }
+
 
 }
