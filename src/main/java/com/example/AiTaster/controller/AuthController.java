@@ -3,6 +3,7 @@ package com.example.AiTaster.controller;
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.dto.UserResponse;
+import com.example.AiTaster.dto.request.AdminRegisterRequest;
 import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.request.LoginRequest;
@@ -52,5 +53,10 @@ public class AuthController {
         return ResponseEntity.status(201).body
                 (APIResponse.response(201,"Login sucessfully",response)
                 );
+    }
+
+    @PostMapping("/register/admin")
+    public UserResponse registerAdmin(@RequestBody AdminRegisterRequest request) {
+        return authenticationService.registerAdmin(request);
     }
 }
