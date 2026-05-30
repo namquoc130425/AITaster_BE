@@ -49,9 +49,9 @@ public class TokenService implements IToken {
     public String generateAccessToken(User user) {
         byte[] keyBytes = Base64.getDecoder().decode(SIGNING_KEY);
 
-        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512); // header
 
-        JWTClaimsSet clams = new JWTClaimsSet.Builder()
+        JWTClaimsSet clams = new JWTClaimsSet.Builder()  // clmas
                 .subject(Long.toString(user.getUserId()))
                 .issuer("NVQN")
                 .audience("NVQ")
