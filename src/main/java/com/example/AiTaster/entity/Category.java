@@ -16,7 +16,11 @@ public class Category {
     Long categoryId;
 
     String categoryName;
+
+
     String slug; // slug là tên không dấu , viết thường , cách nhau bằng dấu gạch ngang , dùng để hiển thị trên URL
+
+
     @Column(columnDefinition = "TEXT")
     String description;
 

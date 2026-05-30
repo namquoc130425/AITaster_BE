@@ -10,7 +10,10 @@ import com.example.AiTaster.service.imp.ICategory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.Normalizer;
 import java.util.List;
+import java.util.Locale;
+
 @Service
 public class CategoryService implements ICategory {
 @Autowired
@@ -55,5 +58,17 @@ CategoryRepo categoryRepo;
         Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException("Category not found with id: " + id));
         categoryRepo.delete(category);
         return null;
+    }
+
+
+    // gọi ra nha chung , gọi trong create hoặc update á ( bạn làm lười lắm )
+    private String generateSlug(String input) {
+        return Normalizer.normalize(input, Normalizer.Form.NFD)   // tách dấu tiếng việt
+                .replaceAll("\\p{M}", "")        // xóa toàn bộ dấu
+                .toLowerCase(Locale.ROOT)                         // viết thường
+                        .trim()                                   // xóa khoảng trắng đầu cuối
+                        .replaceAll("[^a-z0-9\\s-]", "") // xóa kí tự đặc biệt
+                        .replaceAll("\\s+", "-")   // đổi khoảng trắng thành dấu -
+                        .replaceAll("-+", "-"); // nếu nhiều cách thì chỉ 1 dấu - tránh trường hợp nam---dep---trai
     }
 }
