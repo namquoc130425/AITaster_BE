@@ -17,7 +17,14 @@ public enum ErrorCode {
     INVALID_FORMART("Invalid format",HttpStatus.BAD_REQUEST),
     NOT_FOUND("Not Found",HttpStatus.NOT_FOUND),
     INVALID_TOKEN("Invalid Token",HttpStatus.UNAUTHORIZED),
-    INVALID_ROLE("Invalid Role",HttpStatus.BAD_REQUEST),;
+    INVALID_ROLE("Invalid Role",HttpStatus.BAD_REQUEST),
+
+    INAPPROPRIATE_CONTENT("Nội dung không phù hợp", HttpStatus.BAD_REQUEST),
+
+
+    BLOCKED_KEYWORD("Từ khóa bị chặn", HttpStatus.BAD_REQUEST),
+    PROMPT_INJECTION("Phát hiện prompt injection", HttpStatus.BAD_REQUEST),
+    CALL_AI_FAIL("Gọi Gemini API thất bại",HttpStatus.BAD_REQUEST);
 
 
     final String message;

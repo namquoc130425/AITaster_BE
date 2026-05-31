@@ -172,13 +172,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     //lấy username
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        User user = userRepo.findByEmail(userName);
-
-        if (user == null) {
-            throw new UsernameNotFoundException(
-                    "User not found: " + userName
-            );
-        }
+        User user = userRepo.findByEmail(userName).orElseThrow(() -> new GlobalException("User not found"));
 
         return user;
     }
