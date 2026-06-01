@@ -63,15 +63,15 @@ public class AdminService implements IAdminService {
     public AdminResponse createUser(AdminRequest request) {
 
         if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throwError(ErrorCode.PASSWORD_REQUIRED);
+            throw new GlobalException(ErrorCode.PASSWORD_REQUIRED.getMessage());
         }
 
         if (userRepo.existsByEmail(request.getEmail())) {
-            throwError(ErrorCode.DUPLICATE_EMAIL);
+            throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getMessage());
         }
 
         if (request.getPhone() != null && userRepo.existsByPhone(request.getPhone())) {
-            throwError(ErrorCode.DUPLICATE_PHONE);
+            throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getMessage());
         }
 
         User user = userMapper.adminRequestToUser(request);
@@ -91,13 +91,13 @@ public class AdminService implements IAdminService {
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepo.existsByEmail(request.getEmail())) {
-                throwError(ErrorCode.DUPLICATE_EMAIL);
+                throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getMessage());
             }
         }
 
         if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
             if (userRepo.existsByPhone(request.getPhone())) {
-                throwError(ErrorCode.DUPLICATE_PHONE);
+                throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getMessage());
             }
         }
 
@@ -114,6 +114,7 @@ public class AdminService implements IAdminService {
     @Override
     public AdminResponse banUser(Long userId) {
         User user = findUserById(userId);
+
         user.setUserStatus(UserStatus.BANNED);
 
         User savedUser = userRepo.save(user);
@@ -123,6 +124,7 @@ public class AdminService implements IAdminService {
     @Override
     public AdminResponse activateUser(Long userId) {
         User user = findUserById(userId);
+
         user.setUserStatus(UserStatus.ACTIVE);
 
         User savedUser = userRepo.save(user);
@@ -132,21 +134,14 @@ public class AdminService implements IAdminService {
     @Override
     public void deleteUser(Long userId) {
         User user = findUserById(userId);
+
         userRepo.delete(user);
     }
 
     private User findUserById(Long userId) {
         return userRepo.findById(userId)
-                .orElseThrow(() -> new GlobalException(
-                        ErrorCode.USER_NOT_FOUND.getCode(),
-                        ErrorCode.USER_NOT_FOUND.getMessage()
-                ));
-    }
-
-    private void throwError(ErrorCode errorCode) {
-        throw new GlobalException(
-                errorCode.getCode(),
-                errorCode.getMessage()
-        );
+                .orElseThrow(() ->
+                        new GlobalException("User " + ErrorCode.NOT_FOUND.getMessage())
+                );
     }
 }

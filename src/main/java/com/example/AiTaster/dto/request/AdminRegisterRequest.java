@@ -2,6 +2,7 @@ package com.example.AiTaster.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,11 +17,13 @@ public class AdminRegisterRequest {
     String email;
 
     @NotBlank(message = "FIELD_REQUIRED")
+    @Size(min = 8, message = "INVALID_FORMART")
     String password;
 
     @NotBlank(message = "FIELD_REQUIRED")
     String fullName;
 
+    @NotBlank(message = "FIELD_REQUIRED")
     String avatarUrl;
 
     @NotBlank(message = "FIELD_REQUIRED")

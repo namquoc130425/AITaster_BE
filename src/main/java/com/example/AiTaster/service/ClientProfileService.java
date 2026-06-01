@@ -1,10 +1,12 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.User;
+import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
@@ -47,14 +49,14 @@ public class ClientProfileService implements IClientProfile {
     @Override
     public ClientProfileResponse getByClientId(Long id) {
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client profile not found"));
+                .orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         return clientProfileMapper.toResponse(profile);
     }
 
     @Override
     public ClientProfileResponse getByUserId(Long userId) {
-        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new RuntimeException("Client profile not found"));
+        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         return clientProfileMapper.toResponse(profile);
     }
@@ -65,7 +67,7 @@ public class ClientProfileService implements IClientProfile {
     public ClientProfileResponse update(Long id, ClientProfileRequest request) {
 
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client profile not found"));
+                .orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         clientProfileMapper.updateEntity(request, profile);
 
@@ -76,7 +78,7 @@ public class ClientProfileService implements IClientProfile {
 
     @Override
     public void delete(Long clientProfileId) {
-       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new RuntimeException("Client profile not found"));
+       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         // muốn xóa profie của tk nào đó thì phải cắt quan hệ của User --- Profile . còn muốn xóa User mà đi kèm profile thì qua user làm
         User user = profile.getUser();
@@ -91,7 +93,7 @@ public class ClientProfileService implements IClientProfile {
 
     public ClientProfileResponse createForRegister(User savedUser, ClientRegisterRequest request) {
         if (clientProfileRepo.existsByUser_UserId(savedUser.getUserId())) {
-            throw new RuntimeException("This user already has a client profile");
+            throw new GlobalException("This user already has a client profile");
         }
          // request mapper qua entity
         ClientProfile profile = clientProfileMapper.registerToEntity(request);
