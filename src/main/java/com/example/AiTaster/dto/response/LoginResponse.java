@@ -17,6 +17,7 @@ public class LoginResponse {
     Long userId;
     String email;
     String fullName;
+    String username;
     String phone;
     String avatarUrl;
     Role role;

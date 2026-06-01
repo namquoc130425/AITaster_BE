@@ -22,6 +22,7 @@ public interface UserMapper {
     @Mapping(target = "userStatus", ignore = true)
     @Mapping(target = "createAt", ignore = true)
     @Mapping(target = "updateAt", ignore = true)
+//    @Mapping(target = "username", source = "")
     User clientRegisterToUser(ClientRegisterRequest request);
 
     @Mapping(target = "userId", ignore = true)
