@@ -6,6 +6,7 @@ import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.dto.response.LoginResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.User;
@@ -138,23 +139,63 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
     //login
     @Override
-    public UserResponse login(LoginRequest loginRequest) {
+    @Transactional
+    public LoginResponse login(LoginRequest loginRequest) {
         try {
-            // xác thực bằng Spring security
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getUsername(),
                             loginRequest.getPassword()
                     )
             );
-            // ép kiểu từ Authen -) User
+
             User user = (User) authentication.getPrincipal();
-            //generate token access token
+
             String accessToken = tokenService.generateAccessToken(user);
-            // trả về cho FE
-            UserResponse response = userMapper.toResponser(user);
-            response.setAccessToken(accessToken);
-            return response;
+
+            LoginResponse.LoginResponseBuilder responseBuilder = LoginResponse.builder()
+                    .userId(user.getUserId())
+                    .email(user.getEmail())
+                    .fullName(user.getFullName())
+                    .phone(user.getPhone())
+                    .avatarUrl(user.getAvatarUrl())
+                    .role(user.getRole())
+                    .userStatus(user.getUserStatus())
+                    .accessToken(accessToken);
+
+            if (user.getClientProfile() != null) {
+                ClientProfile clientProfile = user.getClientProfile();
+
+                responseBuilder.clientProfile(
+                        LoginResponse.ClientProfileInfo.builder()
+                                .clientProfileId(clientProfile.getClientProfileId())
+                                .companyName(clientProfile.getCompanyName())
+                                .contactName(clientProfile.getContactName())
+                                .description(clientProfile.getDescription())
+                                .businessField(clientProfile.getBussinessField())
+                                .address(clientProfile.getAddress())
+                                .build()
+                );
+            }
+
+            if (user.getExpertProfile() != null) {
+                ExpertProfile expertProfile = user.getExpertProfile();
+
+                responseBuilder.expertProfile(
+                        LoginResponse.ExpertProfileInfo.builder()
+                                .expertProfileId(expertProfile.getExpertProfileId())
+                                .bio(expertProfile.getBio())
+                                .category(expertProfile.getCategory())
+                                .skills(expertProfile.getSkills())
+                                .yearsOfExperience(expertProfile.getYearOfExperience())
+                                .portfolioUrl(expertProfile.getPortfolioUrl())
+                                .rating(expertProfile.getRating())
+                                .completedProjects(expertProfile.getCompletedProjects())
+                                .build()
+                );
+            }
+
+            return responseBuilder.build();
 
         } catch (LockedException e) {
             throw new GlobalException(403, "Account is locked");
@@ -166,7 +207,6 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             log.info(e.getMessage());
             throw new GlobalException(e.getMessage());
         }
-
     }
 
     //lấy username

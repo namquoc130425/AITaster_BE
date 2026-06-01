@@ -23,6 +23,8 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping
+
+
     public List<AdminResponse> getAllUsers(
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) UserStatus userStatus,
@@ -57,11 +59,6 @@ public class AdminController {
     @PatchMapping("/{userId}/activate")
     public AdminResponse activateUser(@PathVariable Long userId) {
         return adminService.activateUser(userId);
-    }
 
-    @DeleteMapping("/{userId}")
-    public String deleteUser(@PathVariable Long userId) {
-        adminService.deleteUser(userId);
-        return "User deleted successfully";
     }
 }
