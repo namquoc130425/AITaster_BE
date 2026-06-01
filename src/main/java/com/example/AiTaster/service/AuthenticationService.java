@@ -65,6 +65,11 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
         //tạo User
         User user = userMapper.clientRegisterToUser(request);
+
+        System.out.println("request username = " + request.getUsername());
+        System.out.println("user username = " + user.getUsername());
+        System.out.println("user email = " + user.getEmail());
+
         //setRole , mã hóa Password, setStatus
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CLIENT);
@@ -211,12 +216,12 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
     //lấy username
     @Override
-    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        User user = userRepo.findByEmail(userName);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepo.findByUsername(username);
 
         if (user == null) {
             throw new UsernameNotFoundException(
-                    "User not found: " + userName
+                    "User not found: " + username
             );
         }
 
