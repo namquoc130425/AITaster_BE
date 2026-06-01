@@ -12,14 +12,14 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class ClientRegisterRequest {
-     @NotBlank(message = "email is required")
-     @Email(message = "email invalid")
+     @NotBlank(message = "FIELD_REQUIRED")
+     @Email(message = "INVALID_FORMART")
      String email;
 
-     @NotBlank(message = "password is required")
-     @Size(min = 8, message = "password must be at least 8 characters")
+     @NotBlank(message = "PASSWORD_REQUIRED")
+     @Size(min = 8, message = "INVALID_FORMART")
      String password;
-     @NotBlank(message = "fullName is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      @Size(max = 30, message = "fullName max 30 characters")
      String fullName;
      String avatarUrl;
@@ -28,12 +28,12 @@ public class ClientRegisterRequest {
      @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "phone invalid"
      )
      String phone;
-     @NotBlank(message = "companyName is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      String companyName;
-     @NotBlank(message = "contactName is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      String contactName;
      String description;
-     @NotBlank(message = "businessField is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      String businessField;
      String address;
 

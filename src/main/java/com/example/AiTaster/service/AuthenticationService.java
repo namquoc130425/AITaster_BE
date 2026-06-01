@@ -1,5 +1,6 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.dto.UserResponse;
@@ -17,7 +18,6 @@ import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
 import jakarta.transaction.Transactional;
-import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -32,74 +32,65 @@ import java.math.BigDecimal;
 
 @Slf4j
 @Service
-
 public class AuthenticationService implements UserDetailsService, IAuthentication {
 
     @Autowired
     UserRepo userRepo;
+
     @Autowired
     UserMapper userMapper;
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
     @Autowired
     AuthenticationManager authenticationManager;
+
     @Autowired
     TokenService tokenService;
 
     @Autowired
-    ClientProfileService clientProfileService;
-    @Autowired
-    private ExpertProfileService expertProfileService;
-    @Autowired
     private ClientProfileMapper clientProfileMapper;
+
     @Autowired
     private ExpertProfileMapper expertProfileMapper;
 
-
-    // đăng ký client
+    @Override
     @Transactional
     public ClientProfileResponse registerClient(ClientRegisterRequest request) {
 
         validateRegister(request.getEmail(), request.getPhone());
 
-        //tạo User
         User user = userMapper.clientRegisterToUser(request);
-        //setRole , mã hóa Password, setStatus
+
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CLIENT);
         user.setUserStatus(UserStatus.ACTIVE);
 
-
- //builder:mapper thẳng
         ClientProfile clientProfile = ClientProfile.builder()
                 .user(user)
                 .companyName(request.getCompanyName())
                 .contactName(request.getContactName())
                 .description(request.getDescription())
                 .bussinessField(request.getBusinessField())
-                .address(request.getAddress()).build();
+                .address(request.getAddress())
+                .build();
 
         user.setClientProfile(clientProfile);
-        // lưu xuống db
+
         userRepo.save(user);
-
-
-        //chuyển User vừa lưu thành ClientProfile và lưu xuống db
-//        ClientProfileResponse response = clientProfileService.createForRegister(savedUser, request);
 
         return clientProfileMapper.toResponse(clientProfile);
     }
 
-
-    // đăng ký expert
+    @Override
     @Transactional
     public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
+
         validateRegister(request.getEmail(), request.getPhone());
 
-        // tạo user
         User user = userMapper.expertRegisterToUser(request);
-        //setRole , mã hóa pass , setStatus
+
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.EXPERT);
         user.setUserStatus(UserStatus.ACTIVE);
@@ -111,33 +102,32 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 .rating(BigDecimal.ZERO)
                 .completedProjects(0)
                 .portfolioUrl(request.getPortfolioUrl())
-
                 .build();
-        // lưu xuong db
+
         user.setExpertProfile(expertProfile);
+
         userRepo.save(user);
-
-        // chuyen use vừa lưu qua cho tk ExpertProfile và lưu xuong dbb
-//        ExpertProfileResponse response = expertProfileService.createForRegister(savedUser, request);
-
 
         return expertProfileMapper.toResponse(expertProfile);
     }
 
-
     private void validateRegister(String email, String phone) {
 
         if (userRepo.existsByPhone(phone)) {
-            throw new GlobalException(400, "Duplicate phone number");
+            throw new GlobalException(
+                    ErrorCode.DUPLICATE_PHONE.getCode(),
+                    ErrorCode.DUPLICATE_PHONE.getMessage()
+            );
         }
 
         if (userRepo.existsByEmail(email)) {
-            throw new GlobalException(400, "Duplicate email");
+            throw new GlobalException(
+                    ErrorCode.DUPLICATE_EMAIL.getCode(),
+                    ErrorCode.DUPLICATE_EMAIL.getMessage()
+            );
         }
     }
 
-
-    //login
     @Override
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
@@ -198,31 +188,39 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             return responseBuilder.build();
 
         } catch (LockedException e) {
-            throw new GlobalException(403, "Account is locked");
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_LOCKED.getCode(),
+                    ErrorCode.ACCOUNT_LOCKED.getMessage()
+            );
         } catch (DisabledException e) {
-            throw new GlobalException(403, "Account is disabled");
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_DISABLED.getCode(),
+                    ErrorCode.ACCOUNT_DISABLED.getMessage()
+            );
         } catch (BadCredentialsException e) {
-            throw new GlobalException(400, "Invalid username or password");
-        } catch (Exception e) {
-            log.info(e.getMessage());
-            throw new GlobalException(e.getMessage());
+            throw new GlobalException(
+                    ErrorCode.INVALID_LOGIN.getCode(),
+                    ErrorCode.INVALID_LOGIN.getMessage()
+            );
         }
     }
 
-    //lấy username
     @Override
-    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String userName)
+            throws UsernameNotFoundException {
+
         User user = userRepo.findByEmail(userName);
 
         if (user == null) {
             throw new UsernameNotFoundException(
-                    "User not found: " + userName
+                    ErrorCode.USER_NOT_FOUND.getMessage() + ": " + userName
             );
         }
 
         return user;
     }
 
+    @Override
     @Transactional
     public UserResponse registerAdmin(AdminRegisterRequest request) {
 
@@ -238,6 +236,4 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
         return userMapper.toResponser(savedUser);
     }
-
-
 }

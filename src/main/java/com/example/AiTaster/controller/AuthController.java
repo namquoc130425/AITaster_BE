@@ -8,10 +8,7 @@ import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.request.LoginRequest;
 
-import com.example.AiTaster.dto.response.APIResponse;
-import com.example.AiTaster.dto.response.ClientProfileResponse;
-import com.example.AiTaster.dto.response.ExpertProfileResponse;
-import com.example.AiTaster.dto.response.LoginResponse;
+import com.example.AiTaster.dto.response.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -57,7 +54,8 @@ public class AuthController {
     }
 
     @PostMapping("/register/admin")
-    public UserResponse registerAdmin(@RequestBody AdminRegisterRequest request) {
-        return authenticationService.registerAdmin(request);
+    public ResponseEntity<APIResponse<UserResponse>> registerAdmin(@RequestBody AdminRegisterRequest request) {
+        UserResponse response= authenticationService.registerAdmin(request);
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Register Admin sucessfully",response));
     }
 }
