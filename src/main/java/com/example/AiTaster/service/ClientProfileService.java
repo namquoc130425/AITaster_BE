@@ -49,14 +49,14 @@ public class ClientProfileService implements IClientProfile {
     @Override
     public ClientProfileResponse getByClientId(Long id) {
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         return clientProfileMapper.toResponse(profile);
     }
 
     @Override
     public ClientProfileResponse getByUserId(Long userId) {
-        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         return clientProfileMapper.toResponse(profile);
     }
@@ -67,7 +67,7 @@ public class ClientProfileService implements IClientProfile {
     public ClientProfileResponse update(Long id, ClientProfileRequest request) {
 
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         clientProfileMapper.updateEntity(request, profile);
 
@@ -78,7 +78,7 @@ public class ClientProfileService implements IClientProfile {
 
     @Override
     public void delete(Long clientProfileId) {
-       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new GlobalException("Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         // muốn xóa profie của tk nào đó thì phải cắt quan hệ của User --- Profile . còn muốn xóa User mà đi kèm profile thì qua user làm
         User user = profile.getUser();
