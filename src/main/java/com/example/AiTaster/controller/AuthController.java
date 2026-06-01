@@ -11,6 +11,7 @@ import com.example.AiTaster.dto.request.LoginRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.dto.response.LoginResponse;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -48,8 +49,8 @@ public class AuthController {
     }
     // API login
     @PostMapping("login")
-    public ResponseEntity<APIResponse<UserResponse>> login (@RequestBody @Valid LoginRequest request) {
-        UserResponse response = authenticationService.login(request);
+    public ResponseEntity<APIResponse<LoginResponse>> login (@RequestBody @Valid LoginRequest request) {
+        LoginResponse response = authenticationService.login(request);
         return ResponseEntity.status(201).body
                 (APIResponse.response(201,"Login sucessfully",response)
                 );
