@@ -46,40 +46,40 @@ public class JobPostAiService {
     }
 
     private void validateAiResponse(GeminiJobPostResponse geminiJobPostResponse) {
-        if (geminiJobPostResponse == null) { //  không trả object
+        if (geminiJobPostResponse == null) {
             throw new GlobalException("AI không tạo được dữ liệu job post");
         }
 
-        if (geminiJobPostResponse.getTitle() == null || geminiJobPostResponse.getTitle().isBlank()) { // Nếu thiếu title
+        if (geminiJobPostResponse.getTitle() == null || geminiJobPostResponse.getTitle().isBlank()) {
             throw new GlobalException("AI trả thiếu title");
         }
 
-        if (geminiJobPostResponse.getRequirementDescription() == null ||geminiJobPostResponse.getRequirementDescription().isBlank()) { // Nếu thiếu mô tả
+        if (geminiJobPostResponse.getRequirementDescription() == null ||geminiJobPostResponse.getRequirementDescription().isBlank()) {
             throw new GlobalException("AI trả thiếu requirementDescription");
         }
 
-        if (geminiJobPostResponse.getBusinessGoal() == null || geminiJobPostResponse.getBusinessGoal().isBlank()) { // Nếu thiếu businessGoal
+        if (geminiJobPostResponse.getBusinessGoal() == null || geminiJobPostResponse.getBusinessGoal().isBlank()) {
             throw new GlobalException("AI trả thiếu businessGoal");
         }
 
-        if (geminiJobPostResponse.getMainFeatures() == null || geminiJobPostResponse.getMainFeatures().isBlank()) { // Nếu thiếu mainFeatures
+        if (geminiJobPostResponse.getMainFeatures() == null || geminiJobPostResponse.getMainFeatures().isBlank()) {
             throw new GlobalException("AI trả thiếu mainFeatures");
         }
 // target này ko bt làm fild gì nên chưa làm
-//        if (geminiJobPostResponse.getTargetUsers() == null || geminiJobPostResponse.getTargetUsers().isBlank()) { // Nếu thiếu targetUsers
+//        if (geminiJobPostResponse.getTargetUsers() == null || geminiJobPostResponse.getTargetUsers().isBlank()) {
 //            throw new GlobalException("AI trả thiếu targetUsers");
 //        }
 
 
-        if (geminiJobPostResponse.getRequiredSkills() == null || geminiJobPostResponse.getRequiredSkills().isBlank()) { // Nếu thiếu skill
+        if (geminiJobPostResponse.getRequiredSkills() == null || geminiJobPostResponse.getRequiredSkills().isBlank()) {
             throw new GlobalException("AI trả thiếu requiredSkills");
         }
 
-        if (geminiJobPostResponse.getBudgets() == null) { // Nếu thiếu budget
+        if (geminiJobPostResponse.getBudgets() == null) {
             throw new GlobalException("AI trả thiếu budgets");
         }
 
-        if (geminiJobPostResponse.getTimeLine() == null || geminiJobPostResponse.getTimeLine().isBlank()) { // Nếu thiếu timeline
+        if (geminiJobPostResponse.getTimeLine() == null || geminiJobPostResponse.getTimeLine().isBlank()) {
             throw new GlobalException("AI trả thiếu timeLine");
         }
     }
