@@ -38,14 +38,14 @@ public class ExpertProfileService implements IExpertProfile {
 @Override
     public ExpertProfileResponse getByExpertId(Long expertId) {
         ExpertProfile profile = expertProfileRepo.findById(expertId)
-                .orElseThrow(() -> new GlobalException("Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
         return expertProfileMapper.toResponse(profile);
     }
 
     @Override
     public ExpertProfileResponse getByUserId(Long userId) {
         ExpertProfile profile = expertProfileRepo.findByUser_UserId(userId)
-                .orElseThrow(() -> new GlobalException("Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
         return expertProfileMapper.toResponse(profile);
     }
 
@@ -68,7 +68,7 @@ public class ExpertProfileService implements IExpertProfile {
 
     @Override
     public ExpertProfileResponse update(Long id, ExpertProfileRequest request) {
-        ExpertProfile profile = expertProfileRepo.findByExpertProfileId(id).orElseThrow(() -> new GlobalException("Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
+        ExpertProfile profile = expertProfileRepo.findByExpertProfileId(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
         expertProfileMapper.updateEntity(request,profile);
         ExpertProfile updateProfile = expertProfileRepo.save(profile);
         return expertProfileMapper.toResponse(updateProfile);
@@ -80,7 +80,7 @@ public class ExpertProfileService implements IExpertProfile {
     @Override
     public void  delete(Long id) {
         ExpertProfile profile = expertProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException("Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
 
         // muốn xóa profie của tk nào đó thì phải cắt quan hệ của User --- Profile . còn muốn xóa User mà đi kèm profile thì qua user làm
         User user = profile.getUser();

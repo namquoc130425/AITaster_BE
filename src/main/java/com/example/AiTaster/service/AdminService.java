@@ -63,15 +63,15 @@ public class AdminService implements IAdminService {
     public AdminResponse createUser(AdminRequest request) {
 
         if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new GlobalException(ErrorCode.PASSWORD_REQUIRED.getMessage());
+            throw new GlobalException(ErrorCode.PASSWORD_REQUIRED.getCode(),ErrorCode.PASSWORD_REQUIRED.getMessage());
         }
 
         if (userRepo.existsByEmail(request.getEmail())) {
-            throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getMessage());
+            throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getCode(),ErrorCode.DUPLICATE_EMAIL.getMessage());
         }
 
         if (request.getPhone() != null && userRepo.existsByPhone(request.getPhone())) {
-            throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getMessage());
+            throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getCode(),ErrorCode.DUPLICATE_PHONE.getMessage());
         }
 
         User user = userMapper.adminRequestToUser(request);
@@ -91,13 +91,13 @@ public class AdminService implements IAdminService {
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepo.existsByEmail(request.getEmail())) {
-                throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getMessage());
+                throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getCode(),ErrorCode.DUPLICATE_EMAIL.getMessage());
             }
         }
 
         if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
             if (userRepo.existsByPhone(request.getPhone())) {
-                throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getMessage());
+                throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getCode(),ErrorCode.DUPLICATE_PHONE.getMessage());
             }
         }
 
@@ -141,7 +141,7 @@ public class AdminService implements IAdminService {
     private User findUserById(Long userId) {
         return userRepo.findById(userId)
                 .orElseThrow(() ->
-                        new GlobalException("User " + ErrorCode.NOT_FOUND.getMessage())
+                        new GlobalException(ErrorCode.NOT_FOUND.getCode(),"User " + ErrorCode.NOT_FOUND.getMessage())
                 );
     }
 }
