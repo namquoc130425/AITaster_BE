@@ -1,22 +1,32 @@
 package com.example.AiTaster.service.imp;
 
+import com.example.AiTaster.constant.Role;
+import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.AdminRequest;
+import com.example.AiTaster.dto.response.AdminResponse;
 
 import java.util.List;
 
 public interface IAdminService {
-    List<UserResponse> getAllUsers();
+    List<AdminResponse> getAllUsers(
+            Role role,
+            UserStatus userStatus,
+            String keyword
+    );
 
-    UserResponse getUserById(Long userId);
+    AdminResponse getUserById(Long userId);
 
-    UserResponse createUser(AdminRequest request);
+    AdminResponse createUser(AdminRequest request);
 
-    UserResponse updateUser(Long userId, AdminRequest request);
+    AdminResponse updateUser(
+            Long userId,
+            AdminRequest request
+    );
 
-    UserResponse banUser(Long userId);
+    AdminResponse banUser(Long userId);
 
-    UserResponse activateUser(Long userId);
+    AdminResponse activateUser(Long userId);
 
     void deleteUser(Long userId);
 }
