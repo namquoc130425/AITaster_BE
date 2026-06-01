@@ -18,6 +18,7 @@ import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
 import jakarta.transaction.Transactional;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -32,41 +33,51 @@ import java.math.BigDecimal;
 
 @Slf4j
 @Service
+
 public class AuthenticationService implements UserDetailsService, IAuthentication {
 
     @Autowired
     UserRepo userRepo;
-
     @Autowired
     UserMapper userMapper;
 
     @Autowired
     PasswordEncoder passwordEncoder;
-
     @Autowired
     AuthenticationManager authenticationManager;
-
     @Autowired
     TokenService tokenService;
 
     @Autowired
+    ClientProfileService clientProfileService;
+    @Autowired
+    private ExpertProfileService expertProfileService;
+    @Autowired
     private ClientProfileMapper clientProfileMapper;
-
     @Autowired
     private ExpertProfileMapper expertProfileMapper;
 
-    @Override
+
+    // đăng ký client
     @Transactional
     public ClientProfileResponse registerClient(ClientRegisterRequest request) {
 
         validateRegister(request.getEmail(), request.getPhone());
 
+        //tạo User
         User user = userMapper.clientRegisterToUser(request);
 
+        System.out.println("request username = " + request.getUsername());
+        System.out.println("user username = " + user.getUsername());
+        System.out.println("user email = " + user.getEmail());
+
+        //setRole , mã hóa Password, setStatus
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CLIENT);
         user.setUserStatus(UserStatus.ACTIVE);
 
+
+ //builder:mapper thẳng
         ClientProfile clientProfile = ClientProfile.builder()
                 .user(user)
                 .companyName(request.getCompanyName())
@@ -77,8 +88,12 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 .build();
 
         user.setClientProfile(clientProfile);
-
+        // lưu xuống db
         userRepo.save(user);
+
+
+        //chuyển User vừa lưu thành ClientProfile và lưu xuống db
+//        ClientProfileResponse response = clientProfileService.createForRegister(savedUser, request);
 
         return clientProfileMapper.toResponse(clientProfile);
     }
@@ -86,11 +101,11 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Override
     @Transactional
     public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
-
         validateRegister(request.getEmail(), request.getPhone());
 
+        // tạo user
         User user = userMapper.expertRegisterToUser(request);
-
+        //setRole , mã hóa pass , setStatus
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.EXPERT);
         user.setUserStatus(UserStatus.ACTIVE);
@@ -102,14 +117,19 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 .rating(BigDecimal.ZERO)
                 .completedProjects(0)
                 .portfolioUrl(request.getPortfolioUrl())
+
                 .build();
-
+        // lưu xuong db
         user.setExpertProfile(expertProfile);
-
         userRepo.save(user);
+
+        // chuyen use vừa lưu qua cho tk ExpertProfile và lưu xuong dbb
+//        ExpertProfileResponse response = expertProfileService.createForRegister(savedUser, request);
+
 
         return expertProfileMapper.toResponse(expertProfile);
     }
+
 
     private void validateRegister(String email, String phone) {
 
@@ -128,6 +148,8 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
     }
 
+
+    //login
     @Override
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
@@ -205,11 +227,12 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
     }
 
+    //lấy username
     @Override
     public UserDetails loadUserByUsername(String userName)
             throws UsernameNotFoundException {
 
-        User user = userRepo.findByEmail(userName);
+        User user = userRepo.findByUsername(userName);
 
         if (user == null) {
             throw new UsernameNotFoundException(
@@ -236,4 +259,6 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
         return userMapper.toResponser(savedUser);
     }
+
+
 }

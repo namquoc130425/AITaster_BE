@@ -23,7 +23,8 @@ public class ClientRegisterRequest {
      @Size(max = 30, message = "fullName max 30 characters")
      String fullName;
      String avatarUrl;
-
+     @NotBlank(message = "username is required")
+     String username;
      @NotBlank(message = "phone is required")
      @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "phone invalid"
      )
