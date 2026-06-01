@@ -2,6 +2,7 @@ package com.example.AiTaster.mapper;
 
 import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
+import com.example.AiTaster.dto.response.AdminResponse;
 import com.example.AiTaster.entity.User;
 import org.mapstruct.*;
 
@@ -14,7 +15,7 @@ public interface UserMapper {
 
     // chuyển dữ liệu từ  entity qua response
     UserResponse toResponser(User user);
-
+    AdminResponse toAdminResponse(User user);
     @Mapping(target = "userId", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "role", ignore = true)
@@ -57,6 +58,8 @@ public interface UserMapper {
     @Mapping(target = "createAt", ignore = true)
     @Mapping(target = "updateAt", ignore = true)
     User adminRegisterToUser(AdminRegisterRequest request);
+
+
     //update
    // @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
    // User updateEntity (UserRequest request, @MappingTarget User user);
