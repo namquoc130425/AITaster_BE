@@ -49,7 +49,7 @@ public class JobPostController {
     }
 
    @PutMapping("/updateJobPost/{id}")
-    public ResponseEntity<APIResponse <JobPostResponse>> updateJobPost(@RequestBody @Valid long id , JobPostRequest jobPostRequest) {
+    public ResponseEntity<APIResponse <JobPostResponse>> updateJobPost(@PathVariable @Valid long id ,@RequestBody @Valid JobPostRequest jobPostRequest) {
        JobPostResponse jobPostResponse = jobPostService.UpdateJobPost(id, jobPostRequest);
         return ResponseEntity.ok(APIResponse.response(200, "Update job post successfully", jobPostResponse));
    }
@@ -71,7 +71,7 @@ public ResponseEntity<APIResponse<List<JobPostResponse>>> getAllJobPostPublic() 
         return ResponseEntity.ok(APIResponse.response(200, "Get All Job Post Public successfully", jobPostResponses));
 }
     @PutMapping("/uploadjobpost/{id}")
-public ResponseEntity<APIResponse<JobPostResponse>> UploadJobPost(@RequestBody @Valid Long id) {
+public ResponseEntity<APIResponse<JobPostResponse>> UploadJobPost(@PathVariable @Valid Long id) {
         JobPostResponse jobPostResponse = jobPostService.publishJobPost(id);
         return ResponseEntity.ok(APIResponse.response(200, "Upload Job Post successfully", jobPostResponse));
 }

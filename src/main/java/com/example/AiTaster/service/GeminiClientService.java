@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GeminiClientService {
     private final ChatClient.Builder chatClientBuilder; // BUILDER CỦA SPRINGAI
-    private final ObjectMapper objectMapper;  // bieens  json thanh object java
+    private final ObjectMapper objectMapper;  // bieens  json thanh dto
 
     public GeminiJobPostResponse generateJobPost(String keyword) throws JsonProcessingException {
         try {
