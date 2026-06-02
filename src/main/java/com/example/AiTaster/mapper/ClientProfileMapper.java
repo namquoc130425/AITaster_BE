@@ -17,7 +17,6 @@ public interface ClientProfileMapper {
     ClientProfile registerToEntity(ClientRegisterRequest request);
 
     // Entity -> Response
-
     ClientProfileResponse toResponse(ClientProfile clientProfile);
 
     // Update existing entity
