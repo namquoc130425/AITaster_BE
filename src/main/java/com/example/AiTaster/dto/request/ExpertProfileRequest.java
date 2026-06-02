@@ -28,7 +28,7 @@ public class ExpertProfileRequest {
     String avatarUrl;
 
     @NotBlank(message = "FIELD_REQUIRED")
-    @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "phone invalid")
+    @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "INVALID_FORMART")
     String phone;
 
     @NotBlank(message = "FIELD_REQUIRED")
