@@ -13,18 +13,30 @@ import org.springframework.http.HttpStatus;
 
 public enum ErrorCode {
     FIELD_REQUIRED("Cannot be blank", HttpStatus.BAD_REQUEST),
-    INVALID_SIZE("Must be between 1 and 50",HttpStatus.BAD_REQUEST),
-    INVALID_FORMART("Invalid format",HttpStatus.BAD_REQUEST),
-    NOT_FOUND("Not Found",HttpStatus.NOT_FOUND),
-    INVALID_TOKEN("Invalid Token",HttpStatus.UNAUTHORIZED),
-    INVALID_ROLE("Invalid Role",HttpStatus.BAD_REQUEST),
+    INVALID_SIZE("Must be between 1 and 50", HttpStatus.BAD_REQUEST),
+    INVALID_FORMART("Invalid format", HttpStatus.BAD_REQUEST),
 
-    INAPPROPRIATE_CONTENT("Nội dung không phù hợp", HttpStatus.BAD_REQUEST),
+    NOT_FOUND("Not Found", HttpStatus.BAD_REQUEST),
+    USER_NOT_FOUND("User not found", HttpStatus.NOT_FOUND),
+
+    DUPLICATE_EMAIL("Duplicate email", HttpStatus.BAD_REQUEST),
+    DUPLICATE_PHONE("Duplicate phone number", HttpStatus.BAD_REQUEST),
+
+    INVALID_TOKEN("Invalid Token", HttpStatus.UNAUTHORIZED),
+    INVALID_ROLE("Invalid Role", HttpStatus.BAD_REQUEST),
+
+    ACCOUNT_LOCKED("Account is locked", HttpStatus.FORBIDDEN),
+    ACCOUNT_DISABLED("Account is disabled", HttpStatus.FORBIDDEN),
+    INVALID_LOGIN("Invalid name or password", HttpStatus.BAD_REQUEST),
+    ALREADY_EXIST("Account already exist", HttpStatus.BAD_REQUEST),
+
+    PASSWORD_REQUIRED("Password is required", HttpStatus.BAD_REQUEST),
+    CALL_AI_FAILED("Call AI service failed", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    BLOCKED_KEYWORD("Input contains blocked keyword", HttpStatus.BAD_REQUEST),
+    PROMPT_INJECTION("Input contains potential prompt injection patterns", HttpStatus.BAD_REQUEST);
 
 
-    BLOCKED_KEYWORD("Từ khóa bị chặn", HttpStatus.BAD_REQUEST),
-    PROMPT_INJECTION("Phát hiện prompt injection", HttpStatus.BAD_REQUEST),
-    CALL_AI_FAIL("Gọi Gemini API thất bại",HttpStatus.BAD_REQUEST);
 
 
     final String message;

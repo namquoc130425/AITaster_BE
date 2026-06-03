@@ -15,7 +15,6 @@ public interface CategoryMappper {
     Category  toEntity(CategoryRequest request);
 
     //entity -> responce
-
     CategoryResponse toResponse(Category category);
 
     // Update existing entity

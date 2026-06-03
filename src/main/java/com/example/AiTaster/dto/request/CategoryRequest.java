@@ -11,11 +11,11 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class CategoryRequest {
-    @NotBlank(message = "field is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     String categoryName;
 
     String slug;
 
-    @NotBlank(message = "field is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     String description;
 }

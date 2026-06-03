@@ -55,7 +55,7 @@ public class JobPostController {
    }
 
    @GetMapping("/{id}")
-    public ResponseEntity<APIResponse<JobPostResponse>> getJobPostById(@RequestBody @Valid @PathVariable long id) {
+    public ResponseEntity<APIResponse<JobPostResponse>> getJobPostById( @Valid @PathVariable long id) {
         JobPost jobPost = jobPostRepo.findById(id).orElseThrow(() -> new GlobalException("Job Post Not Found"));
         JobPostResponse jobPostResponse = jobPostService.GetJobPostById(jobPost.getJobPostId());
         return ResponseEntity.ok(APIResponse.response(200, "Job Post successfully", jobPostResponse));
@@ -65,7 +65,7 @@ public ResponseEntity<APIResponse<List<JobPostResponse>>> getLastMyJobPostByClie
  List<JobPostResponse> jobPostResponses = jobPostService.GetMyJobPostByClient();
  return ResponseEntity.ok(APIResponse.response(200, "Get My Job Post Last By Client successfully", jobPostResponses));
 }
-    @GetMapping("/lastjobpost/")
+    @GetMapping("/lastjobpost")
 public ResponseEntity<APIResponse<List<JobPostResponse>>> getAllJobPostPublic() {
         List<JobPostResponse> jobPostResponses = jobPostService.GetAllJobPostPublic();
         return ResponseEntity.ok(APIResponse.response(200, "Get All Job Post Public successfully", jobPostResponses));
