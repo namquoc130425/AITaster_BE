@@ -1,11 +1,13 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.dto.response.LoginResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.User;
@@ -64,6 +66,11 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
         //tạo User
         User user = userMapper.clientRegisterToUser(request);
+//
+//        System.out.println("request username = " + request.getUsername());
+//        System.out.println("user username = " + user.getUsername());
+//        System.out.println("user email = " + user.getEmail());
+
         //setRole , mã hóa Password, setStatus
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CLIENT);
@@ -77,7 +84,8 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 .contactName(request.getContactName())
                 .description(request.getDescription())
                 .bussinessField(request.getBusinessField())
-                .address(request.getAddress()).build();
+                .address(request.getAddress())
+                .build();
 
         user.setClientProfile(clientProfile);
         // lưu xuống db
@@ -90,8 +98,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         return clientProfileMapper.toResponse(clientProfile);
     }
 
-
-    // đăng ký expert
+    @Override
     @Transactional
     public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
         validateRegister(request.getEmail(), request.getPhone());
@@ -127,56 +134,119 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     private void validateRegister(String email, String phone) {
 
         if (userRepo.existsByPhone(phone)) {
-            throw new GlobalException(400, "Duplicate phone number");
+            throw new GlobalException(
+                    ErrorCode.DUPLICATE_PHONE.getCode(),
+                    ErrorCode.DUPLICATE_PHONE.getMessage()
+            );
         }
 
         if (userRepo.existsByEmail(email)) {
-            throw new GlobalException(400, "Duplicate email");
+            throw new GlobalException(
+                    ErrorCode.DUPLICATE_EMAIL.getCode(),
+                    ErrorCode.DUPLICATE_EMAIL.getMessage()
+            );
         }
     }
 
 
     //login
     @Override
-    public UserResponse login(LoginRequest loginRequest) {
+    @Transactional
+    public LoginResponse login(LoginRequest loginRequest) {
         try {
-            // xác thực bằng Spring security
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getUsername(),
                             loginRequest.getPassword()
                     )
             );
-            // ép kiểu từ Authen -) User
+
             User user = (User) authentication.getPrincipal();
-            //generate token access token
+
             String accessToken = tokenService.generateAccessToken(user);
-            // trả về cho FE
-            UserResponse response = userMapper.toResponser(user);
-            response.setAccessToken(accessToken);
-            return response;
+
+            LoginResponse.LoginResponseBuilder responseBuilder = LoginResponse.builder()
+                    .userId(user.getUserId())
+                    .email(user.getEmail())
+                    .fullName(user.getFullName())
+                    .phone(user.getPhone())
+                    .avatarUrl(user.getAvatarUrl())
+                    .role(user.getRole())
+                    .userStatus(user.getUserStatus())
+                    .accessToken(accessToken);
+
+            if (user.getClientProfile() != null) {
+                ClientProfile clientProfile = user.getClientProfile();
+
+                responseBuilder.clientProfile(
+                        LoginResponse.ClientProfileInfo.builder()
+                                .clientProfileId(clientProfile.getClientProfileId())
+                                .companyName(clientProfile.getCompanyName())
+                                .contactName(clientProfile.getContactName())
+                                .description(clientProfile.getDescription())
+                                .businessField(clientProfile.getBussinessField())
+                                .address(clientProfile.getAddress())
+                                .build()
+                );
+            }
+
+            if (user.getExpertProfile() != null) {
+                ExpertProfile expertProfile = user.getExpertProfile();
+
+                responseBuilder.expertProfile(
+                        LoginResponse.ExpertProfileInfo.builder()
+                                .expertProfileId(expertProfile.getExpertProfileId())
+                                .bio(expertProfile.getBio())
+                                .category(expertProfile.getCategory())
+                                .skills(expertProfile.getSkills())
+                                .yearsOfExperience(expertProfile.getYearOfExperience())
+                                .portfolioUrl(expertProfile.getPortfolioUrl())
+                                .rating(expertProfile.getRating())
+                                .completedProjects(expertProfile.getCompletedProjects())
+                                .build()
+                );
+            }
+
+            return responseBuilder.build();
 
         } catch (LockedException e) {
-            throw new GlobalException(403, "Account is locked");
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_LOCKED.getCode(),
+                    ErrorCode.ACCOUNT_LOCKED.getMessage()
+            );
         } catch (DisabledException e) {
-            throw new GlobalException(403, "Account is disabled");
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_DISABLED.getCode(),
+                    ErrorCode.ACCOUNT_DISABLED.getMessage()
+            );
         } catch (BadCredentialsException e) {
-            throw new GlobalException(400, "Invalid username or password");
-        } catch (Exception e) {
-            log.info(e.getMessage());
-            throw new GlobalException(e.getMessage());
+            throw new GlobalException(
+                    ErrorCode.INVALID_LOGIN.getCode(),
+                    ErrorCode.INVALID_LOGIN.getMessage()
+            );
         }
-
     }
 
     //lấy username
     @Override
-    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        User user = userRepo.findByEmail(userName).orElseThrow(() -> new GlobalException("User not found"));
+    public UserDetails loadUserByUsername(String userName)
+            throws UsernameNotFoundException {
+
+        User user = userRepo.findByUsername(userName).orElseThrow(() -> new GlobalException(
+                ErrorCode.USER_NOT_FOUND.getCode(),
+                ErrorCode.USER_NOT_FOUND.getMessage() + ": " + userName
+        ));
+
+        if (user == null) {
+            throw new UsernameNotFoundException(
+                    ErrorCode.USER_NOT_FOUND.getMessage() + ": " + userName
+            );
+        }
 
         return user;
     }
 
+    @Override
     @Transactional
     public UserResponse registerAdmin(AdminRegisterRequest request) {
 

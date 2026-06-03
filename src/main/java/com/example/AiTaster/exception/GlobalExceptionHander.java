@@ -34,7 +34,7 @@ public class GlobalExceptionHander {
                 .getFieldErrors() // lấy dánh sách Filed bị lỗi
                 .stream()  // chuyển list thành Stream đễ xú lý
                 .map( error -> {  // duyệt từng lõi
-                            String enumKey = error.getDefaultMessage(); // enumKey là cái message mình đã set trong @NotBlank(message = "FIELD_REQUIRED") , lấy ra để chuyển thành enum
+                            String enumKey = error.getDefaultMessage(); // enumKey là cái message mình đã set trong vd @NotBlank(message = "FIELD_REQUIRED") , lấy ra để chuyển thành enum
                             ErrorCode errorCode;
                             //tìm enum ErrorCode.FIELD_REQUIRED
                             //lấy .getMessage() = "Cannot be blank"

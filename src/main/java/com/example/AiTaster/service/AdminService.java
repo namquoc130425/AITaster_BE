@@ -1,49 +1,77 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
-import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.AdminRequest;
+import com.example.AiTaster.dto.response.AdminResponse;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAdminService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class AdminService implements IAdminService {
 
-    private final UserRepo userRepo;
-    private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepo userRepo;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
-    public List<UserResponse> getAllUsers() {
-        return userRepo.findAll()
-                .stream()
-                .map(userMapper::toResponser)
+    public List<AdminResponse> getAllUsers(
+            Role role,
+            UserStatus userStatus,
+            String keyword
+    ) {
+        List<User> users;
+
+        if (role != null && userStatus != null) {
+            users = userRepo.findByRoleAndUserStatus(role, userStatus);
+        } else if (role != null) {
+            users = userRepo.findByRole(role);
+        } else if (userStatus != null) {
+            users = userRepo.findByUserStatus(userStatus);
+        } else if (keyword != null && !keyword.isBlank()) {
+            users = userRepo.findByFullNameContainingIgnoreCase(keyword);
+        } else {
+            users = userRepo.findAll();
+        }
+
+        return users.stream()
+                .map(userMapper::toAdminResponse)
                 .toList();
     }
 
     @Override
-    public UserResponse getUserById(Long userId) {
+    public AdminResponse getUserById(Long userId) {
         User user = findUserById(userId);
-        return userMapper.toResponser(user);
+        return userMapper.toAdminResponse(user);
     }
 
     @Override
-    public UserResponse createUser(AdminRequest request) {
+    public AdminResponse createUser(AdminRequest request) {
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new GlobalException(ErrorCode.PASSWORD_REQUIRED.getCode(),ErrorCode.PASSWORD_REQUIRED.getMessage());
+        }
+
         if (userRepo.existsByEmail(request.getEmail())) {
-            throw new GlobalException(400, "Duplicate email");
+            throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getCode(),ErrorCode.DUPLICATE_EMAIL.getMessage());
         }
 
         if (request.getPhone() != null && userRepo.existsByPhone(request.getPhone())) {
-            throw new GlobalException(400, "Duplicate phone number");
+            throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getCode(),ErrorCode.DUPLICATE_PHONE.getMessage());
         }
 
         User user = userMapper.adminRequestToUser(request);
@@ -54,22 +82,22 @@ public class AdminService implements IAdminService {
         }
 
         User savedUser = userRepo.save(user);
-        return userMapper.toResponser(savedUser);
+        return userMapper.toAdminResponse(savedUser);
     }
 
     @Override
-    public UserResponse updateUser(Long userId, AdminRequest request) {
+    public AdminResponse updateUser(Long userId, AdminRequest request) {
         User user = findUserById(userId);
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepo.existsByEmail(request.getEmail())) {
-                throw new GlobalException(400, "Duplicate email");
+                throw new GlobalException(ErrorCode.DUPLICATE_EMAIL.getCode(),ErrorCode.DUPLICATE_EMAIL.getMessage());
             }
         }
 
         if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
             if (userRepo.existsByPhone(request.getPhone())) {
-                throw new GlobalException(400, "Duplicate phone number");
+                throw new GlobalException(ErrorCode.DUPLICATE_PHONE.getCode(),ErrorCode.DUPLICATE_PHONE.getMessage());
             }
         }
 
@@ -80,31 +108,40 @@ public class AdminService implements IAdminService {
         }
 
         User savedUser = userRepo.save(user);
-        return userMapper.toResponser(savedUser);
+        return userMapper.toAdminResponse(savedUser);
     }
 
     @Override
-    public UserResponse banUser(Long userId) {
+    public AdminResponse banUser(Long userId) {
         User user = findUserById(userId);
+
         user.setUserStatus(UserStatus.BANNED);
-        return userMapper.toResponser(userRepo.save(user));
+
+        User savedUser = userRepo.save(user);
+        return userMapper.toAdminResponse(savedUser);
     }
 
     @Override
-    public UserResponse activateUser(Long userId) {
+    public AdminResponse activateUser(Long userId) {
         User user = findUserById(userId);
+
         user.setUserStatus(UserStatus.ACTIVE);
-        return userMapper.toResponser(userRepo.save(user));
+
+        User savedUser = userRepo.save(user);
+        return userMapper.toAdminResponse(savedUser);
     }
 
     @Override
     public void deleteUser(Long userId) {
         User user = findUserById(userId);
+
         userRepo.delete(user);
     }
 
     private User findUserById(Long userId) {
         return userRepo.findById(userId)
-                .orElseThrow(() -> new GlobalException(404, "User not found"));
+                .orElseThrow(() ->
+                        new GlobalException(ErrorCode.NOT_FOUND.getCode(),"User " + ErrorCode.NOT_FOUND.getMessage())
+                );
     }
 }

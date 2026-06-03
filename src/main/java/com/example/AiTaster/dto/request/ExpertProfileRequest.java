@@ -15,34 +15,34 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 //dùng update cho expertprofile
 public class ExpertProfileRequest {
-    @NotBlank(message = "email is required")
-    @Email(message = "email invalid")
+    @NotBlank(message = "FIELD_REQUIRED")
+    @Email(message = "INVALID_FORMART")
     String email;
 
-    @NotBlank(message = "password is required")
-    @Size(min = 8, message = "password must be at least 8 characters")
+    @NotBlank(message = "PASSWORD_REQURIED")
+    @Size(min = 8, message = "INVALID_FORMART")
     String password;
-    @NotBlank(message = "fullName is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     @Size(max = 30, message = "fullName max 30 characters")
     String fullName;
     String avatarUrl;
 
-    @NotBlank(message = "phone is required")
-    @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "phone invalid")
+    @NotBlank(message = "FIELD_REQUIRED")
+    @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "INVALID_FORMART")
     String phone;
 
-    @NotBlank(message = "bio is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     @Size(max = 1000, message = "bio max 1000 characters")
     String bio;
 
-    @NotBlank(message = "category is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     String category;
 
-    @NotBlank(message = "skills is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     @Size(max = 1000, message = "skills max 1000 characters")
     String skills;
 
-    @NotBlank(message = "yearOfExperience is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     String yearOfExperience;
 
     String portfolioUrl;

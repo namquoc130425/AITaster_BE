@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.dto.request.JobPostRequest;
 import com.example.AiTaster.dto.response.GeminiJobPostResponse;
 import com.example.AiTaster.exception.GlobalException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -9,16 +10,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class GeminiClientService {
     private final ChatClient.Builder chatClientBuilder; // BUILDER CỦA SPRINGAI
     private final ObjectMapper objectMapper;  // bieens  json thanh dto
 
-    public GeminiJobPostResponse generateJobPost(String keyword) throws JsonProcessingException {
+    public GeminiJobPostResponse generateJobPost(JobPostRequest request , List<String> SkillNames) throws JsonProcessingException {
         try {
-            // tạo prompt
-            String prompt = buildPrompt(keyword);
+
+            String prompt = buildPrompt(request,SkillNames);
             // gữi câu hỏi và lụm câu trả lời mlem mlem
             // promt chuẩn đồ chơi để hỏi
             //user(prompt) : gữi câu hỏi với vai trò người dùng user không phai hệ thống : tk em trả lời dùm anh
@@ -31,47 +34,65 @@ public class GeminiClientService {
             return objectMapper.readValue(clearJsonContext, GeminiJobPostResponse.class); // chuyển json sang
         }catch (Exception e) {
             e.printStackTrace();
-            throw new GlobalException(ErrorCode.CALL_AI_FAIL); // Báo lỗi
+            throw new GlobalException(ErrorCode.CALL_AI_FAILED);
         }
 
     }
 
 
 
-    private String buildPrompt(String keyword) {
+    private String buildPrompt(JobPostRequest request , List<String> SkillNames) {
         return """
-                Client nhập keyword dự án: "%s".
-
-                Hãy đóng vai chuyên gia tư vấn dự án phần mềm trên nền tảng marketplace giống Upwork.
-                Từ keyword trên, hãy tạo dữ liệu JobPost đầy đủ để backend lưu vào database.
-
-                BẮT BUỘC:
-                - Chỉ trả về JSON hợp lệ.
-                - Không markdown.
-                - Không giải thích thêm.
-                - Không trả về list/array.
-                - Không trả về jobPostId.
-                - Không trả về clientId.
-                - Không trả về jobPostStatus.
-                - Không trả về createAt.
-                - Không trả về updateAt.
-                - Field budgets phải là số decimal, ví dụ 1500.00.
-                - Field requiredSkills là String, các skill cách nhau bằng dấu phẩy.
-                - Field targetUsers chỉ được chọn một trong các giá trị:
-                  CUSTOMERS, BUSINESS_USERS, INTERNAL_STAFF, STUDENTS, PATIENTS, GENERAL_USERS.
-
-                FORMAT JSON BẮT BUỘC:
-                {
-                  "title": "Tiêu đề job post ngắn gọn",
-                  "requirementDescription": "Mô tả yêu cầu dự án trong 1-2 câu",
-                  "businessGoal": "Mục tiêu kinh doanh của dự án",
-                  "mainFeatures": "Các chức năng chính của hệ thống trong một đoạn văn ngắn",
-                  "targetUsers": "CUSTOMERS",
-                  "requiredSkills": "React, Spring Boot, E-commerce, AI Integration",
-                  "budgets": 1500.00,
-                  "timeLine": "4 - 6 tuần"
-                }
-                """.formatted(keyword); // Gắn keyword vào prompt
+                Bạn là AI Assistant trong marketplace .
+                               Nhiệm vụ của bạn là kiểm tra, chuẩn hóa và viết lại JobPost cho chuyên nghiệp hơn.
+               
+                               DỮ LIỆU CLIENT ĐÃ NHẬP:
+                               title: "%s"
+                               requirementDescription: "%s"
+                               businessGoal: "%s"
+                               mainFeatures: "%s"
+                               requiredSkills: "%s"
+                               budgets: "%s"
+                               timeLine: "%s"
+               
+                               DANH SÁCH SKILL ĐANG CÓ TRONG DATABASE:
+                               %s
+               
+                               QUY TẮC BẮT BUỘC:
+                               - Chỉ trả về JSON hợp lệ.
+                               - Không markdown.
+                               - Không giải thích thêm.
+                               - Không trả về list/array.
+                               - Không thêm field ngoài format.
+                               - Không trả về jobPostId.
+                               - Không trả về clientId.
+                               - Không trả về jobPostStatus.
+                               - Không trả về createAt.
+                               - Không trả về updateAt.
+                               - Giữ đúng ý định ban đầu của client.
+                               - Được phép sửa lỗi chính tả, làm câu rõ ràng hơn, chuyên nghiệp hơn.
+                               - Không bịa thêm tính năng quá xa yêu cầu client.
+                               - Field budgets phải là số decimal, ví dụ 1500.00.
+                              - Field requiredSkills là String, các skill cách nhau bằng dấu phẩy.
+                               - Nếu danh sách skill database có dữ liệu, requiredSkills chỉ được chọn skill từ danh sách database.
+                               - Nếu không có skill phù hợp trong database, giữ lại skill client nhập nhưng format lại cho dễ đọc.              
+                               FORMAT JSON BẮT BUỘC:
+                               {
+                                 "title": "Tiêu đề đã được chỉnh chuyên nghiệp",
+                                 "requirementDescription": "Mô tả yêu cầu đã được viết lại rõ ràng",
+                                 "businessGoal": "Mục tiêu kinh doanh rõ ràng",
+                                 "mainFeatures": "Các chức năng chính được mô tả trong một đoạn văn",
+                                 "requiredSkills": "React, Spring Boot, AI Integration",
+                                 "budgets": 1500.00,
+                                 "timeLine": "4 - 6 tuần"
+                               }
+                               """.formatted(request.getTitle(),
+                                             request.getBusinessGoal(),
+                                             request.getMainFeatures(), // Gắn mainFeatures// Gắn targetUsers
+                                             request.getRequiredSkills(), // Gắn requiredSkills client nhập
+                                             request.getBudgets(), // Gắn budget
+                                             request.getTimeLine(), // Gắn timeline
+                                             SkillNames);// Gắn keyword vào prompt
     }
     private String clearJson(String aicontext) {
         if (aicontext == null) {

@@ -34,6 +34,9 @@ public class User implements UserDetails {
 
     String passwordHash;
 
+    @Column(unique = true)
+    String username;
+
     String fullName;
 
     //cho phep luu url
@@ -75,7 +78,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.email;
+        return this.username;
     }
     @Override
     public String getPassword() {

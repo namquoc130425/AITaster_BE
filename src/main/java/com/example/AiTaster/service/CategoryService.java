@@ -1,5 +1,6 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.request.CategoryRequest;
 import com.example.AiTaster.dto.response.CategoryResponse;
 import com.example.AiTaster.entity.Category;
@@ -30,7 +31,7 @@ CategoryRepo categoryRepo;
 
     @Override
     public CategoryResponse getByCategoryId(Long id) {
-        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException("Category not found with id: " + id));
+        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Category: " + ErrorCode.NOT_FOUND.getMessage()));
         return categoryMapper.toResponse(category);
     }
 
@@ -44,7 +45,7 @@ CategoryRepo categoryRepo;
 
     @Override
     public CategoryResponse UpdateCategory(Long id, CategoryRequest category) {
-        Category categoryid = categoryRepo.findById(id).orElseThrow(() -> new GlobalException("Category not found with id: " + id));
+        Category categoryid = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Category: " + ErrorCode.NOT_FOUND.getMessage()));
         Category entity = categoryMapper.updateEntity(category, categoryid);
          categoryRepo.save(entity);
          CategoryResponse categoryResponse = categoryMapper.toResponse(entity);
@@ -55,7 +56,7 @@ CategoryRepo categoryRepo;
 
     @Override
     public Void DeleteCategory(long id) {
-        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException("Category not found with id: " + id));
+        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Category: " + ErrorCode.NOT_FOUND.getMessage()));
         categoryRepo.delete(category);
         return null;
     }

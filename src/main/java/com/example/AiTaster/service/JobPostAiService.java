@@ -27,23 +27,29 @@ public class JobPostAiService {
     private final ClientProfileRepo clientProfileRepo;
 
     public JobPostResponse CreatJobPostByAi(JobPostAiRequest jobPostAiRequest) throws JsonProcessingException {
-        // 1. lấy user đã login
       User userCurrent =  currentUserService.getCurrentUser();
        // 2.  từ user tìm client profile
-        ClientProfile clientProfile = clientProfileRepo.findByUser(userCurrent).orElseThrow(() -> new GlobalException("User not found"));
-       // 2,5 .
+        ClientProfile clientProfile = clientProfileRepo.findByUser(userCurrent).orElseThrow(() -> new GlobalException("ClientProflie not found"));
+
        contentManagerService.validateKeywordInput(jobPostAiRequest.getKeyword());
+
+   // thêm hàm lọc skill Ai trả về có nằm trong database hay không nếu có thì mới gữi cho AI còn không có thì bỏ đi để tránh việc AI trả về skill ko có trong database
+
         // 3. gọi gemini ra dữ liệu
      GeminiJobPostResponse geminiJobPostResponse = geminiClientService.generateJobPost(jobPostAiRequest.getKeyword());
         //4. gọi validate và chuẩn quá dữ liệu
      validateAiResponse(geminiJobPostResponse);
-        // map result(responseAi) thành enitty
+
+
+
+
         JobPost jobPost = jobPostMapper.toEntityJobPostDraft(geminiJobPostResponse,clientProfile);
-        //lưu xuống db
         JobPost saveJobpost = jobPostRepo.save(jobPost);
-        // rặn cho frontend
         return jobPostMapper.toResponse(saveJobpost);
     }
+
+    // thêm hàm kiểm tra dử liệu trước khi gữi cho AI
+
 
     private void validateAiResponse(GeminiJobPostResponse geminiJobPostResponse) {
         if (geminiJobPostResponse == null) {

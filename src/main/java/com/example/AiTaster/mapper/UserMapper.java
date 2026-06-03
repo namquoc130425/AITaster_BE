@@ -2,6 +2,7 @@ package com.example.AiTaster.mapper;
 
 import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
+import com.example.AiTaster.dto.response.AdminResponse;
 import com.example.AiTaster.entity.User;
 import org.mapstruct.*;
 
@@ -14,49 +15,23 @@ public interface UserMapper {
 
     // chuyển dữ liệu từ  entity qua response
     UserResponse toResponser(User user);
+    AdminResponse toAdminResponse(User user);
 
-    @Mapping(target = "userId", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "role", ignore = true)
-    @Mapping(target = "userStatus", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
     User clientRegisterToUser(ClientRegisterRequest request);
 
-    @Mapping(target = "userId", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "role", ignore = true)
-    @Mapping(target = "userStatus", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     User expertRegisterToUser(ExpertRegisterRequest request);
 
-    @Mapping(target = "userId", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "clientProfile", ignore = true)
-    @Mapping(target = "expertProfile", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     User adminRequestToUser(AdminRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "userId", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "clientProfile", ignore = true)
-    @Mapping(target = "expertProfile", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
     void updateUserFromAdminRequest(AdminRequest request, @MappingTarget User user);
 
-    @Mapping(target = "userId", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "role", ignore = true)
-    @Mapping(target = "userStatus", ignore = true)
-    @Mapping(target = "clientProfile", ignore = true)
-    @Mapping(target = "expertProfile", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     User adminRegisterToUser(AdminRegisterRequest request);
+
+
     //update
    // @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
    // User updateEntity (UserRequest request, @MappingTarget User user);
