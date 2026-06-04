@@ -1,4 +1,4 @@
-package com.example.AiTaster.dto.response;
+package com.example.AiTaster.dto.response.Ai;
 
 import lombok.AccessLevel;
 import lombok.*;

@@ -1,7 +1,7 @@
 package com.example.AiTaster.mapper;
 
 import com.example.AiTaster.dto.request.JobPostRequest;
-import com.example.AiTaster.dto.response.GeminiJobPostResponse;
+import com.example.AiTaster.dto.response.Ai.GeminiJobPostResponse;
 import com.example.AiTaster.dto.response.JobPostResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.JobPost;
@@ -23,8 +23,6 @@ public interface JobPostMapper {
 @Mapping(target = "budgets",source = "geminiJobPostResult.budgets")
 @Mapping(target = "timeLine",source = "geminiJobPostResult.timeLine")
 @Mapping(target = "jobPostStatus",constant = "DRAFT")
-@Mapping(target = "createAt", ignore = true)
-@Mapping(target = "updateAt", ignore = true)
     JobPost toEntityJobPostDraft(GeminiJobPostResponse geminiJobPostResult , ClientProfile clientProfile);
 
 

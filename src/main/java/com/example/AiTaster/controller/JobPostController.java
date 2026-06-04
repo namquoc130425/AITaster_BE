@@ -31,10 +31,11 @@ public class JobPostController {
     private final JobPostMapper jobPostMapper;
 
     @PostMapping("/ai/draft")
-    public ResponseEntity<APIResponse<JobPostResponse>> createJobPostByAI(@RequestBody @Valid JobPostAiRequest jobPostAiRequest) throws JsonProcessingException {
+    public ResponseEntity<APIResponse<JobPostResponse>> createJobPostByAI(@RequestBody @Valid JobPostRequest jobPostRequest) throws JsonProcessingException {
         try {
-            JobPostResponse jobPostResponse = jobPostAiService.CreatJobPostByAi(jobPostAiRequest);
-            return ResponseEntity.ok(APIResponse.response(201, "Create job post with AI successfully", jobPostResponse));
+            JobPostResponse jobPostResponse = jobPostAiService.CreatJobPostByAi(jobPostRequest);
+             return ResponseEntity.ok(APIResponse.response(201, "Create job post with AI successfully", jobPostResponse));
+
         } catch (Exception e) {
             // Trả về lỗi dạng JSON, không throw
             return ResponseEntity.badRequest().body(APIResponse.response(400, e.getMessage(), null));
