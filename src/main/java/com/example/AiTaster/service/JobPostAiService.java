@@ -2,7 +2,9 @@ package com.example.AiTaster.service;
 
 import com.example.AiTaster.dto.request.JobPostAiRequest;
 import com.example.AiTaster.dto.request.JobPostRequest;
-import com.example.AiTaster.dto.response.GeminiJobPostResponse;
+import com.example.AiTaster.dto.response.Ai.AiSearchSkilResponse;
+import com.example.AiTaster.dto.response.Ai.AiSkillResult;
+import com.example.AiTaster.dto.response.Ai.GeminiJobPostResponse;
 import com.example.AiTaster.dto.response.JobPostResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.JobPost;
@@ -15,37 +17,42 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class JobPostAiService {
     private final GeminiClientService geminiClientService;
     private final CurrentUserService currentUserService;
-    private final JobPostRepo  jobPostRepo;
+    private final JobPostRepo jobPostRepo;
     private final JobPostMapper jobPostMapper;
     private final ContentManagerService contentManagerService;
-
     private final ClientProfileRepo clientProfileRepo;
+    private final AiSearchSkillService aiSearchSkillService;
 
-    public JobPostResponse CreatJobPostByAi(JobPostAiRequest jobPostAiRequest) throws JsonProcessingException {
-      User userCurrent =  currentUserService.getCurrentUser();
-       // 2.  từ user tìm client profile
+
+    public JobPostResponse CreatJobPostByAi(JobPostRequest request) throws JsonProcessingException {
+        User userCurrent = currentUserService.getCurrentUser();
+        // 2.  từ user tìm client profile
         ClientProfile clientProfile = clientProfileRepo.findByUser(userCurrent).orElseThrow(() -> new GlobalException("ClientProflie not found"));
-
-       contentManagerService.validateKeywordInput(jobPostAiRequest.getKeyword());
-
-   // thêm hàm lọc skill Ai trả về có nằm trong database hay không nếu có thì mới gữi cho AI còn không có thì bỏ đi để tránh việc AI trả về skill ko có trong database
-
-        // 3. gọi gemini ra dữ liệu
-     GeminiJobPostResponse geminiJobPostResponse = geminiClientService.generateJobPost(jobPostAiRequest.getKeyword());
-        //4. gọi validate và chuẩn quá dữ liệu
-     validateAiResponse(geminiJobPostResponse);
-
+        // check validate input trước khi gữi Ai
+       // contentManagerService.validateKeywordInput(jobPostAiRequest.getKeyword());
+        //Ai tạo keywork tìm skill
+        AiSearchSkilResponse aiSearchSkilResponse = geminiClientService.searchSkillFromAi(request);
+        //hệ thống querry từ key work mà ai trả ra
+        List<AiSkillResult> aiSkillResultList = aiSearchSkillService.searchSkillByKeyword(aiSearchSkilResponse);
+        // AI format JobPost với skill từ Db trả ra
+        GeminiJobPostResponse geminiJobPostResponse = geminiClientService.generateJobPost(request, aiSkillResultList);
 
 
+        //valid dữ liệu của người dùng trước khi gữi cho AI
 
-        JobPost jobPost = jobPostMapper.toEntityJobPostDraft(geminiJobPostResponse,clientProfile);
-        JobPost saveJobpost = jobPostRepo.save(jobPost);
-        return jobPostMapper.toResponse(saveJobpost);
+        // Lọc lại skill để đảm bảo AI chọn đúng skill DB
+
+        JobPost jobPostDraft = jobPostMapper.toEntityJobPostDraft(geminiJobPostResponse, clientProfile);
+        JobPost savedJobPost = jobPostRepo.save(jobPostDraft);
+
+        return jobPostMapper.toResponse(savedJobPost);
     }
 
     // thêm hàm kiểm tra dử liệu trước khi gữi cho AI
@@ -60,7 +67,7 @@ public class JobPostAiService {
             throw new GlobalException("AI trả thiếu title");
         }
 
-        if (geminiJobPostResponse.getRequirementDescription() == null ||geminiJobPostResponse.getRequirementDescription().isBlank()) {
+        if (geminiJobPostResponse.getRequirementDescription() == null || geminiJobPostResponse.getRequirementDescription().isBlank()) {
             throw new GlobalException("AI trả thiếu requirementDescription");
         }
 
@@ -71,10 +78,6 @@ public class JobPostAiService {
         if (geminiJobPostResponse.getMainFeatures() == null || geminiJobPostResponse.getMainFeatures().isBlank()) {
             throw new GlobalException("AI trả thiếu mainFeatures");
         }
-// target này ko bt làm fild gì nên chưa làm
-//        if (geminiJobPostResponse.getTargetUsers() == null || geminiJobPostResponse.getTargetUsers().isBlank()) {
-//            throw new GlobalException("AI trả thiếu targetUsers");
-//        }
 
 
         if (geminiJobPostResponse.getRequiredSkills() == null || geminiJobPostResponse.getRequiredSkills().isBlank()) {
