@@ -51,23 +51,12 @@ public class ExpertProfile {
 
     String portfolioUrl;
 
-    @CreationTimestamp // y chang cai dưới
+    @CreationTimestamp
     LocalDateTime createAt;
 
-    @UpdateTimestamp // thấy sự lợi hại của anh chưa
+    @UpdateTimestamp
     LocalDateTime updateAt;
 
-    // chạy trước khi INSERT dữ liệu mới vào database
-//    @PrePersist
-//    protected void onCreate() {
-        // thời gian tạo tài khoản/profile
-//        createAt = LocalDateTime.now();
-
-        // lần đầu tạo thì updateAt cũng chính là thời gian tạo
-//        updateAt = LocalDateTime.now();
-
-
-//    }
 
     @PrePersist
     public void prePersist(){
@@ -84,12 +73,5 @@ public class ExpertProfile {
         }
     }
 
-    // chạy trước khi UPDATE dữ liệu
-//    @PreUpdate
-//    protected void onUpdate() {
 
-        // mỗi lần chỉnh sửa profile
-        // tự động cập nhật thời gian sửa gần nhất
-//        updateAt = LocalDateTime.now();
-//    }
 }

@@ -20,18 +20,18 @@ public class GeminiClientService {
     private final ChatClient.Builder chatClientBuilder; // BUILDER CỦA SPRINGAI
     private final ObjectMapper objectMapper;  // bieens  json thanh dto
 
-    // từ skill nguoi dùng nhập ,tạo promt gữi cho Ai .để Ai trả ra dử liệu . cầm dữ liệu đó để querry và gữi lại cho Ai
-    public AiSearchSkilResponse searchSkillFromAi(JobPostRequest request) {
-        try {
-            String prompt = buildPromptSearchSkill(request);
-            String aicontext = chatClientBuilder.build().prompt().user(prompt).call().content();
-            String clearJsonContext = clearJson(aicontext);
-            return objectMapper.readValue(clearJsonContext, AiSearchSkilResponse.class);
-        } catch (Exception e) {
-            throw new GlobalException("AI tạo keyword tìm skill thất bại: ");
-
-        }
-    }
+//    // từ skill nguoi dùng nhập ,tạo promt gữi cho Ai .để Ai trả ra dử liệu . cầm dữ liệu đó để querry và gữi lại cho Ai
+//    public AiSearchSkilResponse searchSkillFromAi(JobPostRequest request) {
+//        try {
+//            String prompt = buildPromptSearchSkill(request);
+//            String aicontext = chatClientBuilder.build().prompt().user(prompt).call().content();
+//            String clearJsonContext = clearJson(aicontext);
+//            return objectMapper.readValue(clearJsonContext, AiSearchSkilResponse.class);
+//        } catch (Exception e) {
+//            throw new GlobalException("AI tạo keyword tìm skill thất bại: ");
+//
+//        }
+//    }
 
 
     // format jobpost và chọn skill
@@ -39,11 +39,8 @@ public class GeminiClientService {
         try {
 
             String prompt = buildPrompt(request, aiSkillResults);
-
             String aicontext = chatClientBuilder.build().prompt().user(prompt).call().content();
-
             String clearJsonContext = clearJson(aicontext);
-
             return objectMapper.readValue(clearJsonContext, GeminiJobPostResponse.class); // chuyển json sang
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,45 +49,45 @@ public class GeminiClientService {
 
     }
 
-    private String buildPromptSearchSkill(JobPostRequest request) {
-        return """
-                Bạn là AI phân tích JobPost để tìm skill phù hợp trong database.
-                
-                                    DỮ LIỆU JOBPOST CLIENT NHẬP:
-                                    title: "%s"
-                                    requirementDescription: "%s"
-                                    businessGoal: "%s"
-                                    mainFeatures: "%s"
-                                    requiredSkills client nhập: "%s"
-                                    budgets: "%s"
-                                    timeLine: "%s"
-                
-                                    NHIỆM VỤ:
-                                    - Đọc nội dung JobPost.
-                                    - Tạo keyword ngắn để backend tìm skill trong database.
-                                    - Không tạo mô tả dài.
-                                    - Không trả về skill không liên quan.
-                                    - keywork là JSON array.
-                                    - Mỗi phần tử là một keyword ngắn.
-                                    - Tối đa 5 keyword.
-                                    - Không thêm giải thích ngoài JSON.
-                                    - Nếu client nhập Springboot thì trả về Spring Boot.
-                                    - Nếu client nhập ReactJS thì trả về React.
-                                    - Nếu client nhập Nodejs thì trả về Node.js.
-                
-                                    CHỈ TRẢ VỀ JSON HỢP LỆ:
-                                    {
-                                      "keywork": ["React", "Spring Boot", "E-commerce", "AI Integration"]
-                                    }
-                                    """.formatted(
-                                    request.getTitle(),
-                                    request.getRequirementDescription(),
-                                    request.getBusinessGoal(),
-                                    request.getMainFeatures(),
-                                    request.getRequiredSkills(),
-                                    request.getBudgets(),
-                                    request.getTimeLine() );
-    };
+//    private String buildPromptSearchSkill(JobPostRequest request) {
+//        return """
+//                Bạn là AI phân tích JobPost để tìm skill phù hợp trong database.
+//
+//                                    DỮ LIỆU JOBPOST CLIENT NHẬP:
+//                                    title: "%s"
+//                                    requirementDescription: "%s"
+//                                    businessGoal: "%s"
+//                                    mainFeatures: "%s"
+//                                    requiredSkills client nhập: "%s"
+//                                    budgets: "%s"
+//                                    timeLine: "%s"
+//
+//                                    NHIỆM VỤ:
+//                                    - Đọc nội dung JobPost.
+//                                    - Tạo keyword ngắn để backend tìm skill trong database.
+//                                    - Không tạo mô tả dài.
+//                                    - Không trả về skill không liên quan.
+//                                    - keywork là JSON array.
+//                                    - Mỗi phần tử là một keyword ngắn.
+//                                    - Tối đa 5 keyword.
+//                                    - Không thêm giải thích ngoài JSON.
+//                                    - Nếu client nhập Springboot thì trả về Spring Boot.
+//                                    - Nếu client nhập ReactJS thì trả về React.
+//                                    - Nếu client nhập Nodejs thì trả về Node.js.
+//
+//                                    CHỈ TRẢ VỀ JSON HỢP LỆ:
+//                                    {
+//                                      "keywork": ["React", "Spring Boot", "E-commerce", "AI Integration"]
+//                                    }
+//                                    """.formatted(
+//                                    request.getTitle(),
+//                                    request.getRequirementDescription(),
+//                                    request.getBusinessGoal(),
+//                                    request.getMainFeatures(),
+//                                    request.getRequiredSkills(),
+//                                    request.getBudgets(),
+//                                    request.getTimeLine() );
+//    };
 
     private String buildPrompt(JobPostRequest request, List<AiSkillResult> aiSkillResults) {
         String skillContext = buildSkillResult(aiSkillResults);

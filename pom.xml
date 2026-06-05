@@ -133,12 +133,18 @@
 			<version>2.8.9</version>
 		</dependency>
 
-		<!-- AI -->
+		<!-- AI Chat: Gemini -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-model-google-genai</artifactId>
-			<!-- Không cần <version> -->
 		</dependency>
+
+		<!-- AI Embedding: dùng để biến text thành vector gửi Qdrant -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-google-genai-embedding</artifactId>
+		</dependency>
+
 		<!-- thư viện đọc file  -->
 		<dependency>
 			<groupId>me.paulschwarz</groupId>

@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 
 @Getter
@@ -22,11 +23,11 @@ public class GeminiJobPostResponse {
 
     String mainFeatures; // Chức năng chính
 
-   // TargetUsers targetUsers; // Người dùng mục tiêu
-
-    String requiredSkills; // Skill dạng text tạm thời
+    //String requiredSkills; // Skill dạng text tạm thời
 
     BigDecimal budgets;
 
     String timeLine;
+  // đặt tên final là cho biết trả về skill cuối cùng nha :))))
+    List<Long> finalSkillIds;;
 }

@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -62,6 +63,14 @@ public class JobPost {
  @ManyToOne(fetch = FetchType.LAZY) // NHIỀU JobPost thuộc về 1 client
  @JoinColumn(name = "clientprofile_id",nullable = false)
     ClientProfile clientProfile;
+
+
+ @ManyToMany
+         @JoinTable(
+         name ="jobpost_skill",
+               joinColumns =  @JoinColumn(name = "jobpost_Id"),
+                 inverseJoinColumns = @JoinColumn(name = "skill_Id"))
+ List<Skill> skills;
 
 
 }
