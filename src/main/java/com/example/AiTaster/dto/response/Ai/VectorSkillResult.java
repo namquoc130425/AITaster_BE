@@ -8,12 +8,13 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class VectorSkillResult {
     Long skillId;
 
     String skillName;
 
-    Double scoure; // độ liên quan đến Qdrant trả về
+    Double score; // độ liên quan đến Qdrant trả về
 
     boolean selectedByUser;      // đúng nếu skill đc chọn  chọn bên  fe
 

@@ -15,6 +15,7 @@ public class EmbeddingService {
         if(text == null || text.isBlank()) {
             throw new IllegalArgumentException("Text cannot be null or blank");
         }
+
         return embeddingModel.embed(text);
     }
 }

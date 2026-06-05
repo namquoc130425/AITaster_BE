@@ -18,7 +18,8 @@ public class QdrantCollectionService {
     private final QdrantProperties qdrantProperties;
 
     public void CheckSkillCollectionExits() {
-        String collectionName = qdrantProperties.getCollection().getSkills();      // lấy ten từ file yml
+
+        String collectionName = qdrantProperties.getCollection().getSkills();      // lấy ten collection từ file yml
 
         // tạo API để check
         try{
