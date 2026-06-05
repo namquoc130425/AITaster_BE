@@ -23,6 +23,7 @@ public interface JobPostMapper {
 @Mapping(target = "budgets",source = "geminiJobPostResult.budgets")
 @Mapping(target = "timeLine",source = "geminiJobPostResult.timeLine")
 @Mapping(target = "jobPostStatus",constant = "DRAFT")
+@Mapping(target = "skills",ignore = true)
     JobPost toEntityJobPostDraft(GeminiJobPostResponse geminiJobPostResult , ClientProfile clientProfile);
 
 
@@ -47,6 +48,8 @@ public interface JobPostMapper {
     // jobpost -> response
     @Mapping(target = "clientId",source = "clientProfile")
     JobPostResponse toResponse(JobPost jobPost);
+
+
     @Mapping(target = "jobPostId", ignore = true)
     @Mapping(target = "clientProfile", ignore = true)
     @Mapping(target = "jobPostStatus", ignore = true)
