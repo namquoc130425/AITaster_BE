@@ -16,6 +16,5 @@ public class VectorSkillResult {
 
     Double score; // độ liên quan đến Qdrant trả về
 
-    boolean selectedByUser;      // đúng nếu skill đc chọn  chọn bên  fe
 
 }

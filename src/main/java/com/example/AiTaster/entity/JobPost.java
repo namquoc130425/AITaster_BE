@@ -35,12 +35,6 @@ public class JobPost {
     @Column(columnDefinition = "TEXT") // Text dài
     String mainFeatures; // Chức năng chính
 
-//    @Enumerated(EnumType.STRING) // Lưu enum dạng chữ
-//    @Column(nullable = false, length = 50) // Bắt buộc
-//    TargetUsers targetUsers; // Nhóm người dùng mục tiêu
-
-    @Column(columnDefinition = "TEXT") // Lưu text tạm thời vì bảng Skill chưa xong
-    String requiredSkills; // Skill AI gợi ý, ví dụ React, Spring Boot, AI Integration
 
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal budgets; // Ngân sách dự kiến

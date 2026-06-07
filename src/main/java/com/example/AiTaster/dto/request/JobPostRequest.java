@@ -29,11 +29,6 @@ public class JobPostRequest {
     @NotBlank(message = "MAIN_FEATURES_REQUIRED")
     String mainFeatures;
 
-//    @NotNull(message = "TARGET_USERS_REQUIRED")
-//    TargetUsers targetUsers; // Nhóm người dùng mục tiêu
-
-//
-//    String requiredSkills;
 
     @NotNull(message = "BUDGETS_REQUIRED") // Budget không được null
     @DecimalMin(value = "0.0", inclusive = false, message = "BUDGETS_INVALID") // Budget phải lớn hơn 0
@@ -42,7 +37,7 @@ public class JobPostRequest {
     @NotBlank(message = "TIMELINE_REQUIRED")
     String timeLine;
 
-  @Size(max = 10)
+
     List<Long> selectedSkillIds;
 
 }

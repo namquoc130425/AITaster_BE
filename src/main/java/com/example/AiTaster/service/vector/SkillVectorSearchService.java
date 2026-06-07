@@ -6,6 +6,7 @@ import com.example.AiTaster.service.SkillService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 // service sữ lý text người dùng nhập vào
+@Service
 @Slf4j
 @RequiredArgsConstructor
 public class SkillVectorSearchService {
@@ -24,7 +26,7 @@ public class SkillVectorSearchService {
     // hàm này xữ lý search text mà người dùng nhập vào
 public List<VectorSkillResult> searchSkillResult(String seachtext , int limit ) {
     // kiểm tra Colection trong qdrant đã tồn tại chưa
-     qdrantCollectionService.CheckSkillCollectionExits();
+     qdrantCollectionService.checkSkillCollectionExits();
 
     // chuyển text jobpost mà người dùng nhập vào thành vector để vào Qdrant tìm kím
 float[] vectorQuerry = embeddingService.converTextToVector(seachtext);
@@ -68,7 +70,7 @@ float[] vectorQuerry = embeddingService.converTextToVector(seachtext);
         if(response == null) return results;
 
         // lấy danh sách points
-        JsonNode pointNode = response.path("result").path("point");
+        JsonNode pointNode = response.path("result").path("points");
 
         //trường hợp points trả ra forms khác thì vẫn bắt đc
         if(pointNode.isMissingNode() || !pointNode.isArray()) {
@@ -87,8 +89,8 @@ float[] vectorQuerry = embeddingService.converTextToVector(seachtext);
             // lấy skillId ( ưu tiên lấy trong payload , không có thì lấy trong id )
             if(payloadNode.path("skillId").isNumber()) {
                 skillId = payloadNode.path("skillId").asLong();
-            }else if(payloadNode.path("id").isNumber()) {
-                skillId = payloadNode.path("id").asLong();
+            }else if(point.path("id").isNumber()) {
+                skillId = point.path("id").asLong();
             }
             //lấy nameSkill
             if (payloadNode.path("skillName").isTextual()) {
@@ -102,7 +104,6 @@ float[] vectorQuerry = embeddingService.converTextToVector(seachtext);
                         .skillId(skillId)
                                 .skillName(skillName)
                                 .score(score)
-                                .selectedByUser(false)
                                 .build()
 
                         );

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Getter
 @Setter
+@Component
 @ConfigurationProperties(prefix = "app.qdrant")
 public class QdrantProperties {
     private String url;
