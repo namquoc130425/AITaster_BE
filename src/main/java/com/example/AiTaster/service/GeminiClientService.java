@@ -1,44 +1,31 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
-import com.example.AiTaster.dto.request.JobPostRequest;
-import com.example.AiTaster.dto.response.Ai.AiSearchSkilResponse;
-import com.example.AiTaster.dto.response.Ai.AiSkillResult;
+import com.example.AiTaster.dto.request.JobPostAiRequest;
 import com.example.AiTaster.dto.response.Ai.GeminiJobPostResponse;
+import com.example.AiTaster.dto.response.Ai.VectorSkillResult;
 import com.example.AiTaster.exception.GlobalException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+//service này nhận dữ liệu của qDRANT Và đưa Ai xữ lý
 public class GeminiClientService {
     private final ChatClient.Builder chatClientBuilder; // BUILDER CỦA SPRINGAI
     private final ObjectMapper objectMapper;  // bieens  json thanh dto
 
-//    // từ skill nguoi dùng nhập ,tạo promt gữi cho Ai .để Ai trả ra dử liệu . cầm dữ liệu đó để querry và gữi lại cho Ai
-//    public AiSearchSkilResponse searchSkillFromAi(JobPostRequest request) {
-//        try {
-//            String prompt = buildPromptSearchSkill(request);
-//            String aicontext = chatClientBuilder.build().prompt().user(prompt).call().content();
-//            String clearJsonContext = clearJson(aicontext);
-//            return objectMapper.readValue(clearJsonContext, AiSearchSkilResponse.class);
-//        } catch (Exception e) {
-//            throw new GlobalException("AI tạo keyword tìm skill thất bại: ");
-//
-//        }
-//    }
 
 
-    // format jobpost và chọn skill
-    public GeminiJobPostResponse generateJobPost(JobPostRequest request, List<AiSkillResult> aiSkillResults) throws JsonProcessingException {
+    public GeminiJobPostResponse generateJobPost(JobPostAiRequest jobPostAiRequest , List<VectorSkillResult> vectorSkillResult) {
         try {
 
-            String prompt = buildPrompt(request, aiSkillResults);
+            String prompt = buildPrompt(jobPostAiRequest, vectorSkillResult);
             String aicontext = chatClientBuilder.build().prompt().user(prompt).call().content();
             String clearJsonContext = clearJson(aicontext);
             return objectMapper.readValue(clearJsonContext, GeminiJobPostResponse.class); // chuyển json sang
@@ -49,121 +36,103 @@ public class GeminiClientService {
 
     }
 
-//    private String buildPromptSearchSkill(JobPostRequest request) {
-//        return """
-//                Bạn là AI phân tích JobPost để tìm skill phù hợp trong database.
-//
-//                                    DỮ LIỆU JOBPOST CLIENT NHẬP:
-//                                    title: "%s"
-//                                    requirementDescription: "%s"
-//                                    businessGoal: "%s"
-//                                    mainFeatures: "%s"
-//                                    requiredSkills client nhập: "%s"
-//                                    budgets: "%s"
-//                                    timeLine: "%s"
-//
-//                                    NHIỆM VỤ:
-//                                    - Đọc nội dung JobPost.
-//                                    - Tạo keyword ngắn để backend tìm skill trong database.
-//                                    - Không tạo mô tả dài.
-//                                    - Không trả về skill không liên quan.
-//                                    - keywork là JSON array.
-//                                    - Mỗi phần tử là một keyword ngắn.
-//                                    - Tối đa 5 keyword.
-//                                    - Không thêm giải thích ngoài JSON.
-//                                    - Nếu client nhập Springboot thì trả về Spring Boot.
-//                                    - Nếu client nhập ReactJS thì trả về React.
-//                                    - Nếu client nhập Nodejs thì trả về Node.js.
-//
-//                                    CHỈ TRẢ VỀ JSON HỢP LỆ:
-//                                    {
-//                                      "keywork": ["React", "Spring Boot", "E-commerce", "AI Integration"]
-//                                    }
-//                                    """.formatted(
-//                                    request.getTitle(),
-//                                    request.getRequirementDescription(),
-//                                    request.getBusinessGoal(),
-//                                    request.getMainFeatures(),
-//                                    request.getRequiredSkills(),
-//                                    request.getBudgets(),
-//                                    request.getTimeLine() );
-//    };
 
-    private String buildPrompt(JobPostRequest request, List<AiSkillResult> aiSkillResults) {
-        String skillContext = buildSkillResult(aiSkillResults);
-        return """
-                Bạn là AI Assistant trong marketplace giống Upwork.
-                Nhiệm vụ của bạn là kiểm tra, chuẩn hóa và viết lại JobPost cho chuyên nghiệp hơn.
-                
-                DỮ LIỆU CLIENT ĐÃ NHẬP:
-                title: "%s"
-                requirementDescription: "%s"
-                businessGoal: "%s"
-                mainFeatures: "%s"
-                requiredSkills client nhập: "%s"
-                budgets: "%s"
-                timeLine: "%s"
-                
-                ĐÂY LÀ DANH SÁCH SKILL RESULT ĐƯỢC BACKEND ĐÃ TÌM TỪ DATABASE:
-                %s
-                
-                QUY TẮC BẮT BUỘC:
-                - Chỉ trả về JSON hợp lệ.
-                - Không markdown.
-                - Không giải thích thêm.
-                - Không thêm field ngoài format.
-                - Không trả về jobPostId.
-                - Không trả về clientId.
-                - Không trả về jobPostStatus.
-                - Không trả về createAt.
-                - Không trả về updateAt.
-                - Giữ đúng ý định ban đầu của client.
-                - Được phép sửa lỗi chính tả, chỉnh câu rõ ràng hơn, chuyên nghiệp hơn.
-                - Không bịa thêm tính năng quá xa yêu cầu client.
-                - Field budgets phải là số decimal.
-                - Field targetUsers chỉ được chọn một trong:
-                  CUSTOMERS, BUSINESS_USERS, INTERNAL_STAFF, STUDENTS, PATIENTS, GENERAL_USERS.
-                - Field requiredSkills là String, các skill cách nhau bằng dấu phẩy.
-                - Nếu SKILL RESULT có dữ liệu, requiredSkills chỉ được chọn skill từ danh sách đó.
-                - Nếu SKILL RESULT rỗng, hãy format lại requiredSkills client nhập.
-                
-                FORMAT JSON BẮT BUỘC:
-                {
-                  "title": "Tiêu đề đã được chỉnh chuyên nghiệp",
-                  "requirementDescription": "Mô tả yêu cầu đã được viết lại rõ ràng",
-                  "businessGoal": "Mục tiêu kinh doanh rõ ràng",
-                  "mainFeatures": "Các chức năng chính được mô tả trong một đoạn văn",
-                  "requiredSkills": "React, Spring Boot, AI Integration",
-                  "budgets": 1500.00,
-                  "timeLine": "4 - 6 tuần"
-                }
-                """.formatted(
-                request.getTitle(),
-                request.getRequirementDescription(),
-                request.getBusinessGoal(),
-                request.getMainFeatures(),
-                request.getRequiredSkills(),
-                request.getBudgets(),
-                request.getTimeLine(),
-                skillContext
+    private String buildPrompt(JobPostAiRequest jobPostAiRequest, List<VectorSkillResult> vectorSkillResult) {
+        String vectorSkillResultText = buildVectorSkillText(vectorSkillResult);
+        String prompt = """
+            Bạn là trợ lý AI cho một nền tảng freelance marketplace chuyên về dịch vụ AI.
+
+            NHIỆM VỤ CỦA BẠN:
+            - Viết lại thông tin Job Post cho rõ ràng, chuyên nghiệp và dễ hiểu hơn.
+            - Chuẩn hóa nội dung người dùng nhập.
+            - Gợi ý danh sách kỹ năng cuối cùng phù hợp với Job Post.
+            - Tất cả nội dung trả về phải viết bằng TIẾNG VIỆT.
+
+            QUY TẮC RẤT QUAN TRỌNG:
+            1. Chỉ trả về JSON hợp lệ.
+            2. Không trả markdown.
+            3. Không giải thích bên ngoài JSON.
+            4. Không dùng tiếng Anh trong nội dung title, description, requirementDescription, businessGoal, mainFeatures, deliverables.
+            5. Không được bịa kỹ năng.
+            6. finalSkillIds chỉ được lấy từ danh sách Candidate skills from Qdrant.
+            7. finalSkillIds tối đa 5 kỹ năng.
+            8. Không trả skillId trùng nhau.
+            9. Ưu tiên kỹ năng có vectorScore cao hơn nếu kỹ năng đó phù hợp với nội dung Job Post.
+            10. Nếu kỹ năng không liên quan đến Job Post thì không chọn, dù vectorScore cao.
+            11. Nếu thông tin người dùng nhập còn mơ hồ, hãy suy luận ở mức tổng quát dựa trên title và candidate skills.
+            12. Không được bịa các yêu cầu quá cụ thể nếu người dùng chưa cung cấp.
+            13. Nếu người dùng nhập các câu như "chưa biết", "không biết", "chưa rõ", "không rõ", "chưa tìm hiểu", hãy viết lại bằng tiếng Việt theo hướng an toàn, ví dụ:
+                - "Khách hàng chưa cung cấp yêu cầu chi tiết, cần trao đổi thêm để làm rõ phạm vi công việc."
+                - "Mục tiêu kinh doanh chưa được mô tả cụ thể, cần làm rõ thêm trong bước trao đổi."
+                - "Các tính năng chính chưa được xác định rõ, có thể bắt đầu từ các chức năng chatbot cơ bản."
+            14. Nếu title đủ rõ, bạn được phép tạo bản nháp hợp lý từ title.
+            15. Không để field rỗng.
+            16. budgets phải giữ theo số tiền người dùng nhập.
+            17. timeLine phải giữ theo thời gian người dùng nhập.
+
+            CÁCH XỬ LÝ KHI INPUT MƠ HỒ:
+            - Nếu requirementDescription là "chưa biết", hãy viết yêu cầu tổng quát, không quá chi tiết.
+            - Nếu businessGoal là "chưa biết", hãy viết mục tiêu chung dựa trên title.
+            - Nếu mainFeatures là "chưa biết", hãy đề xuất tính năng cơ bản ở mức an toàn.
+            - Không được nói chắc chắn rằng hệ thống có những tính năng phức tạp nếu người dùng chưa yêu cầu.
+            - Có thể dùng các cụm như "cần trao đổi thêm", "có thể bao gồm", "dự kiến", "ở mức cơ bản".
+
+            Candidate skills from Qdrant:
+            %s
+
+            User job post input:
+            title: %s
+            requirementDescription: %s
+            businessGoal: %s
+            mainFeatures: %s
+            budgets: %s
+            timeLine: %s
+
+            Trả về đúng cấu trúc JSON sau:
+            {
+              "title": "string",
+              "description": "string",
+              "requirementDescription": "string",
+              "businessGoal": "string",
+              "mainFeatures": "string",
+              "deliverables": "string",
+              "budgets": 1000,
+              "timeLine": "string",
+              "finalSkillIds": [1, 2, 3]
+            }
+            """.formatted(
+                vectorSkillResultText,
+                jobPostAiRequest.getTitle(),
+                jobPostAiRequest.getRequirementDescription(),
+                jobPostAiRequest.getBusinessGoal(),
+                jobPostAiRequest.getMainFeatures(),
+                jobPostAiRequest.getBudgets(),
+                jobPostAiRequest.getTimeLine()
         );
-    }
 
-    private String buildSkillResult(List<AiSkillResult> aiSkillResultsList) {
-        // kiểm tra có trong database khoonh
-        if (aiSkillResultsList == null || aiSkillResultsList.isEmpty()) {
-            throw new GlobalException("Không tìm thấy skill nào phù hợp với yêu cầu của bạn");
+        return prompt;
+    }
+  // vì Qdrant trả về List nên từ List sẽ chuyển thành String để Ai đọc :)))
+    private String buildVectorSkillText(List<VectorSkillResult> vectorSkillResult) {
+        if (vectorSkillResult == null || vectorSkillResult.isEmpty()) {
+            return "[]";
         }
-        // duyệt qua từng kết quả mà database trả ra -> chuyển qua string
-        StringBuilder builder = new StringBuilder();
-        for (AiSkillResult aiSkillResultList : aiSkillResultsList) {
-            builder.append("- ID: ")
-                    .append(aiSkillResultList.getSkillId())
-                    .append(", Skill Name: ")
-                    .append(aiSkillResultList.getSkillName())
-                    .append("\n");
-        }
-        return builder.toString();
+
+        return vectorSkillResult.stream()
+                .map(skill -> """
+                       
+                        {
+                          "skillId": %d,
+                          "skillName": "%s",
+                          "vectorScore": %.4f,
+                        }
+                        
+                        """.formatted(
+                        skill.getSkillId(),
+                        skill.getSkillName(),
+                        skill.getScore()
+                ))
+                .collect(Collectors.joining(",\n"));
     }
 
 

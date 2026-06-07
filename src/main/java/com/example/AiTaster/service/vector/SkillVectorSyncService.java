@@ -27,7 +27,7 @@ public class SkillVectorSyncService {
 // đẩy list thì vòng lặp rồi thêm vào list rỗng bên ngoài rồi lại add rồi trả về size()
 @Transactional(readOnly = true)
     public int syncSkillVector() {
-        qdrantCollectionService.CheckSkillCollectionExits();
+        qdrantCollectionService.checkSkillCollectionExits();
 
         List<Skill> skills = skillRepo.findAll();
 
@@ -36,10 +36,10 @@ public class SkillVectorSyncService {
         }
   List<Map<String,Object>> newPoints = new ArrayList<>();
         for(Skill skill : skills) {
-            Map<String, Object> point = buildQdrantPoint(skill);
-            newPoints.add(point);
+            Map<String, Object> points = buildQdrantPoint(skill);
+            newPoints.add(points);
         }
-        upsertPointToQdranr(newPoints);
+        upsertPointsToQdranr(newPoints);
         return newPoints.size();
     }
 
@@ -47,10 +47,12 @@ public class SkillVectorSyncService {
     // upseart 1 skill lên Qdrant
     // dùng khi admin tạo mới skill hoặc sửa skill
     public void upsertOneSkill(Skill skill){
-        qdrantCollectionService.CheckSkillCollectionExits();
-         Map<String, Object> point = buildQdrantPoint(skill);
+        qdrantCollectionService.checkSkillCollectionExits();
+         Map<String, Object> points = buildQdrantPoint(skill);
 
-         List<Map<String, Object>> skills = List.of(point);
+         List<Map<String, Object>> skills = List.of(points);
+
+         upsertPointsToQdranr(skills);
 
     }
 
@@ -70,7 +72,7 @@ public class SkillVectorSyncService {
                 "vector",vectorSkill,
                 "payload",Map.of(
                         "skillId",skills.getSkillId(),
-                        "skillName",skills.getSkillName()
+                        "skillName",skillname
                 )
 
                 );
@@ -80,14 +82,14 @@ public class SkillVectorSyncService {
     // gữi danh sách point lêm Qdrant
     // List<map<String> là danh sách chứa nhiều map
     // mỗi map là 1 points
-    private String upsertPointToQdranr(List<Map<String,Object>> point) {
+    private String upsertPointsToQdranr(List<Map<String,Object>> points) {
         String  collectionName = qdrantProperties.getCollection().getSkills();
-      Map<String,Object> map = Map.of("point",point); // tạo json point :
+      Map<String,Object> map = Map.of("points",points); // tạo json point :
                                                                             // ......
                                                                             // ...
 
         qdrantRestClient.put()
-                .uri("/collection/{collectionName}/points?wait=true",collectionName)
+                .uri("/collections/{collectionName}/points?wait=true",collectionName)
                 .body(map)
                 .retrieve()
                 .toBodilessEntity();

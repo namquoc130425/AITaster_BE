@@ -7,6 +7,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter // Tự sinh getter
 @Setter // Tự sinh setter
@@ -28,15 +29,13 @@ public class JobPostResponse {
 
     String mainFeatures;
 
-   // TargetUsers targetUsers; // Người dùng mục tiêu
-
-    String requiredSkills;
 
     BigDecimal budgets;
 
     String timeLine;
 
     JobpostStatus jobPostStatus;
+    List<SkillResponse> skills;
 
    // LocalDateTime createAt;
 

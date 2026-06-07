@@ -17,14 +17,14 @@ public class QdrantCollectionService {
     private final RestClient qdrantRestClient;
     private final QdrantProperties qdrantProperties;
 
-    public void CheckSkillCollectionExits() {
+    public void checkSkillCollectionExits() {
 
         String collectionName = qdrantProperties.getCollection().getSkills();      // lấy ten collection từ file yml
 
         // tạo API để check
         try{
          qdrantRestClient.get()
-                 .uri("/collection/{collectionName}",collectionName)
+                 .uri("/collections/{collectionName}",collectionName)
                  .retrieve()  // gữi request đi rồi nhận response
                  .toBodilessEntity(); // request có thành công hay không,không quan tâm đến body trả về, chỉ cần biết status code
 
@@ -44,7 +44,7 @@ public class QdrantCollectionService {
     private void createCollection(String collectionName) {
         //Qdrant dùng json nên dùng Map để tạo form build JSON
         Map<String ,Object> body = Map.of(
-                "vector",Map.of(
+                "vectors",Map.of(
                             "size",qdrantProperties.getVectorSize(),
                             "distance",qdrantProperties.getDistance()
                 )
@@ -53,7 +53,7 @@ public class QdrantCollectionService {
         // tạo api để thêm colection
 
         qdrantRestClient.put()
-                .uri("/collection/{collectionName}",collectionName)
+                .uri("/collections/{collectionName}",collectionName)
                 .body(body)
                 .retrieve()
                 .toBodilessEntity();
