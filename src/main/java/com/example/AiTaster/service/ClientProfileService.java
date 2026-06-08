@@ -1,10 +1,12 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.User;
+import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
@@ -16,6 +18,7 @@ import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 @Slf4j
@@ -61,11 +64,48 @@ public class ClientProfileService implements IClientProfile {
 
 
 
-    @Override
+    @Transactional
     public ClientProfileResponse update(Long id, ClientProfileRequest request) {
 
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client profile not found"));
+                .orElseThrow(() -> new GlobalException(
+                        ErrorCode.NOT_FOUND.getCode(),
+                        "Client profile " + ErrorCode.NOT_FOUND.getMessage()
+                ));
+
+        User user = profile.getUser();
+
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (userRepo.existsByEmail(request.getEmail())) {
+                throw new GlobalException(
+                        ErrorCode.DUPLICATE_EMAIL.getCode(),
+                        ErrorCode.DUPLICATE_EMAIL.getMessage()
+                );
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
+            if (userRepo.existsByPhone(request.getPhone())) {
+                throw new GlobalException(
+                        ErrorCode.DUPLICATE_PHONE.getCode(),
+                        ErrorCode.DUPLICATE_PHONE.getMessage()
+                );
+            }
+            user.setPhone(request.getPhone());
+        }
+
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        }
 
         clientProfileMapper.updateEntity(request, profile);
 
