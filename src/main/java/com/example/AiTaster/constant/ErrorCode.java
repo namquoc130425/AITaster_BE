@@ -17,8 +17,9 @@ public enum ErrorCode {
     INVALID_FORMART("Invalid format",HttpStatus.BAD_REQUEST),
     NOT_FOUND("Not Found",HttpStatus.NOT_FOUND),
     INVALID_TOKEN("Invalid Token",HttpStatus.UNAUTHORIZED),
+    DUPLICATE_EMAIL("Email trùng", HttpStatus.BAD_REQUEST),
+    DUPLICATE_PHONE("Phone bị trùng",HttpStatus.BAD_REQUEST),
     INVALID_ROLE("Invalid Role",HttpStatus.BAD_REQUEST),;
-
 
     final String message;
     final HttpStatus httpStatus;

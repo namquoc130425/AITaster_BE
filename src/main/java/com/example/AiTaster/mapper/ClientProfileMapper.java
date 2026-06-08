@@ -25,6 +25,11 @@ public interface ClientProfileMapper {
 
     // Update existing entity
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "clientProfileId", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "bussinessField", source = "businessField")
+    @Mapping(target = "createAt", ignore = true)
+    @Mapping(target = "updateAt", ignore = true)
     void updateEntity(
             ClientProfileRequest request,
             @MappingTarget ClientProfile clientProfile
