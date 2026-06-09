@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -24,6 +26,10 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     String description;
 
-    // mối quan hệ với ExpertService : 1 category có nhiều ExpertService
-    //                                 1 ExpertService chỉ đc 1 category
+
+    // cascade all là xóa tk cha thì tk con sẽ xóa theo
+    @OneToMany(mappedBy = "category" ,cascade = CascadeType.ALL)
+    List<ExpertService> expertServices;
 }
+
+

@@ -17,24 +17,24 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JobPostRequest {
-    @NotBlank(message = "TITLE_REQUIRED")
+    @NotBlank(message = "FIELD_REQUIRED")
     String title;
 
-    @NotBlank(message = "REQUIREMENT_DESCRIPTION_REQUIRED")
+    @NotBlank(message = "FIELD_REQUIRED")
     String requirementDescription;
 
-    @NotBlank(message = "BUSINESS_GOAL_REQUIRED")
+    @NotBlank(message = "FIELD_REQUIRED")
     String businessGoal;
 
-    @NotBlank(message = "MAIN_FEATURES_REQUIRED")
+    @NotBlank(message = "FIELD_REQUIRED")
     String mainFeatures;
 
 
-    @NotNull(message = "BUDGETS_REQUIRED") // Budget không được null
+    @NotBlank(message = "FIELD_REQUIRED") // Budget không được null
     @DecimalMin(value = "0.0", inclusive = false, message = "BUDGETS_INVALID") // Budget phải lớn hơn 0
     BigDecimal budgets;
 
-    @NotBlank(message = "TIMELINE_REQUIRED")
+    @NotBlank(message = "FIELD_REQUIRED")
     String timeLine;
 
 
