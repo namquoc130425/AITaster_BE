@@ -13,5 +13,7 @@ public interface IAuthentication {
 
     LoginResponse login(LoginRequest loginRequest);
 
+    LoginResponse refresh(TokenRequest tokenRequest);
+
     UserResponse registerAdmin(AdminRegisterRequest request);
 }
