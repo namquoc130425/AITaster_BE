@@ -67,7 +67,8 @@ public class ClientProfileService implements IClientProfile {
     public ClientProfileResponse update(Long id, ClientProfileRequest request) {
 
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode()
+                        ,"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         clientProfileMapper.updateEntity(request, profile);
 

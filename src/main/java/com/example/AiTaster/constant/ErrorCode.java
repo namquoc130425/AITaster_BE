@@ -29,8 +29,10 @@ public enum ErrorCode {
     ACCOUNT_DISABLED("Account is disabled", HttpStatus.FORBIDDEN),
     INVALID_LOGIN("Invalid name or password", HttpStatus.BAD_REQUEST),
     ALREADY_EXIST("Account already exist", HttpStatus.BAD_REQUEST),
-    PASSWORD_REQUIRED("Password is required", HttpStatus.BAD_REQUEST);
+    PASSWORD_REQUIRED("Password is required", HttpStatus.BAD_REQUEST),
 
+    //---------------------------------------------------------------------------
+    INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),;
 
 
 

@@ -3,6 +3,7 @@ package com.example.AiTaster.service;
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
+import com.example.AiTaster.controller.AuthController;
 import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
@@ -10,6 +11,7 @@ import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.dto.response.LoginResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.ExpertProfile;
+import com.example.AiTaster.entity.RefreshToken;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
@@ -18,7 +20,6 @@ import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
 import jakarta.transaction.Transactional;
-import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -56,6 +57,10 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     private ClientProfileMapper clientProfileMapper;
     @Autowired
     private ExpertProfileMapper expertProfileMapper;
+    @Autowired
+    RefreshTokenService refreshTokenService;
+    @Autowired
+    AuthController authController;
 
 
     // đăng ký client
@@ -77,7 +82,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         user.setUserStatus(UserStatus.ACTIVE);
 
 
- //builder:mapper thẳng
+        //builder:mapper thẳng
         ClientProfile clientProfile = ClientProfile.builder()
                 .user(user)
                 .companyName(request.getCompanyName())
@@ -165,49 +170,10 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
             String accessToken = tokenService.generateAccessToken(user);
 
-            LoginResponse.LoginResponseBuilder responseBuilder = LoginResponse.builder()
-                    .userId(user.getUserId())
-                    .email(user.getEmail())
-                    .fullName(user.getFullName())
-                    .phone(user.getPhone())
-                    .avatarUrl(user.getAvatarUrl())
-                    .role(user.getRole())
-                    .userStatus(user.getUserStatus())
-                    .accessToken(accessToken);
+            String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-            if (user.getClientProfile() != null) {
-                ClientProfile clientProfile = user.getClientProfile();
 
-                responseBuilder.clientProfile(
-                        LoginResponse.ClientProfileInfo.builder()
-                                .clientProfileId(clientProfile.getClientProfileId())
-                                .companyName(clientProfile.getCompanyName())
-                                .contactName(clientProfile.getContactName())
-                                .description(clientProfile.getDescription())
-                                .businessField(clientProfile.getBussinessField())
-                                .address(clientProfile.getAddress())
-                                .build()
-                );
-            }
-
-            if (user.getExpertProfile() != null) {
-                ExpertProfile expertProfile = user.getExpertProfile();
-
-                responseBuilder.expertProfile(
-                        LoginResponse.ExpertProfileInfo.builder()
-                                .expertProfileId(expertProfile.getExpertProfileId())
-                                .bio(expertProfile.getBio())
-                                .category(expertProfile.getCategory())
-                                .skills(expertProfile.getSkills())
-                                .yearsOfExperience(expertProfile.getYearOfExperience())
-                                .portfolioUrl(expertProfile.getPortfolioUrl())
-                                .rating(expertProfile.getRating())
-                                .completedProjects(expertProfile.getCompletedProjects())
-                                .build()
-                );
-            }
-
-            return responseBuilder.build();
+            return buildLoginResponse(user, accessToken, refreshToken);
 
         } catch (LockedException e) {
             throw new GlobalException(
@@ -258,6 +224,95 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         User savedUser = userRepo.save(user);
 
         return userMapper.toResponser(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse refresh(TokenRequest tokenRequest) {
+
+        RefreshToken validToken =
+                refreshTokenService.verifyToken(tokenRequest.getToken())
+                        .orElseThrow(() -> new GlobalException(
+                                ErrorCode.INVALID_REFRESH_TOKEN.getCode(),
+                                ErrorCode.INVALID_REFRESH_TOKEN.getMessage()
+                        ));
+
+        User user = userRepo.findById(validToken.getUserId())
+                .orElseThrow(() -> new GlobalException(
+                        ErrorCode.USER_NOT_FOUND.getCode(),
+                        ErrorCode.USER_NOT_FOUND.getMessage()
+                ));
+
+        //rotation: revoke cũ + cấp mới
+        validateRefreshUserStatus(user);
+
+        RefreshToken refreshToken = refreshTokenService.rotateToken(tokenRequest.getToken(), user);
+        String accessToken = tokenService.generateAccessToken(user);
+        return buildLoginResponse(user, accessToken, refreshToken.getToken());
+    }
+
+    private void validateRefreshUserStatus(User user) {
+        if (!user.isAccountNonLocked()) {
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_LOCKED.getCode(),
+                    ErrorCode.ACCOUNT_LOCKED.getMessage()
+            );
+        }
+
+        if (!user.isEnabled()) {
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_DISABLED.getCode(),
+                    ErrorCode.ACCOUNT_DISABLED.getMessage()
+            );
+        }
+    }
+
+    private LoginResponse buildLoginResponse(User user, String accessToken, String refreshToken) {
+        LoginResponse.LoginResponseBuilder responseBuilder = LoginResponse.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .username(user.getUsername())
+                .phone(user.getPhone())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole())
+                .userStatus(user.getUserStatus())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken);
+
+        if (user.getClientProfile() != null) {
+            ClientProfile clientProfile = user.getClientProfile();
+
+            responseBuilder.clientProfile(
+                    LoginResponse.ClientProfileInfo.builder()
+                            .clientProfileId(clientProfile.getClientProfileId())
+                            .companyName(clientProfile.getCompanyName())
+                            .contactName(clientProfile.getContactName())
+                            .description(clientProfile.getDescription())
+                            .businessField(clientProfile.getBussinessField())
+                            .address(clientProfile.getAddress())
+                            .build()
+            );
+        }
+
+        if (user.getExpertProfile() != null) {
+            ExpertProfile expertProfile = user.getExpertProfile();
+
+            responseBuilder.expertProfile(
+                    LoginResponse.ExpertProfileInfo.builder()
+                            .expertProfileId(expertProfile.getExpertProfileId())
+                            .bio(expertProfile.getBio())
+                            .category(expertProfile.getCategory())
+                            .skills(expertProfile.getSkills())
+                            .yearsOfExperience(expertProfile.getYearOfExperience())
+                            .portfolioUrl(expertProfile.getPortfolioUrl())
+                            .rating(expertProfile.getRating())
+                            .completedProjects(expertProfile.getCompletedProjects())
+                            .build()
+            );
+        }
+
+        return responseBuilder.build();
     }
 
 
