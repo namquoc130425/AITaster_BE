@@ -23,6 +23,7 @@ public class LoginResponse {
     Role role;
     UserStatus userStatus;
     String accessToken;
+    String refreshToken;
 
     ClientProfileInfo clientProfile;
     ExpertProfileInfo expertProfile;
@@ -49,7 +50,7 @@ public class LoginResponse {
         String bio;
         String category;
         String skills;
-        String yearsOfExperience;
+        int yearsOfExperience;
         String portfolioUrl;
         BigDecimal rating;
         Integer completedProjects;

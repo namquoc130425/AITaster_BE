@@ -133,6 +133,12 @@
 			<version>2.8.9</version>
 		</dependency>
 
+		<!--	Redis	-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
 		<!-- AI Chat: Gemini -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
@@ -191,5 +197,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

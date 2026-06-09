@@ -29,13 +29,15 @@ public enum ErrorCode {
     ACCOUNT_DISABLED("Account is disabled", HttpStatus.FORBIDDEN),
     INVALID_LOGIN("Invalid name or password", HttpStatus.BAD_REQUEST),
     ALREADY_EXIST("Account already exist", HttpStatus.BAD_REQUEST),
-
     PASSWORD_REQUIRED("Password is required", HttpStatus.BAD_REQUEST),
+
     CALL_AI_FAILED("Call AI service failed", HttpStatus.INTERNAL_SERVER_ERROR),
 
     BLOCKED_KEYWORD("Input contains blocked keyword", HttpStatus.BAD_REQUEST),
-    PROMPT_INJECTION("Input contains potential prompt injection patterns", HttpStatus.BAD_REQUEST);
+    PROMPT_INJECTION("Input contains potential prompt injection patterns", HttpStatus.BAD_REQUEST),
 
+    //---------------------------------------------------------------------------
+    INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),;
 
 
 
