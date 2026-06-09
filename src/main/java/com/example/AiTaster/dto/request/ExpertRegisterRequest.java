@@ -45,8 +45,8 @@ public class ExpertRegisterRequest {
      @Size(max = 1000, message = "skills max 1000 characters")
      String skills;
 
-     @NotBlank(message = "FIELD_REQUIRED")
-     String yearOfExperience;
+
+     int yearOfExperience;
 
 //     // rating mặc định thường là 0
 //     // không được âm

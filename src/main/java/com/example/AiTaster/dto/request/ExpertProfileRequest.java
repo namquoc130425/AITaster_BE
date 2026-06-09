@@ -25,6 +25,7 @@ public class ExpertProfileRequest {
     @NotBlank(message = "FIELD_REQUIRED")
     @Size(max = 30, message = "fullName max 30 characters")
     String fullName;
+
     String avatarUrl;
 
     @NotBlank(message = "FIELD_REQUIRED")
@@ -42,8 +43,8 @@ public class ExpertProfileRequest {
     @Size(max = 1000, message = "skills max 1000 characters")
     String skills;
 
-    @NotBlank(message = "FIELD_REQUIRED")
-    String yearOfExperience;
+
+    int yearOfExperience;
 
     String portfolioUrl;
 }

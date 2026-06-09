@@ -43,7 +43,7 @@ public class ExpertProfile {
 
     String skills;
 
-    String yearOfExperience;
+    int yearOfExperience;
 
     BigDecimal rating;
 

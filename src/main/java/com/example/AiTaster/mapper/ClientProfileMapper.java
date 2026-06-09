@@ -21,8 +21,5 @@ public interface ClientProfileMapper {
 
     // Update existing entity
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntity(
-            ClientProfileRequest request,
-            @MappingTarget ClientProfile clientProfile
-    );
+    ClientProfile updateEntity( ClientProfileRequest request, @MappingTarget ClientProfile clientProfile );
 }
