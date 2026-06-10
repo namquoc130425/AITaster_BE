@@ -10,12 +10,7 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring",uses = UserMapper.class)
 public interface ExpertProfileMapper {
     //request -> entity ( expert register request chuyển thành expert Profile )
-    @Mapping(target = "expertProfileId", ignore = true)
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "rating", ignore = true)
-    @Mapping(target = "completedProjects", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     ExpertProfile registertoEntity(ExpertRegisterRequest request);
 
 

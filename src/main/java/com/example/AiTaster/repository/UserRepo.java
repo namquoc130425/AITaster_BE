@@ -1,16 +1,32 @@
 package com.example.AiTaster.repository;
 
+import com.example.AiTaster.constant.Role;
+import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface UserRepo extends JpaRepository<User,Long> {
+import java.util.List;
+import java.util.Optional;
 
-    User findByEmail(String email);
+@Repository
+public interface UserRepo extends JpaRepository<User, Long> {
+
+    Optional<User> findByUsername(String username);
 
     boolean existsByEmail(String email);
 
     boolean existsByPhone(String phone);
+
+    List<User> findByRole(Role role);
+
+    List<User> findByUserStatus(UserStatus userStatus);
+
+    List<User> findByRoleAndUserStatus(
+            Role role,
+            UserStatus userStatus
+    );
+
+    List<User> findByFullNameContainingIgnoreCase(String keyword);
 
 }

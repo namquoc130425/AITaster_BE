@@ -14,35 +14,39 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class ExpertRegisterRequest {
-     @NotBlank(message = "email is required")
-     @Email(message = "email invalid")
+     @NotBlank(message = "FIELD_REQUIRED")
+     @Email(message = "INVALID_FORMART")
      String email;
 
-     @NotBlank(message = "password is required")
-     @Size(min = 8, message = "password must be at least 8 characters")
+     @NotBlank(message = "PASSWORD_REQUIRED")
+     @Size(min = 8, message = "INVALID_FORMART")
      String password;
-     @NotBlank(message = "fullName is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      @Size(max = 30, message = "fullName max 30 characters")
      String fullName;
      String avatarUrl;
+
+     @NotBlank(message = "FIELD_REQUIRED")
+     @NotBlank(message = "username is required")
+     String username;
 
      @NotBlank(message = "phone is required")
      @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "phone invalid")
      String phone;
 
-     @NotBlank(message = "bio is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      @Size(max = 1000, message = "bio max 1000 characters")
      String bio;
 
-     @NotBlank(message = "category is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      String category;
 
-     @NotBlank(message = "skills is required")
+     @NotBlank(message = "FIELD_REQUIRED")
      @Size(max = 1000, message = "skills max 1000 characters")
      String skills;
 
-     @NotBlank(message = "yearOfExperience is required")
-     String yearOfExperience;
+
+     int yearOfExperience;
 
 //     // rating mặc định thường là 0
 //     // không được âm

@@ -1,5 +1,6 @@
 package com.example.AiTaster.exception;
 
+import com.example.AiTaster.constant.ErrorCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,5 +20,15 @@ public class GlobalException extends RuntimeException {
     public GlobalException(int code,String message) {
         super(message);
         this.code = code;
+    }
+
+    public GlobalException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.code = errorCode.getCode();
+    }
+
+    public GlobalException(ErrorCode errorCode, String customMessage) {
+        super(customMessage);
+        this.code = errorCode.getCode();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.AiTaster.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -9,33 +10,32 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity
-@Getter
 @Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Entity
+@Builder
 public class Skill {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long skillId;
+    long skillId;
 
-    @Column
     String skillName;
-
     String slug;
-
     String description;
 
-    @CreationTimestamp // tự reset time khi insert
-    LocalDateTime createdAt;
+    @CreationTimestamp
+    LocalDateTime createAt;
 
-    //tự cập nhật time mỗi lần update
     @UpdateTimestamp
     LocalDateTime updateAt;
 
-    @OneToMany(mappedBy = "skill")
-    List<ExpertProfileSkill> expertProfileSkill;
+    @ManyToMany(mappedBy = "skills")
+    List<JobPost> jobPost;
 
+    @ManyToMany(mappedBy = "skills")
+    List<ExpertService>  expertServices;
 }

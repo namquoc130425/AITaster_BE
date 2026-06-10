@@ -1,0 +1,8 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: aitaster-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass 12345678
+    restart: unless-stopped
