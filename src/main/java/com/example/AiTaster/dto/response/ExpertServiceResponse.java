@@ -30,11 +30,12 @@ public class ExpertServiceResponse {
     String currency;
 
     String serviceImage;
+
     String videoDemo;
 
     ServiceStatus serviceStatus;
 
-    CategoryResponse categoryResponse;
+    CategoryResponse category;
 
     List<SkillResponse> skills;
 }
