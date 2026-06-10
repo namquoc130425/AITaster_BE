@@ -29,12 +29,12 @@ public class ExpertProfile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     User user;
 
-    //biến này lấy khóa chính của ExpertProfile gán cho bên kia
-    @OneToMany(mappedBy = "expertProfile"
-            , cascade = CascadeType.ALL // xóa th cha thì th con xóa theo
-            , orphanRemoval = true // xóa con khi nó bị gỡ khỏi danh sách của cha
-    )
-    List<ExpertProfileSkill> expertProfileSkills;
+//    //biến này lấy khóa chính của ExpertProfile gán cho bên kia
+//    @OneToMany(mappedBy = "expertProfile"
+//            , cascade = CascadeType.ALL // xóa th cha thì th con xóa theo
+//            , orphanRemoval = true // xóa con khi nó bị gỡ khỏi danh sách của cha
+//    )
+//   // List<ExpertProfileSkill> expertProfileSkills;
 
     @Column(columnDefinition = "TEXT")
     String bio;
@@ -43,7 +43,7 @@ public class ExpertProfile {
 
     String skills;
 
-    String yearOfExperience;
+    int yearOfExperience;
 
     BigDecimal rating;
 
@@ -51,23 +51,12 @@ public class ExpertProfile {
 
     String portfolioUrl;
 
-    @CreationTimestamp // y chang cai dưới
+    @CreationTimestamp
     LocalDateTime createAt;
 
-    @UpdateTimestamp // thấy sự lợi hại của anh chưa
+    @UpdateTimestamp
     LocalDateTime updateAt;
 
-    // chạy trước khi INSERT dữ liệu mới vào database
-//    @PrePersist
-//    protected void onCreate() {
-        // thời gian tạo tài khoản/profile
-//        createAt = LocalDateTime.now();
-
-        // lần đầu tạo thì updateAt cũng chính là thời gian tạo
-//        updateAt = LocalDateTime.now();
-
-
-//    }
 
     @PrePersist
     public void prePersist(){
@@ -84,12 +73,7 @@ public class ExpertProfile {
         }
     }
 
-    // chạy trước khi UPDATE dữ liệu
-//    @PreUpdate
-//    protected void onUpdate() {
+    @OneToMany(mappedBy = "expertProfile")
+    List<ExpertService> expertServices;
 
-        // mỗi lần chỉnh sửa profile
-        // tự động cập nhật thời gian sửa gần nhất
-//        updateAt = LocalDateTime.now();
-//    }
 }

@@ -1,5 +1,6 @@
 package com.example.AiTaster.dto.request;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -14,33 +15,34 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 // dùng cho updateProfile của client
 public class ClientProfileRequest {
-    @NotBlank(message = "field is required")
+    @NotBlank(message = "FIELD_REQUIRED")
+    @Email(message = "INVALID_FORMART")
     String email;
-    @NotBlank(message = "password is required")
-    @Size(min = 8, message = "password must be at least 8 characters")
+    @NotBlank(message = "PASSWORD_REQUIRED")
+    @Size(min = 8, message = "INVALID_FORMART")
     String password;
 
-    @NotBlank(message = "fullName is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     @Size(max = 50, message = "fullName max 50 characters")
     String fullName;
 
 
     String avatarUrl;
 
-    @NotBlank(message = "phone is required")
-    @Pattern(regexp = "^(84|0)(3|5|7|8|9)[0-9]{8}$", message = "phone invalid")
+    @NotBlank(message = "FIELD_REQUIRED")
+    @Pattern(regexp = "^(84|0)(3|5|7|8|9)[0-9]{8}$", message = "INVALID_FORMART")
     //đúng kiểu sdt với không được để trống
     String phone;
 
 //    Long userId;
 //    @NotBlank(message = "field is required")
     String companyName;
-    @NotBlank(message = "field is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     String contactName;
 
     String description;
-    @NotBlank(message = "field is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     String businessField;
-    @NotBlank(message = "field is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     String address;
 }

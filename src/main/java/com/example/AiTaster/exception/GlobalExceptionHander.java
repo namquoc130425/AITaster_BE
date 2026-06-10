@@ -13,6 +13,7 @@ import java.util.List;
 @ControllerAdvice  // áp dụng cho tất cả controller trong hệ thống
 @Slf4j
 public class GlobalExceptionHander {
+    // Bắt lỗi business do mình tự throw
     @ExceptionHandler(GlobalException.class)
     public ResponseEntity<APIResponse <Object>> handlerGlobal(GlobalException exception) {
         int status = (exception.getCode() != null)
@@ -22,6 +23,9 @@ public class GlobalExceptionHander {
         // trả về JSON : {code : 400 , messages:"Duplicate PHONE,v.v.", result : null}
     }
 
+
+
+    // Bắt lỗi validation: @NotBlank, @Size, @Email, @Pattern...
     @ExceptionHandler(MethodArgumentNotValidException.class) // khi filed @NotBlank vi phạm -> Spring throw cái này tự động
     // cấu hình bắt exception của thư vienj validation rồi trả về cho fe
     public ResponseEntity<APIResponse<Object>> handleValidation(MethodArgumentNotValidException exception){ // hàm bắt lỗi tự tạo -> nếu thuộc lỗi loại GlobalException -> gọi hàm này đễ xữ lý  >
@@ -30,7 +34,7 @@ public class GlobalExceptionHander {
                 .getFieldErrors() // lấy dánh sách Filed bị lỗi
                 .stream()  // chuyển list thành Stream đễ xú lý
                 .map( error -> {  // duyệt từng lõi
-                            String enumKey = error.getDefaultMessage(); // enumKey là cái message mình đã set trong @NotBlank(message = "FIELD_REQUIRED") , lấy ra để chuyển thành enum
+                            String enumKey = error.getDefaultMessage(); // enumKey là cái message mình đã set trong vd @NotBlank(message = "FIELD_REQUIRED") , lấy ra để chuyển thành enum
                             ErrorCode errorCode;
                             //tìm enum ErrorCode.FIELD_REQUIRED
                             //lấy .getMessage() = "Cannot be blank"
@@ -38,7 +42,6 @@ public class GlobalExceptionHander {
                                 errorCode = ErrorCode.valueOf(enumKey);
                             } catch (IllegalArgumentException e) {
                                 errorCode = ErrorCode.FIELD_REQUIRED;
-                                throw new RuntimeException(e);
 
                             }
                             return  error.getField() + "" +  errorCode.getMessage(); // → "userName Cannot be blank"

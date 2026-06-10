@@ -1,6 +1,7 @@
 package com.example.AiTaster.repository;
 
 import com.example.AiTaster.entity.ClientProfile;
+import com.example.AiTaster.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -10,4 +11,6 @@ public interface ClientProfileRepo extends JpaRepository<ClientProfile, Long> {
     boolean existsByClientProfileId(Long clientId);
     Optional<ClientProfile> findByUser_UserId(Long userId);
     boolean existsByUser_UserId(Long userId);
+
+   Optional<ClientProfile> findByUser(User user);
 }

@@ -18,7 +18,6 @@ import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 @Slf4j
@@ -50,62 +49,26 @@ public class ClientProfileService implements IClientProfile {
     @Override
     public ClientProfileResponse getByClientId(Long id) {
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client profile not found"));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         return clientProfileMapper.toResponse(profile);
     }
 
     @Override
     public ClientProfileResponse getByUserId(Long userId) {
-        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new RuntimeException("Client profile not found"));
+        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         return clientProfileMapper.toResponse(profile);
     }
 
 
 
-    @Transactional
+    @Override
     public ClientProfileResponse update(Long id, ClientProfileRequest request) {
 
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException(
-                        ErrorCode.NOT_FOUND.getCode(),
-                        "Client profile " + ErrorCode.NOT_FOUND.getMessage()
-                ));
-
-        User user = profile.getUser();
-
-        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
-            if (userRepo.existsByEmail(request.getEmail())) {
-                throw new GlobalException(
-                        ErrorCode.DUPLICATE_EMAIL.getCode(),
-                        ErrorCode.DUPLICATE_EMAIL.getMessage()
-                );
-            }
-            user.setEmail(request.getEmail());
-        }
-
-        if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
-            if (userRepo.existsByPhone(request.getPhone())) {
-                throw new GlobalException(
-                        ErrorCode.DUPLICATE_PHONE.getCode(),
-                        ErrorCode.DUPLICATE_PHONE.getMessage()
-                );
-            }
-            user.setPhone(request.getPhone());
-        }
-
-        if (request.getFullName() != null) {
-            user.setFullName(request.getFullName());
-        }
-
-        if (request.getAvatarUrl() != null) {
-            user.setAvatarUrl(request.getAvatarUrl());
-        }
-
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        }
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode()
+                        ,"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         clientProfileMapper.updateEntity(request, profile);
 
@@ -116,7 +79,7 @@ public class ClientProfileService implements IClientProfile {
 
     @Override
     public void delete(Long clientProfileId) {
-       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new RuntimeException("Client profile not found"));
+       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
 
         // muốn xóa profie của tk nào đó thì phải cắt quan hệ của User --- Profile . còn muốn xóa User mà đi kèm profile thì qua user làm
         User user = profile.getUser();
@@ -131,7 +94,7 @@ public class ClientProfileService implements IClientProfile {
 
     public ClientProfileResponse createForRegister(User savedUser, ClientRegisterRequest request) {
         if (clientProfileRepo.existsByUser_UserId(savedUser.getUserId())) {
-            throw new RuntimeException("This user already has a client profile");
+            throw new GlobalException("This user already has a client profile");
         }
          // request mapper qua entity
         ClientProfile profile = clientProfileMapper.registerToEntity(request);

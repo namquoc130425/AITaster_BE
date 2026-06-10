@@ -13,25 +13,13 @@ public interface ClientProfileMapper {
 
 
     // Request -> Entity
-    @Mapping(target = "clientProfileId", ignore = true)
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     ClientProfile registerToEntity(ClientRegisterRequest request);
 
     // Entity -> Response
-
     ClientProfileResponse toResponse(ClientProfile clientProfile);
 
     // Update existing entity
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "clientProfileId", ignore = true)
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "bussinessField", source = "businessField")
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
-    void updateEntity(
-            ClientProfileRequest request,
-            @MappingTarget ClientProfile clientProfile
-    );
+    ClientProfile updateEntity( ClientProfileRequest request, @MappingTarget ClientProfile clientProfile );
 }

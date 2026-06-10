@@ -7,6 +7,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -51,4 +52,7 @@ public class ClientProfile {
     protected void onUpdate() {
         updateAt = LocalDateTime.now();
     }
+
+    @OneToMany(mappedBy = "clientProfile",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    List<JobPost> jobPosts;
 }
