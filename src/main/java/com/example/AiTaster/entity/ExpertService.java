@@ -30,8 +30,10 @@ public class ExpertService {
     BigDecimal serviceFee;
 
     String serviceImage;
+
     String videoDemo;
 
+    @Enumerated(EnumType.STRING)
     ServiceStatus serviceStatus;
 
     @CreationTimestamp
