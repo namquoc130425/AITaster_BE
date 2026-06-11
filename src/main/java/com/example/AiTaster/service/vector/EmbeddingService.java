@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-// hàm convert Text -> Vettor dùng EmbeddingModel
+// hàm convert Text -> Vector dùng EmbeddingModel
 // dùng 2 lần nên tách service luôn :)))
 public class EmbeddingService {
     private final EmbeddingModel embeddingModel;
