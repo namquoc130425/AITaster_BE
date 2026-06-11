@@ -1,8 +1,11 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.Util.PageUtil;
 import com.example.AiTaster.constant.ServiceStatus;
+import com.example.AiTaster.dto.request.ExpertProduct.ExpertServiceFillerRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ExpertServiceMapper;
@@ -11,7 +14,10 @@ import com.example.AiTaster.repository.ExpertProfileRepo;
 import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.service.imp.IExpertService;
+import com.example.AiTaster.specification.ExpertServiceSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -105,6 +111,30 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
     public List<ExpertServiceResponse> getAllPublicServices() {
         return expertServiceRepo.findByServiceStatus(ServiceStatus.OPEN).stream().map(expertServiceMapper ::toResponse).toList();
     }
+
+    //tất cả bài đăng của hệ thống kèm filter
+    public PageResponse<ExpertServiceResponse> getAllPublicServicesPage(ExpertServiceFillerRequest expertServiceFillerRequest) {
+        //kiểm tra dữ liệu của fe nếu cái nào null thì dùng dữ liệu của pageRequest thông qua PageUtil
+        Pageable pageable = PageUtil.createPageable(expertServiceFillerRequest);
+
+        //gọi db lấy dánh sách
+        // ExpertServiceSpecification.filter(...) dùng để tạo điều kiện search/filter.
+        // pageable dùng để phân trang và sắp xếp dữ liệu.
+        Page<ExpertService> expertServicesPages =expertServiceRepo.findAll(ExpertServiceSpecification.filter(expertServiceFillerRequest),pageable)
+                ;
+        // mapp expertService sang expertResponse ở ngoài là Page những trong dữ liệu đã map
+        Page<ExpertServiceResponse> responsePage = expertServicesPages.map(expertServiceMapper::toResponse);
+
+        // Dùng PageResponse.fromPage để tự bọc content + metaData\
+        // Nó lấy content trong responsePage đưa vào content.
+        // Nó lấy thông tin phân trang trong responsePage đưa vào metaData.
+        // Kết quả trả về là PageResponse<ExpertServiceResponse>.
+        return PageResponse.fromPage(responsePage);
+
+    }
+
+
+
 // chi tiết 1 bài đăng cua he thong
     @Override
     public ExpertServiceResponse getPublicServiceDetail(long serviceId) {

@@ -1,9 +1,11 @@
 package com.example.AiTaster.controller;
 
 import com.example.AiTaster.constant.ServiceStatus;
+import com.example.AiTaster.dto.request.ExpertProduct.ExpertServiceFillerRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.service.ExpertProductService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -21,6 +23,18 @@ import java.util.List;
 public class ExpertServiceController {
     @Autowired
     ExpertProductService expertProductService;
+
+
+    //filter
+    @PostMapping("/public/filter")
+    public ResponseEntity<APIResponse<PageResponse<ExpertServiceResponse>>> getAllPublicServicesPage(@RequestBody @Valid ExpertServiceFillerRequest expertServiceFillerRequest) {
+        PageResponse<ExpertServiceResponse> expertServiceResponse = expertProductService.getAllPublicServicesPage(expertServiceFillerRequest);
+      return ResponseEntity.ok(APIResponse.response(200, "get All and Filter and Search Success", expertServiceResponse));
+    }
+
+
+
+
 
     @PostMapping("/Creatservice")
     public ResponseEntity<APIResponse<ExpertServiceResponse>> creatAiservice(@RequestBody @Valid ExpertServiceRequest expertServiceRequest) {
@@ -113,5 +127,6 @@ public class ExpertServiceController {
                 APIResponse.response(200, "Change AI service status successfully", response)
         );
     }
+
 
 }
