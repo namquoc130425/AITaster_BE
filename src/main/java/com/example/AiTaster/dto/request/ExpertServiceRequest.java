@@ -23,7 +23,8 @@ public class ExpertServiceRequest {
     String serviceName;
     @NotBlank(message = "FIELD_REQUIRED")
     String serviceDescription;
-    @NotBlank(message = "FIELD_REQUIRED")
+
+
     BigDecimal serviceFee;
 
 
@@ -31,8 +32,6 @@ public class ExpertServiceRequest {
 
 
     String videoDemo;
-
-    ServiceStatus serviceStatus;
 
     Long selectedCategoryId;
 
