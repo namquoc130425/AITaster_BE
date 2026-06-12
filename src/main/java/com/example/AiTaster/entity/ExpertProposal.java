@@ -36,7 +36,7 @@ public class ExpertProposal {
     JobPost jobpost;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name ="expertProfile_Id",)
+    @JoinColumn(name = "expertProfile_Id")
     ExpertProfile expertProfile;
 
 
@@ -75,4 +75,5 @@ public class ExpertProposal {
             isDeleted = false;
         }
 
+    }
 }
