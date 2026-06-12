@@ -1,7 +1,9 @@
 package com.example.AiTaster.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -12,20 +14,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+public class PasswordResetOtp {
 
-public class PasswordResetToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false, unique = true)
-    String token;
+    String email;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    User user;
+    String otp;
 
     LocalDateTime expiredAt;
 
     boolean used;
+
+    @CreationTimestamp
+    LocalDateTime createdAt;
 }

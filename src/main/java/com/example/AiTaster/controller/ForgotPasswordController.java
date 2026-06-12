@@ -23,7 +23,7 @@ public class ForgotPasswordController {
 
         return APIResponse.response(
                 200,
-                "Reset password email sent successfully",
+                "OTP sent to email successfully",
                 null
         );
     }
