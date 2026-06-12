@@ -66,5 +66,8 @@ public class JobPost {
                  inverseJoinColumns = @JoinColumn(name = "skill_Id"))
  List<Skill> skills;
 
+    @OneToMany(mappedBy = "jobpost")
+    List<ExpertProposal> expertProposal;
+
 
 }
