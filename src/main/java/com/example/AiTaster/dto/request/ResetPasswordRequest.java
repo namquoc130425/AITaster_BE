@@ -8,8 +8,10 @@ import lombok.Data;
 public class ResetPasswordRequest {
 
     @NotBlank(message = "FIELD_REQUIRED")
-    String token;
+    String email;
 
+    @NotBlank(message = "FIELD_REQUIRED")
+    String otp;
     @NotBlank(message = "FIELD_REQUIRED")
     @Size(min = 8, message = "INVALID_SIZE")
     String newPassword;
