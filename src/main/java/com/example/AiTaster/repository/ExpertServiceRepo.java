@@ -6,10 +6,11 @@ import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.ExpertService;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
-public interface ExpertServiceRepo extends JpaRepository<ExpertService, Long> {
+public interface ExpertServiceRepo extends JpaRepository<ExpertService, Long>, JpaSpecificationExecutor<ExpertService> {
 
     List<ExpertService> findByServiceStatus(ServiceStatus serviceStatus);
 
