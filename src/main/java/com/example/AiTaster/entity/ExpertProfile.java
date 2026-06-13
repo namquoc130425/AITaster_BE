@@ -29,13 +29,6 @@ public class ExpertProfile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     User user;
 
-//    //biến này lấy khóa chính của ExpertProfile gán cho bên kia
-//    @OneToMany(mappedBy = "expertProfile"
-//            , cascade = CascadeType.ALL // xóa th cha thì th con xóa theo
-//            , orphanRemoval = true // xóa con khi nó bị gỡ khỏi danh sách của cha
-//    )
-//   // List<ExpertProfileSkill> expertProfileSkills;
-
     @Column(columnDefinition = "TEXT")
     String bio;
 
@@ -43,7 +36,7 @@ public class ExpertProfile {
 
     String skills;
 
-    int yearOfExperience;
+    Integer yearOfExperience;
 
     BigDecimal rating;
 

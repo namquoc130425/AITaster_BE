@@ -1,11 +1,9 @@
 package com.example.AiTaster.controller;
 
-import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.response.APIResponse;
-import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
-import com.example.AiTaster.repository.ExpertProfileRepo;
 import com.example.AiTaster.service.ExpertProfileService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -38,9 +36,9 @@ public class ExpertProfileController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<APIResponse<ExpertProfileResponse>> update(@Valid @PathVariable Long id, @RequestBody ExpertProfileRequest request
+    public ResponseEntity<APIResponse<CurrentUserResponse>> update(@Valid @PathVariable Long id, @RequestBody ExpertProfileRequest request
     ) {
-        ExpertProfileResponse response =  expertProfileService.update(id,request);
+        CurrentUserResponse response =  expertProfileService.update(id,request);
         return ResponseEntity.status(201).body(APIResponse.response(201,"Update Client successfully",response));
     }
 

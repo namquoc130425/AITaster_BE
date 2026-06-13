@@ -8,18 +8,23 @@ import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
-import com.example.AiTaster.dto.response.LoginResponse;
+import com.example.AiTaster.dto.response.AuthResponse;
+import com.example.AiTaster.dto.response.AuthenticationResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.RefreshToken;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
+import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
 import jakarta.transaction.Transactional;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -34,34 +39,21 @@ import java.math.BigDecimal;
 
 @Slf4j
 @Service
-
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class AuthenticationService implements UserDetailsService, IAuthentication {
 
-    @Autowired
     UserRepo userRepo;
-    @Autowired
     UserMapper userMapper;
-
-    @Autowired
     PasswordEncoder passwordEncoder;
-    @Autowired
     AuthenticationManager authenticationManager;
-    @Autowired
     TokenService tokenService;
-
-    @Autowired
-    ClientProfileService clientProfileService;
-    @Autowired
-    private ExpertProfileService expertProfileService;
-    @Autowired
-    private ClientProfileMapper clientProfileMapper;
-    @Autowired
-    private ExpertProfileMapper expertProfileMapper;
-    @Autowired
+    ClientProfileMapper clientProfileMapper;
+    ExpertProfileMapper expertProfileMapper;
     RefreshTokenService refreshTokenService;
-    @Autowired
-    AuthController authController;
+    CurrentUserResponseMapper currentUserResponseMapper;
 
+//code quá bẩn
 
     // đăng ký client
     @Transactional
@@ -88,7 +80,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 .companyName(request.getCompanyName())
                 .contactName(request.getContactName())
                 .description(request.getDescription())
-                .bussinessField(request.getBusinessField())
+                .businessField(request.getBusinessField())
                 .address(request.getAddress())
                 .build();
 
@@ -118,7 +110,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         ExpertProfile expertProfile = ExpertProfile.builder()
                 .user(user)
                 .bio(request.getBio())
-                .yearOfExperience(request.getYearOfExperience())
+                .yearOfExperience(request.getYearsOfExperience())
                 .rating(BigDecimal.ZERO)
                 .completedProjects(0)
                 .portfolioUrl(request.getPortfolioUrl())
@@ -157,7 +149,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     //login
     @Override
     @Transactional
-    public LoginResponse login(LoginRequest loginRequest) {
+    public AuthenticationResponse login(LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -167,13 +159,15 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             );
 
             User user = (User) authentication.getPrincipal();
-
+//            principal   -> user là ai <=>  new UsernamePasswordAuthenticationToken
+//            credentials -> mật khẩu/token
+//            authorities -> quyền/role
             String accessToken = tokenService.generateAccessToken(user);
 
             String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
 
-            return buildLoginResponse(user, accessToken, refreshToken);
+            return buildAuthenticationResponse(user, accessToken, refreshToken);
 
         } catch (LockedException e) {
             throw new GlobalException(
@@ -231,7 +225,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
     @Override
     @Transactional
-    public LoginResponse refresh(TokenRequest tokenRequest) {
+    public AuthResponse refresh(TokenRequest tokenRequest) {
 
         RefreshToken validToken =
                 refreshTokenService.verifyToken(tokenRequest.getToken())
@@ -251,7 +245,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
         RefreshToken refreshToken = refreshTokenService.rotateToken(tokenRequest.getToken(), user);
         String accessToken = tokenService.generateAccessToken(user);
-        return buildLoginResponse(user, accessToken, refreshToken.getToken());
+        return buildAuthResponse(accessToken, refreshToken.getToken());
     }
 
     private void validateRefreshUserStatus(User user) {
@@ -270,52 +264,18 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
     }
 
-    private LoginResponse buildLoginResponse(User user, String accessToken, String refreshToken) {
-        LoginResponse.LoginResponseBuilder responseBuilder = LoginResponse.builder()
-                .userId(user.getUserId())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .username(user.getUsername())
-                .phone(user.getPhone())
-                .avatarUrl(user.getAvatarUrl())
-                .role(user.getRole())
-                .userStatus(user.getUserStatus())
+    private AuthResponse buildAuthResponse(String accessToken, String refreshToken) {
+        return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken);
+                .refreshToken(refreshToken)
+                .build();
+    }
 
-        if (user.getClientProfile() != null) {
-            ClientProfile clientProfile = user.getClientProfile();
-
-            responseBuilder.clientProfile(
-                    LoginResponse.ClientProfileInfo.builder()
-                            .clientProfileId(clientProfile.getClientProfileId())
-                            .companyName(clientProfile.getCompanyName())
-                            .contactName(clientProfile.getContactName())
-                            .description(clientProfile.getDescription())
-                            .businessField(clientProfile.getBussinessField())
-                            .address(clientProfile.getAddress())
-                            .build()
-            );
-        }
-
-        if (user.getExpertProfile() != null) {
-            ExpertProfile expertProfile = user.getExpertProfile();
-
-            responseBuilder.expertProfile(
-                    LoginResponse.ExpertProfileInfo.builder()
-                            .expertProfileId(expertProfile.getExpertProfileId())
-                            .bio(expertProfile.getBio())
-                            .category(expertProfile.getCategory())
-                            .skills(expertProfile.getSkills())
-                            .yearsOfExperience(expertProfile.getYearOfExperience())
-                            .portfolioUrl(expertProfile.getPortfolioUrl())
-                            .rating(expertProfile.getRating())
-                            .completedProjects(expertProfile.getCompletedProjects())
-                            .build()
-            );
-        }
-
-        return responseBuilder.build();
+    private AuthenticationResponse buildAuthenticationResponse(User user, String accessToken, String refreshToken) {
+        return AuthenticationResponse.builder()
+                .auth(buildAuthResponse(accessToken, refreshToken))
+                .currentUser(currentUserResponseMapper.toResponse(user))
+                .build();
     }
 
 

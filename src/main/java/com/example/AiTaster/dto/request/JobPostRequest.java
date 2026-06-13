@@ -29,8 +29,7 @@ public class JobPostRequest {
     @NotBlank(message = "FIELD_REQUIRED")
     String mainFeatures;
 
-
-    @NotBlank(message = "FIELD_REQUIRED") // Budget không được null
+    // Budget không được null
     @DecimalMin(value = "0.0", inclusive = false, message = "BUDGETS_INVALID") // Budget phải lớn hơn 0
     BigDecimal budgets;
 

@@ -1,6 +1,7 @@
 package com.example.AiTaster.dto;
 
 import com.example.AiTaster.constant.Gender;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.EnumType;
@@ -20,9 +21,9 @@ public class UserResponse {
     Long userId;
     String username;
     String fullName;
+    Role role;
     String email;
     String phone;
     String avatarUrl;
-
     String accessToken;
 }

@@ -1,5 +1,6 @@
 package com.example.AiTaster.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -44,7 +45,8 @@ public class ExpertProfileRequest {
     String skills;
 
 
-    int yearOfExperience;
+    @JsonAlias("yearOfExperience")
+    Integer yearsOfExperience;
 
     String portfolioUrl;
 }

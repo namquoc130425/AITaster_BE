@@ -4,16 +4,17 @@ import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
-import com.example.AiTaster.dto.response.LoginResponse;
+import com.example.AiTaster.dto.response.AuthResponse;
+import com.example.AiTaster.dto.response.AuthenticationResponse;
 
 public interface IAuthentication {
     ClientProfileResponse registerClient(ClientRegisterRequest request);
 
     ExpertProfileResponse registerExpert(ExpertRegisterRequest request);
 
-    LoginResponse login(LoginRequest loginRequest);
+    AuthenticationResponse login(LoginRequest loginRequest);
 
-    LoginResponse refresh(TokenRequest tokenRequest);
+    AuthResponse refresh(TokenRequest tokenRequest);
 
     UserResponse registerAdmin(AdminRegisterRequest request);
 }

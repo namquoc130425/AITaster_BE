@@ -48,8 +48,8 @@ public class AuthController {
     }
     // API login
     @PostMapping("login")
-    public ResponseEntity<APIResponse<LoginResponse>> login (@RequestBody @Valid LoginRequest request) {
-        LoginResponse response = authenticationService.login(request);
+    public ResponseEntity<APIResponse<AuthenticationResponse>> login (@RequestBody @Valid LoginRequest request) {
+        AuthenticationResponse response = authenticationService.login(request);
         return ResponseEntity.status(201).body
                 (APIResponse.response(201,"Login sucessfully",response)
                 );
@@ -57,8 +57,8 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "refresh token")
-    public ResponseEntity<APIResponse<LoginResponse>> refresh(@RequestBody @Valid TokenRequest request){
-        LoginResponse response = authenticationService.refresh(request);
+    public ResponseEntity<APIResponse<AuthResponse>> refresh(@RequestBody @Valid TokenRequest request){
+        AuthResponse response = authenticationService.refresh(request);
         return ResponseEntity.ok(APIResponse.response(200, "Refresh token sucessfully", response));
     }
 

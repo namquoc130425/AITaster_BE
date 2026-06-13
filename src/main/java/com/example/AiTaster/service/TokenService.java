@@ -53,8 +53,8 @@ public class TokenService implements IToken {
 
         JWTClaimsSet clams = new JWTClaimsSet.Builder()  // clmas
                 .subject(Long.toString(user.getUserId()))
-                .issuer("NVQN")
-                .audience("NVQ")
+                .issuer("AITasker")
+                .audience("AITasker")
                 .issueTime((new Date()))
                 .expirationTime(new Date(Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
