@@ -10,15 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "expert_proposals",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_jobpost_expert_proposal",
-                        columnNames = {"jobpost_id", "expert_profile_id"}
-                )
-        }
-)
+@Table(name = "expert_proposals")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,7 +28,7 @@ public class ExpertProposal {
     JobPost jobpost;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name ="expertProfile_Id",)
+    @JoinColumn(name = "expertProfile_Id", nullable = false)
     ExpertProfile expertProfile;
 
 
@@ -75,4 +67,5 @@ public class ExpertProposal {
             isDeleted = false;
         }
 
+    }
 }

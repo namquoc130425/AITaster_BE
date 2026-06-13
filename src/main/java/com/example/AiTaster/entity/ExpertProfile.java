@@ -76,4 +76,8 @@ public class ExpertProfile {
     @OneToMany(mappedBy = "expertProfile")
     List<ExpertService> expertServices;
 
+
+    @OneToMany(mappedBy = "expertProfile")
+    List<ExpertProposal> expertProposal;
+
 }
