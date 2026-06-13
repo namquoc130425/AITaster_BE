@@ -32,9 +32,10 @@ public interface UserMapper {
     User adminRegisterToUser(AdminRegisterRequest request);
 
 
-    //update
-   // @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-   // User updateEntity (UserRequest request, @MappingTarget User user);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    User updateUserFromClientProfileRequest(ClientProfileRequest request, @MappingTarget User user);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    User updateUserFromExpertProfileRequest(ExpertProfileRequest request, @MappingTarget User user);
 
 }

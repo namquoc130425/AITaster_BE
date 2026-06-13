@@ -1,6 +1,7 @@
 package com.example.AiTaster.dto.request;
 
 import com.example.AiTaster.constant.Role;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,7 +47,8 @@ public class ExpertRegisterRequest {
      String skills;
 
 
-     int yearOfExperience;
+     @JsonAlias("yearOfExperience")
+     Integer yearsOfExperience;
 
 //     // rating mặc định thường là 0
 //     // không được âm

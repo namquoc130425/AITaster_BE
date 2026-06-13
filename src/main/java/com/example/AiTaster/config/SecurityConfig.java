@@ -42,15 +42,9 @@ public class SecurityConfig {
             "/webjars/**"
     };
 
-    @Configuration
-    @SecurityScheme(
-            name = "api",
-            type = SecuritySchemeType.HTTP,
-            scheme = "bearer",
-            bearerFormat = "JWT"
-    )
-    public class OpenApiConfig {
-    }
+    private static final String [] ADMIN = {
+
+    };
 
 
     @Bean
@@ -78,7 +72,8 @@ public class SecurityConfig {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER).permitAll()
-                        .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll()
+                        .requestMatchers(ADMIN).hasRole("ADMIN")
+                        .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll() // chuyển qua mảng tring
                         .anyRequest().authenticated()
                 )
 

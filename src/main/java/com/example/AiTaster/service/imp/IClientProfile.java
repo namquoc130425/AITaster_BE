@@ -5,6 +5,7 @@ package com.example.AiTaster.service.imp;
 import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.User;
 import org.mapstruct.control.MappingControl;
@@ -27,7 +28,7 @@ public interface    IClientProfile {
             ClientRegisterRequest request
     );
 
-    ClientProfileResponse update(
+    CurrentUserResponse update(
             Long id,
             ClientProfileRequest request
     );
