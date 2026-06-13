@@ -16,6 +16,8 @@ public class AdminRequest {
     @NotBlank(message = "FIELD_REQUIRED")
     String email;
 
+    String username;
+
     @NotBlank(message = "FIELD_REQUIRED")
     @Size(min = 8, message = "INVALID_FORMART")
     String password;

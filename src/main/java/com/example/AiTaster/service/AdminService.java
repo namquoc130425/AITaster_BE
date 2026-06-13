@@ -18,7 +18,7 @@ import java.util.List;
 
 @Service
 public class AdminService implements IAdminService {
-
+    // Sửa
     @Autowired
     private UserRepo userRepo;
 
@@ -135,7 +135,9 @@ public class AdminService implements IAdminService {
     public void deleteUser(Long userId) {
         User user = findUserById(userId);
 
-        userRepo.delete(user);
+        user.setUserStatus(UserStatus.INACTIVE);
+
+        userRepo.save(user);
     }
 
     private User findUserById(Long userId) {
