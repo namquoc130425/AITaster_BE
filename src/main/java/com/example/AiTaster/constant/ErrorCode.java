@@ -35,6 +35,7 @@ public enum ErrorCode {
 
     BLOCKED_KEYWORD("Input contains blocked keyword", HttpStatus.BAD_REQUEST),
     PROMPT_INJECTION("Input contains potential prompt injection patterns", HttpStatus.BAD_REQUEST),
+    PRICE_INVALID("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
 
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),;
