@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -39,13 +40,13 @@ public class SkillController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<APIResponse<SkillResponse>> getSkillById(@RequestBody long id) {
+    public ResponseEntity<APIResponse<SkillResponse>> getSkillById(@PathVariable @Valid long id) {
         return ResponseEntity.ok(APIResponse
                 .response(200, "Get Skill Success", skillService.getById(id)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<APIResponse<SkillResponse>> deleteSkillById(@RequestBody long id) {
+    public ResponseEntity<APIResponse<SkillResponse>> deleteSkillById(@PathVariable long id) {
         return ResponseEntity.ok(APIResponse
                 .response(200, "Delete Skill Success", skillService.delete(id)));
     }
