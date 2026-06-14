@@ -21,7 +21,7 @@ public static Specification<ExpertService> filter(ExpertServiceFillerRequest req
     return(root,query,cb) -> {
         // root đại diện cho entity expertService
         // query câu truy vấn đang được tạo
-        //cb:CriterBuilder dùng để tạo điều kiện :equal , like ,greaterThan ,lessThan...
+        //cb:CriteriaBuilder dùng để tạo điều kiện :equal , like ,greaterThan ,lessThan...
         List<Predicate> predicates = new ArrayList<>();
         //chứa danh sách điều kiện
         SubExpertServiceFilterRequest filter = null;

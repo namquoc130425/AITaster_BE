@@ -1,9 +1,11 @@
 package com.example.AiTaster.controller;
 
 import com.example.AiTaster.dto.request.JobPostAiRequest;
+import com.example.AiTaster.dto.request.JobPost.JobPostFilterRequest;
 import com.example.AiTaster.dto.request.JobPostRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.JobPostResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
@@ -29,6 +31,14 @@ public class JobPostController {
     private final JobPostService jobPostService;
     private final JobPostRepo jobPostRepo;
     private final JobPostMapper jobPostMapper;
+
+    @PostMapping("/public/filter")
+    public ResponseEntity<APIResponse<PageResponse<JobPostResponse>>> getAllPublicJobPostsPage(
+            @RequestBody @Valid JobPostFilterRequest jobPostFilterRequest
+    ) {
+        PageResponse<JobPostResponse> jobPostResponses = jobPostService.getAllPublicJobPostsPage(jobPostFilterRequest);
+        return ResponseEntity.ok(APIResponse.response(200, "get All JobPost and Filter and Search Success", jobPostResponses));
+    }
 
     @PostMapping("/ai/draft")
     public ResponseEntity<APIResponse<JobPostResponse>> createJobPostByAI(@RequestBody @Valid JobPostAiRequest jobPostAiRequest) throws JsonProcessingException {
