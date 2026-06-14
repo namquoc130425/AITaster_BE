@@ -21,13 +21,11 @@ public interface IExpertProfile {
     ExpertProfileResponse getByUserId(Long userId);
 
 
-
     ExpertProfileResponse createForRegister(User user, ExpertRegisterRequest request
     );
 
     CurrentUserResponse update(Long id, ExpertProfileRequest request
     );
-
 
 
    void  delete(Long id);
