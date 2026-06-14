@@ -1,10 +1,11 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.Util.PageUtil;
 import com.example.AiTaster.constant.JobpostStatus;
-import com.example.AiTaster.dto.request.JobPostAiRequest;
+import com.example.AiTaster.dto.request.JobPost.JobPostFilterRequest;
 import com.example.AiTaster.dto.request.JobPostRequest;
-import com.example.AiTaster.dto.response.Ai.GeminiJobPostResponse;
 import com.example.AiTaster.dto.response.JobPostResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.entity.Skill;
@@ -15,7 +16,10 @@ import com.example.AiTaster.repository.ClientProfileRepo;
 import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.service.imp.IJobPost;
+import com.example.AiTaster.specification.JobPostSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -79,6 +83,14 @@ public class JobPostService implements IJobPost {
     @Override
     public List<JobPostResponse> GetAllJobPostPublic() {
         return jobPostRepo.findByJobPostStatus(JobpostStatus.OPEN).stream().map(jobPostMapper::toResponse).toList();
+    }
+
+    public PageResponse<JobPostResponse> getAllPublicJobPostsPage(JobPostFilterRequest jobPostFilterRequest) {
+        Pageable pageable = PageUtil.createPageable(jobPostFilterRequest);
+        Page<JobPost> jobPostPage = jobPostRepo.findAll(JobPostSpecification.filter(jobPostFilterRequest), pageable);
+        Page<JobPostResponse> responsePage = jobPostPage.map(jobPostMapper::toResponse);
+
+        return PageResponse.fromPage(responsePage);
     }
 
 

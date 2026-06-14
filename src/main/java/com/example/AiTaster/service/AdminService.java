@@ -3,13 +3,19 @@ package com.example.AiTaster.service;
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
+import com.example.AiTaster.Util.PageUtil;
+import com.example.AiTaster.dto.request.Admin.UserFilterRequest;
 import com.example.AiTaster.dto.request.AdminRequest;
 import com.example.AiTaster.dto.response.AdminResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAdminService;
+import com.example.AiTaster.specification.UserSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +33,15 @@ public class AdminService implements IAdminService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Override
+    public PageResponse<AdminResponse> getAllUsers(UserFilterRequest request) {
+        Pageable pageable = PageUtil.createPageable(request);
+        Page<User> users = userRepo.findAll(UserSpecification.filter(request), pageable);
+
+        Page<AdminResponse> responsePage = users.map(userMapper::toAdminResponse);
+        return PageResponse.fromPage(responsePage);
+    }
 
     @Override
     public List<AdminResponse> getAllUsers(
