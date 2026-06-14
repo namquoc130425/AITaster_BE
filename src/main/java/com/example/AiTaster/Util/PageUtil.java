@@ -42,8 +42,8 @@ public class PageUtil {
                 : Sort.by(request.getSortBy()).descending();
 
         return org.springframework.data.domain.PageRequest.of(
-                request.getPage(),
-                request.getSize(),
+                page,
+                size,
                 sort
         );
     }
