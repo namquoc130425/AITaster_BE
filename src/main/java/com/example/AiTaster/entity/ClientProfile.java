@@ -33,7 +33,7 @@ public class ClientProfile {
     @Column(columnDefinition = "TEXT")
     String description;
 
-    String bussinessField;
+    String businessField;
     String address;
 
 //    @Enumerated(EnumType.STRING)  nên bỏ vì set bên User rồi . sau này cần lấy thì join bảng để lấy ra

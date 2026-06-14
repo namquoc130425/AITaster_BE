@@ -1,5 +1,6 @@
 package com.example.AiTaster.dto.request;
 
+import com.example.AiTaster.constant.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -26,16 +27,16 @@ public class ClientProfileRequest {
     @Size(max = 50, message = "fullName max 50 characters")
     String fullName;
 
+    String username;
+
+    Role role;
 
     String avatarUrl;
 
     @NotBlank(message = "FIELD_REQUIRED")
     @Pattern(regexp = "^(84|0)(3|5|7|8|9)[0-9]{8}$", message = "INVALID_FORMART")
-    //đúng kiểu sdt với không được để trống
     String phone;
 
-//    Long userId;
-//    @NotBlank(message = "field is required")
     String companyName;
     @NotBlank(message = "FIELD_REQUIRED")
     String contactName;

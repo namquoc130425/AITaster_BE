@@ -3,12 +3,16 @@ package com.example.AiTaster.service;
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
+import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
+import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
+import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ExpertProfileRepo;
+import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IExpertProfile;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +28,13 @@ public class ExpertProfileService implements IExpertProfile {
     ExpertProfileMapper expertProfileMapper;
 @Autowired
     ExpertProfileRepo expertProfileRepo;
+@Autowired
+    UserRepo userRepo;
+@Autowired
+    CurrentUserResponseMapper currentUserResponseMapper;
+
+@Autowired
+    UserMapper userMapper;
 
 
     @Override
@@ -67,13 +78,17 @@ public class ExpertProfileService implements IExpertProfile {
     }
 
     @Override
-    public ExpertProfileResponse update(Long id, ExpertProfileRequest request) {
+    @Transactional
+    public CurrentUserResponse update(Long id, ExpertProfileRequest request) {
         ExpertProfile profile = expertProfileRepo.findByExpertProfileId(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
-        expertProfileMapper.updateEntity(request,profile);
-        ExpertProfile updateProfile = expertProfileRepo.save(profile);
-        return expertProfileMapper.toResponse(updateProfile);
-    }
+        User user = profile.getUser();
 
+        expertProfileMapper.updateEntity(request,profile);
+        userMapper.updateUserFromExpertProfileRequest(request, user);
+        ExpertProfile updateProfile = expertProfileRepo.save(profile);
+
+        return currentUserResponseMapper.toResponse(updateProfile.getUser());
+    }
 
 
     @Transactional

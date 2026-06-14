@@ -4,6 +4,7 @@ package com.example.AiTaster.service.imp;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 
+import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.entity.User;
 
@@ -24,7 +25,7 @@ public interface IExpertProfile {
     ExpertProfileResponse createForRegister(User user, ExpertRegisterRequest request
     );
 
-    ExpertProfileResponse update(Long id, ExpertProfileRequest request
+    CurrentUserResponse update(Long id, ExpertProfileRequest request
     );
 
 

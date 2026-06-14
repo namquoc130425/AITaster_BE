@@ -4,15 +4,18 @@ import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
+import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
 import com.example.AiTaster.repository.UserRepo;
 
 import com.example.AiTaster.service.imp.IClientProfile;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,8 @@ public class ClientProfileService implements IClientProfile {
 
     @Autowired
      ClientProfileMapper clientProfileMapper;
+    @Autowired
+    CurrentUserResponseMapper currentUserResponseMapper;
 
 
 
@@ -64,18 +69,24 @@ public class ClientProfileService implements IClientProfile {
 
 
     @Override
-    public ClientProfileResponse update(Long id, ClientProfileRequest request) {
+    @Transactional
+    public CurrentUserResponse update(Long id, ClientProfileRequest request) {
 
         ClientProfile profile = clientProfileRepo.findById(id)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode()
-                        ,"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+                        ,"Client profile "+ ErrorCode.NOT_FOUND.getMessage()));
+
+        User user = profile.getUser();
 
         clientProfileMapper.updateEntity(request, profile);
 
+        userMapper.updateUserFromClientProfileRequest(request, user); // dirty checking tự động lưu (@Transactional)
+
         ClientProfile updatedProfile = clientProfileRepo.save(profile);
 
-        return clientProfileMapper.toResponse(updatedProfile);
+        return currentUserResponseMapper.toResponse(updatedProfile.getUser());
     }
+
 
     @Override
     public void delete(Long clientProfileId) {

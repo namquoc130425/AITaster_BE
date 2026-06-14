@@ -26,7 +26,7 @@ public class ProposalUnlock {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proposal_id", nullable = false, unique = true)
     ExpertProposal proposal;
-//Nhiều ProposalUnlock thuộc về 1 ClientProfile
+    //Nhiều ProposalUnlock thuộc về 1 ClientProfile
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_profile_id", nullable = false)
     ClientProfile clientProfile;
