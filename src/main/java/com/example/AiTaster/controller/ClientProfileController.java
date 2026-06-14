@@ -3,6 +3,7 @@ package com.example.AiTaster.controller;
 import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.CurrentUserResponse;
 
 
 import com.example.AiTaster.service.ClientProfileService;
@@ -41,9 +42,9 @@ ClientProfileService clientProfileService;
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<APIResponse<ClientProfileResponse>> update(@Valid@PathVariable Long id, @RequestBody ClientProfileRequest request
+    public ResponseEntity<APIResponse<CurrentUserResponse>> update(@Valid@PathVariable Long id, @RequestBody ClientProfileRequest request
     ) {
-        ClientProfileResponse response =  clientProfileService.update(id,request);
+        CurrentUserResponse response =  clientProfileService.update(id,request);
         return ResponseEntity.status(201).body(APIResponse.response(201,"Update Client successfully",response));
     }
 

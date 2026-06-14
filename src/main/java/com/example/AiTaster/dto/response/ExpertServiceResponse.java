@@ -20,6 +20,7 @@ import java.util.List;
 @Data
 public class ExpertServiceResponse {
 
+    Long serviceId;
 
     String serviceName;
 

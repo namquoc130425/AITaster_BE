@@ -18,18 +18,13 @@ import java.time.LocalDateTime;
 @Data
 public class ExpertProfileResponse {
     Long expertProfileId;
-
-    UserResponse user;
-
     String bio;
     String category;
     String skills;
     Integer yearsOfExperience;
     String portfolioUrl;
-
     BigDecimal rating;
     Integer completedProjects;
-
     LocalDateTime createAt;
     LocalDateTime updateAt;
 }
