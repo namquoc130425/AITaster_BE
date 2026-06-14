@@ -4,10 +4,12 @@ import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.AdminRequest;
+import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.AdminResponse;
 import com.example.AiTaster.service.AdminService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,5 +62,20 @@ public class AdminController {
     public AdminResponse activateUser(@PathVariable Long userId) {
         return adminService.activateUser(userId);
 
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<APIResponse<String>> deleteUser(
+            @PathVariable Long userId
+    ) {
+        adminService.deleteUser(userId);
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "User deactivated successfully",
+                        "INACTIVE"
+                )
+        );
     }
 }
