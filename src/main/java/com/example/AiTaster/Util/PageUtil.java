@@ -38,8 +38,8 @@ public class PageUtil {
         }
         // neu Sort là Ascending thì sort theo tăng , không thì ngược lại
         Sort sort = request.getSortDirection() == SortDirection.ASCENDING
-                ? Sort.by(request.getSortBy()).ascending()
-                : Sort.by(request.getSortBy()).descending();
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
         return org.springframework.data.domain.PageRequest.of(
                 page,

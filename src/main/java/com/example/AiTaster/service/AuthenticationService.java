@@ -121,7 +121,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         ExpertProfile expertProfile = ExpertProfile.builder()
                 .user(user)
                 .bio(request.getBio())
-                .yearOfExperience(request.getYearsOfExperience())
+                .yearOfExperience(request.getYearOfExperience())
                 .rating(BigDecimal.ZERO)
                 .completedProjects(0)
                 .portfolioUrl(request.getPortfolioUrl())
@@ -167,9 +167,6 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             );
 
             User user = (User) authentication.getPrincipal();
-//            principal   -> user là ai <=>  new UsernamePasswordAuthenticationToken
-//            credentials -> mật khẩu/token
-//            authorities -> quyền/role
             String accessToken = tokenService.generateAccessToken(user);
 
             String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
