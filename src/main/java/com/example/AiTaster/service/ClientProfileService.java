@@ -40,6 +40,8 @@ public class ClientProfileService implements IClientProfile {
      ClientProfileMapper clientProfileMapper;
     @Autowired
     CurrentUserResponseMapper currentUserResponseMapper;
+    @Autowired
+    CurrentUserService currentUserService;
 
 
 
@@ -75,6 +77,9 @@ public class ClientProfileService implements IClientProfile {
         ClientProfile profile = clientProfileRepo.findById(id)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode()
                         ,"Client profile "+ ErrorCode.NOT_FOUND.getMessage()));
+
+        ClientProfile currentClientProfile = getCurrentClientProfile();
+        checkClientOwner(profile, currentClientProfile);
 
         User user = profile.getUser();
 
@@ -118,4 +123,15 @@ public class ClientProfileService implements IClientProfile {
 
         return clientProfileMapper.toResponse(saved);
     }
+    public ClientProfile getCurrentClientProfile() {
+        User currentUser = currentUserService.getCurrentUser();
+        return clientProfileRepo.findByUser(currentUser)
+                .orElseThrow(() -> new GlobalException("Client Profile Not Found"));
+    }
+
+    private void checkClientOwner(ClientProfile profile, ClientProfile currentClientProfile) {
+        if (!profile.getClientProfileId().equals(currentClientProfile.getClientProfileId())) {
+            throw new GlobalException(403, "You are not owner of this client profile");
+        }
+    };
 }

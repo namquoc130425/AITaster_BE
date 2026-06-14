@@ -48,7 +48,7 @@ public class ExpertRegisterRequest {
 
 
      @JsonAlias("yearOfExperience")
-     Integer yearsOfExperience;
+     Integer yearOfExperience;
 
 //     // rating mặc định thường là 0
 //     // không được âm

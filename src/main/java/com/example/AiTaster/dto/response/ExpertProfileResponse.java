@@ -21,7 +21,7 @@ public class ExpertProfileResponse {
     String bio;
     String category;
     String skills;
-    Integer yearsOfExperience;
+    Integer yearOfExperience;
     String portfolioUrl;
     BigDecimal rating;
     Integer completedProjects;
