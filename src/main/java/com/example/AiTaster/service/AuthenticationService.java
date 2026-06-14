@@ -21,6 +21,7 @@ import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -39,18 +40,35 @@ import java.math.BigDecimal;
 
 @Slf4j
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+
 public class AuthenticationService implements UserDetailsService, IAuthentication {
 
+    @Autowired
     UserRepo userRepo;
+
+    @Autowired
     UserMapper userMapper;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
     AuthenticationManager authenticationManager;
+
+    @Autowired
     TokenService tokenService;
+
+    @Autowired
     ClientProfileMapper clientProfileMapper;
+
+    @Autowired
     ExpertProfileMapper expertProfileMapper;
+
+    @Autowired
     RefreshTokenService refreshTokenService;
+
+    @Autowired
     CurrentUserResponseMapper currentUserResponseMapper;
 
 //code quá bẩn
