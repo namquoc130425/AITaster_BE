@@ -16,7 +16,7 @@ public class PageRequest {
     @Builder.Default
     int size = 10;
     @Builder.Default
-    String sortBy = "createAt";
+    String sortBy = "createAt"; //Nên để là createdAt
 
     @Builder.Default
     SortDirection sortDirection = SortDirection.DESCENDING;
