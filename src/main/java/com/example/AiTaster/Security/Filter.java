@@ -51,7 +51,7 @@ HandlerExceptionResolver handlerException;
         if(publicEndpoints == null || publicEndpoints.isEmpty()) {
             return false;
         }
-        return publicEndpoints.stream().allMatch(pattern -> antPathMatcher.match(pattern, url));
+        return publicEndpoints.stream().anyMatch(pattern -> antPathMatcher.match(pattern, url));
     }
 
     // lấy token
@@ -78,9 +78,10 @@ HandlerExceptionResolver handlerException;
                User user = tokenService.verifyAccessToken(token);
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }catch (GlobalException e){
-SecurityContextHolder.clearContext();
-handlerExceptionResolver.resolveException(request, response, null, e);
+            } catch (GlobalException e) {
+                SecurityContextHolder.clearContext();
+                handlerExceptionResolver.resolveException(request, response, null, e);
+                return;
             }
         }
         filterChain.doFilter(request, response);
