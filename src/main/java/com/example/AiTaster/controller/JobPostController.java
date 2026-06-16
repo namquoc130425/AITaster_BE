@@ -84,10 +84,10 @@ public class JobPostController {
         return ResponseEntity.ok(APIResponse.response(200, "Get All Job Post Public successfully", jobPostResponses));
     }
 
-    @PutMapping("/uploadjobpost/{id}")
-    public ResponseEntity<APIResponse<JobPostResponse>> UploadJobPost(@PathVariable @Valid Long id) {
-        JobPostResponse jobPostResponse = jobPostService.publishJobPost(id);
-        return ResponseEntity.ok(APIResponse.response(200, "Upload Job Post successfully", jobPostResponse));
+    @PutMapping("/hiddenjobpost/{id}")
+    public ResponseEntity<APIResponse<JobPostResponse>> hiddenJobPost(@PathVariable @Valid Long id) {
+        JobPostResponse jobPostResponse = jobPostService.hideJobPost(id);
+        return ResponseEntity.ok(APIResponse.response(200, "Hide Job Post successfully", jobPostResponse));
     }
 
 }

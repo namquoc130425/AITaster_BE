@@ -20,5 +20,5 @@ public interface IJobPost {
 
     void  DeleteJobPost(Long id);
 
-    JobPostResponse publishJobPost(Long id);
+    JobPostResponse hideJobPost(Long id);
 }
