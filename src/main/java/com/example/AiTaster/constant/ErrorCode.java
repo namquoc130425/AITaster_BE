@@ -38,8 +38,8 @@ public enum ErrorCode {
     PRICE_INVALID("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
 
     //---------------------------------------------------------------------------
-    INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),;
-
+    INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
+    ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED);
 
 
     final String message;

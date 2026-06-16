@@ -72,7 +72,7 @@ public class JobPostController {
         return ResponseEntity.ok(APIResponse.response(200, "Job Post successfully", jobPostResponse));
     }
 
-    @GetMapping("/lastJobpost/")
+    @GetMapping("/lastJobpost/myJobPost")
     public ResponseEntity<APIResponse<List<JobPostResponse>>> getLastMyJobPostByClient() {
         List<JobPostResponse> jobPostResponses = jobPostService.GetMyJobPostByClient();
         return ResponseEntity.ok(APIResponse.response(200, "Get My Job Post Last By Client successfully", jobPostResponses));
