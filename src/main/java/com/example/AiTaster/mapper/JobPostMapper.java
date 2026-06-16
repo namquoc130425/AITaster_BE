@@ -21,7 +21,7 @@ public interface JobPostMapper {
 @Mapping(target = "mainFeatures",source = "geminiJobPostResult.mainFeatures")
 @Mapping(target = "budgets",source = "geminiJobPostResult.budgets")
 @Mapping(target = "timeLine",source = "geminiJobPostResult.timeLine")
-@Mapping(target = "jobPostStatus",constant = "DRAFT")
+@Mapping(target = "jobPostStatus",constant = "OPEN")
 @Mapping(target = "skills",ignore = true)
     JobPost toEntityJobPostDraft(GeminiJobPostResponse geminiJobPostResult , ClientProfile clientProfile)   ;
 
@@ -35,7 +35,7 @@ public interface JobPostMapper {
     @Mapping(target = "mainFeatures",source = "jobPostRequest.mainFeatures")
     @Mapping(target = "budgets",source = "jobPostRequest.budgets")
     @Mapping(target = "timeLine",source = "jobPostRequest.timeLine")
-    @Mapping(target = "jobPostStatus",constant = "DRAFT")
+    @Mapping(target = "jobPostStatus",constant = "OPEN")
     @Mapping(target = "skills",ignore = true)
 
     JobPost toEntityJobPostDraft(JobPostRequest jobPostRequest , ClientProfile clientProfile);

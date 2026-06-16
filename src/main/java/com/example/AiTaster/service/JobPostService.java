@@ -107,9 +107,9 @@ public class JobPostService implements IJobPost {
 
     }
 
-    // Public JobPost -> đổi status Opends
+    // Public JobPost -> đổi status HIDDEN
     @Override
-    public JobPostResponse publishJobPost(Long id) {
+    public JobPostResponse hideJobPost(Long id) {
 
         ClientProfile clientProfile = getCurrentClientProfile();
 
@@ -117,11 +117,7 @@ public class JobPostService implements IJobPost {
 
         checkJobPostByClientId(jobPost, clientProfile);
 
-        if (!jobPost.getJobPostStatus().equals(JobpostStatus.DRAFT)) {
-            throw new GlobalException("Job Post Status Not Found");
-        }
-
-        jobPost.setJobPostStatus(JobpostStatus.OPEN);
+        jobPost.setJobPostStatus(JobpostStatus.HIDDEN);
 
         JobPost saveJobPost = jobPostRepo.save(jobPost);
 
