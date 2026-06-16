@@ -41,7 +41,7 @@ public class DataSeeder implements CommandLineRunner { //CommandLineRunner
 
     private void seedCreateAdminUser() {
         // implement logic to create an admin user if not exists
-        if (userRepo.findByUsername("admin") != null) {
+        if (userRepo.findByUsername("admin").isPresent()) {
             return;
         }
 

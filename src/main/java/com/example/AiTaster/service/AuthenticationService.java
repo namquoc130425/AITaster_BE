@@ -231,7 +231,6 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Override
     @Transactional
     public AuthResponse refresh(TokenRequest tokenRequest) {
-
         RefreshToken validToken =
                 refreshTokenService.verifyToken(tokenRequest.getToken())
                         .orElseThrow(() -> new GlobalException(
