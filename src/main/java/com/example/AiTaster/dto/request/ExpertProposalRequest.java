@@ -18,9 +18,6 @@ public class ExpertProposalRequest {
     @NotBlank(message = "FIELD_REQUIRED")
     String title;
 
-    @NotBlank(message = "FIELD_REQUIRED")
-    String summary;
-
     String technologies;
 
     @NotBlank(message = "FIELD_REQUIRED")

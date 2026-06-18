@@ -23,20 +23,13 @@ public class ExpertProposal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long proposalId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "jobpost_id", nullable = false)
-    JobPost jobpost;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "expertProfile_Id", nullable = false)
-    ExpertProfile expertProfile;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "application_id", nullable = false, unique = true)
+     ExpertApplication expertApplication;
 
 
     @Column(nullable = false)
     String title;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
-    String summary;
 
     @Column(columnDefinition = "TEXT")
     String technologies;

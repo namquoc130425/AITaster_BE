@@ -70,7 +70,7 @@ public class ExpertProfile {
     List<ExpertService> expertServices;
 
 
-    @OneToMany(mappedBy = "expertProfile")
-    List<ExpertProposal> expertProposal;
 
+    @OneToMany(mappedBy = "expertProfile")
+    List<ExpertApplication> expertApplications;
 }

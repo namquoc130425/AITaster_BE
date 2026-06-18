@@ -67,7 +67,7 @@ public class JobPost {
  List<Skill> skills;
 
     @OneToMany(mappedBy = "jobpost")
-    List<ExpertProposal> expertProposal;
+    List<ExpertApplication> expertApplications;
 
 
 }

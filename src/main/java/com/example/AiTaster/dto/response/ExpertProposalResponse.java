@@ -18,15 +18,9 @@ public class ExpertProposalResponse {
 
     Long proposalId;
 
-    Long jobPostId;
-
-    Long expertProfileId;
-
-    String expertName;
+    Long applicationId;
 
     String title;
-
-    String summary;
 
     String technologies;
 

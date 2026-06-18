@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Getter // Tự sinh getter
-@Setter // Tự sinh setter
-@NoArgsConstructor // Constructor rỗng
-@AllArgsConstructor // Constructor đầy đủ
-@Builder // Cho phép build response
-@FieldDefaults(level = AccessLevel.PRIVATE) // Field mặc định private
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class JobPostResponse {
 
     Long jobPostId;
