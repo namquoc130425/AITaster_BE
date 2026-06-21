@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.Util.PageUtil;
+import com.example.AiTaster.constant.ProductType;
 import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.dto.request.ExpertProduct.ExpertServiceFillerRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
@@ -9,10 +10,7 @@ import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ExpertServiceMapper;
-import com.example.AiTaster.repository.CategoryRepo;
-import com.example.AiTaster.repository.ExpertProfileRepo;
-import com.example.AiTaster.repository.ExpertServiceRepo;
-import com.example.AiTaster.repository.SkillRepo;
+import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.imp.IExpertService;
 import com.example.AiTaster.specification.ExpertServiceSpecification;
 import lombok.RequiredArgsConstructor;
@@ -33,21 +31,71 @@ public class ExpertProductService implements IExpertService {
     private final CurrentUserService currentUserService;
     private final ExpertProfileRepo expertProfileRepo;
     private final CategoryRepo categoryRepo;
+    private final ServiceFileRepo serviceFileRepo;
+    private final LocalFileStorageService localFileStorageService;
 
     @Override
-    public ExpertServiceResponse CreatService(ExpertServiceRequest expertServiceRequest) {
-        validateInputContent(expertServiceRequest);
-        ExpertProfile expertProfile = getCurrentExpertProfile();
-        Category category = getCategoryByCategoryId(expertServiceRequest.getSelectedCategoryId());
-        List<Skill> skills = getSkillBySkillId(expertServiceRequest.getSelectedSkillIds());
-        ExpertService newExpertService = expertServiceMapper.toEntity(expertServiceRequest, expertProfile);
-        newExpertService.setSkills(skills);
-        newExpertService.setCategory(category);
-        expertServiceRepo.save(newExpertService);
+    public ExpertServiceResponse CreatService(
+            ExpertServiceRequest request
+    ) {
 
+        validateInputContent(request);
 
-        return expertServiceMapper.toResponse(newExpertService);
+        ExpertProfile expertProfile =
+                getCurrentExpertProfile();
 
+        Category category =
+                getCategoryByCategoryId(
+                        request.getSelectedCategoryId()
+                );
+
+        List<Skill> skills =
+                getSkillBySkillId(
+                        request.getSelectedSkillIds()
+                );
+
+        ExpertService expertService =
+                expertServiceMapper.toEntity(
+                        request,
+                        expertProfile
+                );
+
+        expertService.setCategory(category);
+        expertService.setSkills(skills);
+
+        String docUrl =
+                localFileStorageService.saveFile(
+                        request.getDocFile()
+                );
+
+        String sourceUrl =
+                localFileStorageService.saveFile(
+                        request.getSourceFile()
+                );
+
+        ServiceFile serviceFile =
+                ServiceFile.builder()
+                        .fileContent(docUrl)
+                        .productFile(sourceUrl)
+                        .productType(
+                                ProductType.SOURCE_CODE
+                        )
+                        .isActive(true)
+                        .expertService(expertService)
+                        .build();
+
+        expertService.setServiceFile(
+                serviceFile
+        );
+
+        ExpertService saved =
+                expertServiceRepo.save(
+                        expertService
+                );
+
+        return expertServiceMapper.toResponse(
+                saved
+        );
     }
 
     @Override

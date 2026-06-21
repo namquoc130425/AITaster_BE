@@ -4,10 +4,7 @@ import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.CategoryResponse;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.dto.response.SkillResponse;
-import com.example.AiTaster.entity.Category;
-import com.example.AiTaster.entity.ExpertProfile;
-import com.example.AiTaster.entity.ExpertService;
-import com.example.AiTaster.entity.Skill;
+import com.example.AiTaster.entity.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -15,7 +12,8 @@ import org.mapstruct.MappingTarget;
 import java.util.List;
 
 @Mapper(componentModel = "spring",
-uses = {SkillMapper.class,CategoryMappper.class})
+uses = {SkillMapper.class,CategoryMappper.class, ServiceFile.class})
+
 public interface ExpertServiceMapper {
 
     @Mapping(target = "expertProfile",source = "expertProfile")
