@@ -59,4 +59,11 @@ public class ExpertService {
 
             )
     List<Skill> skills;
+
+    @OneToOne(
+            mappedBy = "expertService",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    ServiceFile serviceFile;
 }
