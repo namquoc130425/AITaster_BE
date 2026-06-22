@@ -1,5 +1,6 @@
 package com.example.AiTaster.dto.response;
 
+import com.example.AiTaster.constant.TimelineUnit;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,9 @@ public class InvitationDraftResponse {
 
     BigDecimal finalOfferedPrice;
 
-    String finalTimeline;
+    Integer finalTimelineValue;
+
+    TimelineUnit finalTimelineUnit;
 
     Boolean clientAcceptedTerms;
 }

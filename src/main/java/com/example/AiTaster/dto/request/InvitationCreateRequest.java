@@ -1,9 +1,7 @@
 package com.example.AiTaster.dto.request;
 
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.example.AiTaster.constant.TimelineUnit;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,8 +33,15 @@ public class InvitationCreateRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "PRICE_INVALID")
     BigDecimal finalOfferedPrice;
 
-    @NotBlank(message = "FIELD_REQUIRED")
-    String finalTimeline;
+
+    // Client nhập số thời gian hoàn thành.
+    @NotNull(message = "FIELD_REQUIRED")
+    @Min(value = 1, message = "TIMELINE_VALUE_INVALID")
+    Integer finalTimelineValue;
+
+    // Client chọn đơn vị trên dropdown.
+    @NotNull(message = "FIELD_REQUIRED")
+    TimelineUnit finalTimelineUnit;
 
 
     @NotNull(message = "FIELD_REQUIRED")
