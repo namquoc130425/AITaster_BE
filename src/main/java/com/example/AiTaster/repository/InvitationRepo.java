@@ -31,12 +31,30 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
     //Collection : biến chứa nhiều status
     boolean existsByExpertApplicationAndInvitationStatusIn(ExpertApplication expertApplication, Collection<InvitationStatus> invitationStatus);
 
-
+    // Client xem các lời mời thuộc jobpost của mình.
+    @EntityGraph(attributePaths = {
+            "expertApplication",
+            "expertApplication.jobpost",
+            "expertApplication.jobpost.clientProfile",
+            "expertApplication.jobpost.clientProfile.user",
+            "expertApplication.expertProfile",
+            "expertApplication.expertProfile.user"
+    })
     List<Invitation> findByExpertApplication_Jobpost_ClientProfile(ClientProfile clientProfile);
 
+    // Expert xem lời mời mình nhận được.
+    @EntityGraph(attributePaths = {
+            "expertApplication",
+            "expertApplication.jobpost",
+            "expertApplication.jobpost.clientProfile",
+            "expertApplication.jobpost.clientProfile.user",
+            "expertApplication.expertProfile",
+            "expertApplication.expertProfile.user"
+    })
     List<Invitation> findByExpertApplication_ExpertProfile(ExpertProfile expertProfile);
 
     // Detail có load sẵn các quan hệ cần map response.
+    // khi lấy Invitation , hãy load sẵn luôn expertAppplication v.v.v.v. . vì dùng Lazy nên khi nào gọi tới mới lấy thì anottation này giúp lấy nhanh
     @EntityGraph(attributePaths = {
             "expertApplication",
             "expertApplication.jobpost",
