@@ -1,6 +1,7 @@
 package com.example.AiTaster.dto.response;
 
 import com.example.AiTaster.constant.InvitationStatus;
+import com.example.AiTaster.constant.TimelineUnit;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -43,6 +44,10 @@ public class InvitationResponse {
 
     BigDecimal finalOfferedPrice;
 
+    Integer finalTimelineValue;
+
+    TimelineUnit finalTimelineUnit;
+
     String finalTimeline;
 
     Boolean clientAcceptedTerms;
@@ -56,7 +61,6 @@ public class InvitationResponse {
     LocalDateTime respondedAt;
 
     LocalDateTime createAt;
-
 
     LocalDateTime updateAt;
 }
