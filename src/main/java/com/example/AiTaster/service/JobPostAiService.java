@@ -14,7 +14,6 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
-import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 
 import com.example.AiTaster.service.vector.SkillVectorSearchService;
@@ -31,7 +30,6 @@ import java.util.Set;
 public class JobPostAiService {
     private final GeminiClientService geminiClientService;
     private final CurrentUserService currentUserService;
-    private final JobPostRepo jobPostRepo;
     private final JobPostMapper jobPostMapper;
     private final ContentManagerService contentManagerService;
     private final ClientProfileRepo clientProfileRepo;
@@ -79,9 +77,8 @@ public class JobPostAiService {
 
         JobPost jobPost = jobPostMapper.toEntityJobPostDraft(aiResponse, clientProfile);
         jobPost.setSkills(skillToDb);
-        JobPost savedJobPost = jobPostRepo.save(jobPost);
 
-        return jobPostMapper.toResponse(savedJobPost);
+        return jobPostMapper.toResponse(jobPost);
     }
 
 
