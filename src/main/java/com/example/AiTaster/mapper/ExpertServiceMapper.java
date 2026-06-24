@@ -30,7 +30,7 @@ public interface ExpertServiceMapper {
     ExpertService toEntity(ExpertServiceRequest request,ExpertProfile expertProfile);
 
 
-
+    @Mapping(target = "serviceFileResponse",source = "serviceFile")
     ExpertServiceResponse toResponse(ExpertService expertService);
     @Mapping(target = "expertProfile", ignore = true)
     @Mapping(target = "category", ignore = true)

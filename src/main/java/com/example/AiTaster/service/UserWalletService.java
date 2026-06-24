@@ -27,7 +27,8 @@ public class UserWalletService implements IUserWalletService {
     public UserWalletResponse createWallet(UserWalletRequest request) {
 
         User user = currentUserService.getCurrentUser();
-
+        // Có nên check role?
+        // Trả về thêm Id của profile (xem thử)
         if (userWalletRepo.findByUser(user).isPresent()) {
             throw new GlobalException(400, "Wallet already exists");
         }
