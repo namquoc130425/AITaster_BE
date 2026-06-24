@@ -6,6 +6,7 @@ import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.dto.response.PageResponse;
+import com.example.AiTaster.entity.ServiceFile;
 import com.example.AiTaster.service.ExpertProductService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -58,10 +59,10 @@ public class ExpertServiceController {
     }
 
     // EXPERT: update bài đăng của mình
-    @PutMapping("/{serviceId}")
+    @PutMapping(value = "/{serviceId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse<ExpertServiceResponse>> updateService(
             @PathVariable Long serviceId,
-            @RequestBody @Valid ExpertServiceRequest expertServiceRequest
+            @ModelAttribute @Valid ExpertServiceRequest expertServiceRequest
     ) {
         ExpertServiceResponse response = expertProductService.updateService(serviceId, expertServiceRequest);
 

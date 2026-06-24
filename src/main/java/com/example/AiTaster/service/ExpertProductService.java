@@ -73,7 +73,7 @@ public class ExpertProductService implements IExpertService {
                         request.getSourceFile()
                 );
 
-        ServiceFile serviceFile =
+        ServiceFile serviceFile = //use mapper
                 ServiceFile.builder()
                         .fileContent(docUrl)
                         .productFile(sourceUrl)

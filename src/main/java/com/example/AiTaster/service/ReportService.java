@@ -26,7 +26,7 @@ public class ReportService implements IReportService {
     private final ReportMapper reportMapper;
 
     @Override
-    public ReportResponse createReport(
+    public ReportResponse createReport( // trả thêm dữ liệu profile của 2 thằng báo và bị báo
             ReportRequest request
     ) {
 

@@ -4,6 +4,7 @@ import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.entity.ExpertService;
+import com.example.AiTaster.entity.ServiceFile;
 
 import java.util.List;
 

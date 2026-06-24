@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class UserWalletRequest {
 
-    String currency;
+    String currency; //có nên để enum
 
 }
