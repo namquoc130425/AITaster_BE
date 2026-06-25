@@ -76,6 +76,7 @@ public class Invitation {
     @Column(name = "invitation_status", nullable = false, length = 30)
     InvitationStatus invitationStatus;
 
+    // thời gian hết hạn
     @Column(nullable = false)
     LocalDateTime expiresAt;
 

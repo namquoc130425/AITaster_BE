@@ -1,6 +1,8 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.EscrowStatus;
 import com.example.AiTaster.constant.InvitationStatus;
+import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.constant.TimelineUnit;
 import com.example.AiTaster.dto.request.InvitationAcceptRequest;
 import com.example.AiTaster.dto.request.InvitationCreateRequest;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,6 +34,8 @@ public class InvitationService implements Iinvitation {
     private final JobPostRepo jobPostRepo;
     private final InvitationRepo invitationRepo;
     private final InvitationMapper invitationMapper;
+    private final ProjectRepo projectRepo;
+    private final ProjectEscrowRepo projectEscrowRepo;
 
 
   // đẩy dữ liệu lên form cho client xem
@@ -112,7 +117,7 @@ public class InvitationService implements Iinvitation {
         checkInvitationOwnerClient(invitation,clientProfile);
         return invitationMapper.toResponseInvitation(invitation);
     }
-
+    @Transactional
     @Override
     public InvitationResponse acceptInvitation(Long invitationId, InvitationAcceptRequest request) {
         if(request == null || !Boolean.TRUE.equals(request.getExpertAcceptedTerms())) {
@@ -124,10 +129,19 @@ public class InvitationService implements Iinvitation {
 
         checkInvitedExpert(invitation,expertProfile);
         ensurePendingAndNotExpired(invitation);
+
         invitation.setExpertAcceptedTerms(true);
+
         invitation.setInvitationStatus(InvitationStatus.ACCEPTED);
+
         invitation.setRespondedAt(LocalDateTime.now());
+
         Invitation saveInvitation = invitationRepo.save(invitation);
+     //tạo project
+     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
+     // tạo project
+     createProjectEscrow(newproject);
+
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
 
@@ -270,6 +284,59 @@ public class InvitationService implements Iinvitation {
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
     }
 
+    private Project createProjectByExpertAcceptInvitation(Invitation invitation) {
+        if(projectRepo.existsByInvitation(invitation)) {
+            throw  new GlobalException(400, "Project already exists for this invitation");
+        }
+         Project project =Project.builder()
+                 .invitation(invitation)
+                .title(invitation.getProjectTitle())
+                .finalRequirementSnapshot(invitation.getFinalRequirement())
+                .expectedOutputSnapshot(invitation.getExpectedOutput())
+                .acceptanceCriteriaSnapshot(invitation.getAcceptanceCriteria())
+                .agreedPrice(invitation.getFinalOfferedPrice())
+                .timeline(invitation.getFinalTimeline())
+                .timelineValue(invitation.getFinalTimelineValue())
+                .timelineUnit(invitation.getFinalTimelineUnit())
+                .deadlineAt(null)
+                 .startAt(null)
+                 .completedAt(null)
+                 .paymentDeadlineAt(LocalDateTime.now().plusHours(24))
+                .projectStatus(ProjectStatus.WAITING_ESCROW)
+                .isActive(false)
+                .build();
+        return projectRepo.save(project);
+    }
 
+    private ProjectEscrow createProjectEscrow(Project project) {
+        if (projectEscrowRepo.existsByProjectId(project.getProjectId())) {
+            throw new GlobalException(400, "Project escrow already exists");
+        }
+
+        Long clientProfileId = project.getInvitation()
+                .getExpertApplication()
+                .getJobpost()
+                .getClientProfile()
+                .getClientProfileId();
+
+        Long expertProfileId = project.getInvitation()
+                .getExpertApplication()
+                .getExpertProfile()
+                .getExpertProfileId();
+
+        ProjectEscrow escrow = ProjectEscrow.builder()
+                .projectId(project.getProjectId())
+                .clientProfileId(clientProfileId)
+                .expertProfileId(expertProfileId)
+                .agreedAmount(project.getAgreedPrice())
+                .heldAmount(BigDecimal.ZERO)
+                .platformFee(BigDecimal.ZERO)
+                .expertAmount(project.getAgreedPrice())
+                .escrowStatus(EscrowStatus.WAITING_PAYMENT)
+                .startedAt(null)
+                .build();
+
+        return projectEscrowRepo.save(escrow);
+    }
 
 }
