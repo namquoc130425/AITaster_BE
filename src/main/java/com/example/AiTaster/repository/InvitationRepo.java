@@ -40,7 +40,7 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
             "expertApplication.expertProfile",
             "expertApplication.expertProfile.user"
     })
-    List<Invitation> findByExpertApplication_Jobpost_ClientProfile(ClientProfile clientProfile);
+    List<Invitation> findByExpertApplication_Jobpost_ClientProfileOrderByCreateAtDesc(ClientProfile clientProfile);
 
     // Expert xem lời mời mình nhận được.
     @EntityGraph(attributePaths = {
@@ -51,7 +51,7 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
             "expertApplication.expertProfile",
             "expertApplication.expertProfile.user"
     })
-    List<Invitation> findByExpertApplication_ExpertProfile(ExpertProfile expertProfile);
+    List<Invitation> findByExpertApplication_ExpertProfileOrderByCreateAtDesc(ExpertProfile expertProfile);
 
     // Detail có load sẵn các quan hệ cần map response.
     // khi lấy Invitation , hãy load sẵn luôn expertAppplication v.v.v.v. . vì dùng Lazy nên khi nào gọi tới mới lấy thì anottation này giúp lấy nhanh
