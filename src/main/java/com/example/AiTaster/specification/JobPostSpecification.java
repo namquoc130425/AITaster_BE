@@ -57,11 +57,13 @@ public class JobPostSpecification {
                     query.distinct(true);
                 }
 
-                if (filter.getBudgetFrom() != null) {
+                if (filter.getBudgetFrom() != null
+                        && filter.getBudgetFrom().signum() > 0) {
                     predicates.add(cb.greaterThanOrEqualTo(root.get("budgets"), filter.getBudgetFrom()));
                 }
 
-                if (filter.getBudgetTo() != null) {
+                if (filter.getBudgetTo() != null
+                        && filter.getBudgetTo().signum() > 0) {
                     predicates.add(cb.lessThanOrEqualTo(root.get("budgets"), filter.getBudgetTo()));
                 }
             }
