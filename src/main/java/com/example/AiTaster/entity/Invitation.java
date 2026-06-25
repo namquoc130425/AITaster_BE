@@ -1,6 +1,7 @@
 package com.example.AiTaster.entity;
 
 import com.example.AiTaster.constant.InvitationStatus;
+import com.example.AiTaster.constant.TimelineUnit;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -56,6 +57,13 @@ public class Invitation {
     BigDecimal finalOfferedPrice;
 
     @Column(nullable = false)
+    Integer finalTimelineValue;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    TimelineUnit finalTimelineUnit;
+
+    @Column(nullable = false)
     String finalTimeline;
 
     @Column(nullable = false)
@@ -72,7 +80,7 @@ public class Invitation {
     LocalDateTime expiresAt;
 
     // Thời điểm expert phản hồi.
-    // Accept/reject thì set now, còn pending thì null.
+    // Accept/reject thì set now, còn pending thì null.,
     LocalDateTime respondedAt;
 
     @CreationTimestamp
@@ -81,6 +89,8 @@ public class Invitation {
     @UpdateTimestamp
     LocalDateTime updateAt;
 
+
+
     @PrePersist
     public void prePersist() {
         if (clientAcceptedTerms == null) clientAcceptedTerms = false;
@@ -88,4 +98,5 @@ public class Invitation {
         if (invitationStatus == null) invitationStatus = InvitationStatus.PENDING;
         if (expiresAt == null) expiresAt = LocalDateTime.now().plusHours(24);
     }
+    //nếu expiresAt chưa có giá trị thì tự động gán thời gian hết hạn là 24 tiếng tính từ thời gian hiện tại
 }
