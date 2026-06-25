@@ -1,15 +1,15 @@
 package com.example.AiTaster.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class MessageRequest {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ConversationReadRequest {
 
     @NotNull(message = "FIELD_REQUIRED")
     Long conversationId;
-
-    @NotBlank(message = "MESSAGE_CONTENT_REQUIRED")
-    String content;
 }

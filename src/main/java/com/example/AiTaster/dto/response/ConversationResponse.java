@@ -6,14 +6,19 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ConversationResponse {
 
     Long conversationId;
+
+    Long applicationId;
+
+    Long jobPostId;
 
     Long projectId;
 
@@ -25,6 +30,9 @@ public class ConversationResponse {
 
     ConversationType conversationType;
 
+    LocalDateTime convertedToProjectAt;
+
     LocalDateTime createAt;
+
     LocalDateTime updateAt;
 }
