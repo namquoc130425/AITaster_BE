@@ -1,8 +1,9 @@
 package com.example.AiTaster.controller;
 
-import com.example.AiTaster.dto.request.ConversationCreateRequest;
+import com.example.AiTaster.dto.request.ConversationStartRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ConversationResponse;
+import com.example.AiTaster.dto.response.ConversationStartResponse;
 import com.example.AiTaster.service.ConversationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -20,15 +21,19 @@ public class ConversationController {
 
     private final ConversationService conversationService;
 
-    @PostMapping
-    public ResponseEntity<APIResponse<ConversationResponse>> createConversation(
-            @RequestBody @Valid ConversationCreateRequest request
+    @PostMapping("/applications/{applicationId}/start")
+    public ResponseEntity<APIResponse<ConversationStartResponse>> startConversation(
+            @PathVariable Long applicationId,
+            @RequestBody @Valid ConversationStartRequest request
     ) {
+        ConversationStartResponse response =
+                conversationService.startConversation(applicationId, request);
+
         return ResponseEntity.status(201).body(
                 APIResponse.response(
                         201,
-                        "Create conversation successfully",
-                        conversationService.createConversation(request)
+                        "Conversation started successfully",
+                        response
                 )
         );
     }
@@ -38,7 +43,7 @@ public class ConversationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get my conversations successfully",
+                        "Get conversations successfully",
                         conversationService.getMyConversations()
                 )
         );

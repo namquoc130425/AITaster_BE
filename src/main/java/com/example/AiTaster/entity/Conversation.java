@@ -8,9 +8,19 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(
+        name = "conversation",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_conversation_application",
+                        columnNames = "application_id"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,7 +33,11 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long conversationId;
 
-    // Project entity tạo sau, tạm lưu projectId dạng Long
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "application_id", nullable = false, unique = true)
+    ExpertApplication expertApplication;
+
+    // Project entity tạo sau, hiện tại để nullable
     Long projectId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,8 +49,10 @@ public class Conversation {
     User expert;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     ConversationType conversationType;
+
+    LocalDateTime convertedToProjectAt;
 
     @CreationTimestamp
     LocalDateTime createAt;
@@ -44,6 +60,7 @@ public class Conversation {
     @UpdateTimestamp
     LocalDateTime updateAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Message> messages;
+    List<Message> messages = new ArrayList<>();
 }

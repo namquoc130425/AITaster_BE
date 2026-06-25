@@ -11,21 +11,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class MessageResponse {
-
-    Long messageId;
+public class ReadReceiptResponse {
 
     Long conversationId;
 
-    Long senderId;
-    String senderName;
+    Long readerId;
 
-    Long receiverId;
-    String receiverName;
+    int readCount;
 
-    String content;
-
-    Boolean isRead;
-
-    LocalDateTime sendAt;
+    LocalDateTime readAt;
 }

@@ -2,6 +2,7 @@ package com.example.AiTaster.repository;
 
 import com.example.AiTaster.entity.Conversation;
 import com.example.AiTaster.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -9,13 +10,25 @@ import java.util.Optional;
 
 public interface ConversationRepo extends JpaRepository<Conversation, Long> {
 
-    Optional<Conversation> findByConversationId(Long conversationId);
+    boolean existsByExpertApplication_ApplicationId(Long applicationId);
 
-    List<Conversation> findByClientOrExpert(User client, User expert);
+    Optional<Conversation> findByExpertApplication_ApplicationId(Long applicationId);
 
-    Optional<Conversation> findByClientAndExpertAndProjectId(
-            User client,
-            User expert,
-            Long projectId
-    );
+    @EntityGraph(attributePaths = {
+            "expertApplication",
+            "expertApplication.jobpost",
+            "expertApplication.jobpost.clientProfile",
+            "expertApplication.expertProfile",
+            "client",
+            "expert"
+    })
+    Optional<Conversation> findWithDetailByConversationId(Long conversationId);
+
+    @EntityGraph(attributePaths = {
+            "expertApplication",
+            "expertApplication.jobpost",
+            "client",
+            "expert"
+    })
+    List<Conversation> findByClientOrExpertOrderByUpdateAtDesc(User client, User expert);
 }

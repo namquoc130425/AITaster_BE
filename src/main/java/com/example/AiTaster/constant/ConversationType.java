@@ -1,6 +1,6 @@
 package com.example.AiTaster.constant;
 
 public enum ConversationType {
-    DIRECT,
+    APPLICATION,
     PROJECT
 }
