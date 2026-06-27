@@ -1,54 +1,159 @@
 package com.example.AiTaster.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SepayWebhookRequest {
 
-    // ID giao dịch do SePay gửi. Có thể dùng để chống xử lý webhook trùng.
-    Long id;
+    // Unix timestamp khi SePay gửi IPN
+    Long timestamp;
 
-    // Tên ngân hàng/cổng thanh toán, ví dụ: Vietcombank.
-    String gateway;
+    // ORDER_PAID hoặc TRANSACTION_VOID
+    @JsonProperty("notification_type")
+    String notificationType;
 
-    // Thời điểm giao dịch theo SePay, ví dụ: 2024-07-02 11:08:33.
-    String transactionDate;
+    // Thông tin đơn hàng
+    OrderInfo order;
 
-    // Số tài khoản nhận tiền.
-    String accountNumber;
+    // Thông tin giao dịch
+    TransactionInfo transaction;
 
-    // Tài khoản phụ nếu có, docs có thể gửi chuỗi rỗng.
-    String subAccount;
+    // Thông tin khách hàng
+    CustomerInfo customer;
 
-    // Mã nội dung SePay tách ra.
-    // Với QR của mình, nếu des = AIT-PROJ-1-XXXX thì code có thể chính là paymentCode.
-    String code;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class OrderInfo {
 
-    // Nội dung chuyển khoản đầy đủ.
-    // Mình vẫn nên search paymentCode trong field này để chắc ăn.
-    String content;
+        // ID đơn hàng nội bộ của SePay
+        String id;
 
-    // in = tiền vào, out = tiền ra.
-    String transferType;
+        // Mã đơn hàng bên SePay
+        @JsonProperty("order_id")
+        String orderId;
 
-    // Mô tả giao dịch từ ngân hàng/SePay.
-    String description;
+        // CAPTURED, CANCELLED, AUTHENTICATION_NOT_NEEDED
+        @JsonProperty("order_status")
+        String orderStatus;
 
-    // Số tiền giao dịch.
-    BigDecimal transferAmount;
+        // VND
+        @JsonProperty("order_currency")
+        String orderCurrency;
 
-    // Số dư sau giao dịch.
-    BigDecimal accumulated;
+        // Số tiền đơn hàng
+        @JsonProperty("order_amount")
+        BigDecimal orderAmount;
 
-    // Mã tham chiếu ngân hàng/SePay. Ưu tiên dùng để chống trùng.
-    String referenceCode;
+        // Mã hóa đơn của hệ thống mình
+        // Quan trọng: nên chính là paymentCode của mình
+        @JsonProperty("order_invoice_number")
+        String orderInvoiceNumber;
 
+        // Dữ liệu tùy chỉnh nếu có
+        @JsonProperty("custom_data")
+        JsonNode customData;
+
+        @JsonProperty("user_agent")
+        JsonNode userAgent;
+
+        @JsonProperty("ip_address")
+        String ipAddress;
+
+        @JsonProperty("order_description")
+        String orderDescription;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class TransactionInfo {
+
+        // ID giao dịch nội bộ của SePay
+        String id;
+
+        // CARD, BANK_TRANSFER, ...
+        @JsonProperty("payment_method")
+        String paymentMethod;
+
+        // Mã giao dịch duy nhất từ SePay
+        // Lưu vào providerTransactionCode/providerTransactionId để chống xử lý trùng
+        @JsonProperty("transaction_id")
+        String transactionId;
+
+        // PAYMENT hoặc REFUND
+        @JsonProperty("transaction_type")
+        String transactionType;
+
+        // Ví dụ: 2025-09-01 00:00:15
+        @JsonProperty("transaction_date")
+        String transactionDate;
+
+        // APPROVED hoặc DECLINED
+        @JsonProperty("transaction_status")
+        String transactionStatus;
+
+        // Số tiền giao dịch
+        @JsonProperty("transaction_amount")
+        BigDecimal transactionAmount;
+
+        // VND
+        @JsonProperty("transaction_currency")
+        String transactionCurrency;
+
+        // Các field thẻ, có thì nhận, không có cũng không lỗi
+        @JsonProperty("authentication_status")
+        String authenticationStatus;
+
+        @JsonProperty("card_number")
+        String cardNumber;
+
+        @JsonProperty("card_holder_name")
+        String cardHolderName;
+
+        @JsonProperty("card_expiry")
+        String cardExpiry;
+
+        @JsonProperty("card_funding_method")
+        String cardFundingMethod;
+
+        @JsonProperty("card_brand")
+        String cardBrand;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class CustomerInfo {
+
+        // ID khách hàng nội bộ của SePay
+        String id;
+
+        // ID khách hàng của hệ thống mình nếu lúc tạo đơn có gửi lên
+        @JsonProperty("customer_id")
+        String customerId;
+    }
 
 }

@@ -15,6 +15,7 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
 
     // Check jobpost đã có invitation ACCEPTED chưa.
     // Nếu có rồi thì không cho gửi lời mời mới nữa.
+
     boolean existsByExpertApplication_JobpostAndInvitationStatus(JobPost jobPost, InvitationStatus invitationStats
     );
 

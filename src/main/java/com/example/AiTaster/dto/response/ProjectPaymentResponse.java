@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class ProjectPaymentResponse {
     Long paymentTransactionId;
 
-    Long projectId;
+    Long invitationId;
 
     Long senderId;
 
@@ -39,11 +39,7 @@ public class ProjectPaymentResponse {
 
     String providerName;
 
-    // Mã client cần ghi vào nội dung chuyển khoản.
-    String paymentCode;
-
-    // QR để FE hiển thị.
-    String qrUrl;
+    SepayCheckoutFormResponse checkoutForm;
 
     LocalDateTime expiredAt;
 
