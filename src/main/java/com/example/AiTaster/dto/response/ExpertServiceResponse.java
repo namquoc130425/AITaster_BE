@@ -2,6 +2,7 @@ package com.example.AiTaster.dto.response;
 
 import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.entity.Category;
+import com.example.AiTaster.entity.ServiceFile;
 import com.example.AiTaster.entity.Skill;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
@@ -39,4 +40,6 @@ public class ExpertServiceResponse {
     CategoryResponse category;
 
     List<SkillResponse> skills;
+
+    ServiceFileResponse serviceFileResponse;
 }
