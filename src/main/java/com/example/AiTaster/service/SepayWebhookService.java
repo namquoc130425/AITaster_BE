@@ -148,7 +148,6 @@ public class SepayWebhookService {
     }
 
     /**
-     * SỬA:
      * Cổng thanh toán SePay IPN dùng X-Secret-Key.
      * Secret này phải giống với app.sepay.webhook-secret trong application.yml.
      */
@@ -181,12 +180,8 @@ public class SepayWebhookService {
                 && "VND".equalsIgnoreCase(request.getTransaction().getTransactionCurrency());
     }
     /**
-     * SỬA:
-     * Webhook cũ tìm paymentCode trong code/content/description.
-     * IPN mới chuẩn nhất là lấy order.order_invoice_number.
-     *
      * Điều kiện:
-     * Khi tạo đơn SePay, bạn phải set:
+     * Khi tạo đơn SePay, phải set:
      * order_invoice_number = paymentTransaction.getPaymentCode()
      */
     private String extractPaymentCode(SepayWebhookRequest sepayWebhookRequest) {
