@@ -37,6 +37,16 @@ public enum ErrorCode {
     PROMPT_INJECTION("Input contains potential prompt injection patterns", HttpStatus.BAD_REQUEST),
     PRICE_INVALID("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
 
+    APPLICATION_NOT_FOUND("Application not found", HttpStatus.NOT_FOUND),
+    CONVERSATION_NOT_FOUND("Conversation not found", HttpStatus.NOT_FOUND),
+    CONVERSATION_ALREADY_EXISTS("Conversation already exists for this application", HttpStatus.CONFLICT),
+    ONLY_CLIENT_CAN_START_CONVERSATION("Only client can start a conversation", HttpStatus.FORBIDDEN),
+    NOT_APPLICATION_OWNER("You are not owner of this application job post", HttpStatus.FORBIDDEN),
+    NOT_CONVERSATION_MEMBER("You are not a member of this conversation", HttpStatus.FORBIDDEN),
+    CLIENT_MUST_SEND_FIRST_MESSAGE("Client must send the first message", HttpStatus.FORBIDDEN),
+    MESSAGE_NOT_FOUND("Message not found", HttpStatus.NOT_FOUND),
+    MESSAGE_CONTENT_REQUIRED("Message content is required", HttpStatus.BAD_REQUEST),
+    FILE_URL_REQUIRED("File URL is required", HttpStatus.BAD_REQUEST),
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED);

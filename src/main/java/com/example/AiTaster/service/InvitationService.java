@@ -89,7 +89,7 @@ public class InvitationService implements Iinvitation {
         ClientProfile clientProfile = getCurrentClientProfile();
         pendingInvitationsExpire();
 
-        return invitationRepo.findByExpertApplication_Jobpost_ClientProfile(clientProfile)
+        return invitationRepo.findByExpertApplication_Jobpost_ClientProfileOrderByCreateAtDesc(clientProfile)
                 .stream()
                 .map(invitationMapper::toResponseInvitation)
                 .toList();
@@ -100,7 +100,7 @@ public class InvitationService implements Iinvitation {
     public List<InvitationResponse> getMyExpertInvitations() {
         ExpertProfile expertProfile = getCurrentExpertProfile();
         pendingInvitationsExpire();
-        return invitationRepo.findByExpertApplication_ExpertProfile(expertProfile)
+        return invitationRepo.findByExpertApplication_ExpertProfileOrderByCreateAtDesc(expertProfile)
                 .stream()
                 .map(invitationMapper :: toResponseInvitation).toList();
 

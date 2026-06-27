@@ -6,10 +6,12 @@ import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.dto.response.PageResponse;
+import com.example.AiTaster.entity.ServiceFile;
 import com.example.AiTaster.service.ExpertProductService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,17 +38,31 @@ public class ExpertServiceController {
 
 
 
-    @PostMapping("/Creatservice")
-    public ResponseEntity<APIResponse<ExpertServiceResponse>> creatAiservice(@RequestBody @Valid ExpertServiceRequest expertServiceRequest) {
-        ExpertServiceResponse responses = expertProductService.CreatService(expertServiceRequest);
-        return ResponseEntity.ok(APIResponse.response(201, "Create job post successfully", responses));
+    @PostMapping(
+            value = "/Creatservice",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<APIResponse<ExpertServiceResponse>> creatAiservice(
+            @ModelAttribute @Valid ExpertServiceRequest request
+    ) {
+
+        ExpertServiceResponse response =
+                expertProductService.CreatService(request);
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        201,
+                        "Create service successfully",
+                        response
+                )
+        );
     }
 
     // EXPERT: update bài đăng của mình
-    @PutMapping("/{serviceId}")
+    @PutMapping(value = "/{serviceId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse<ExpertServiceResponse>> updateService(
             @PathVariable Long serviceId,
-            @RequestBody @Valid ExpertServiceRequest expertServiceRequest
+            @ModelAttribute @Valid ExpertServiceRequest expertServiceRequest
     ) {
         ExpertServiceResponse response = expertProductService.updateService(serviceId, expertServiceRequest);
 
@@ -127,6 +143,5 @@ public class ExpertServiceController {
                 APIResponse.response(200, "Change AI service status successfully", response)
         );
     }
-
 
 }
