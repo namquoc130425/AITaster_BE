@@ -79,6 +79,8 @@ public class Project {
     @JoinColumn(name = "invitation_id")
     Invitation invitation;
 
+
+
     @PrePersist
     public void prePersist() {
         if (projectStatus == null) projectStatus = ProjectStatus.WAITING_ESCROW;

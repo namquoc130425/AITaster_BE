@@ -3,10 +3,7 @@ package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.dto.request.SepayWebhookRequest;
-import com.example.AiTaster.entity.Invitation;
-import com.example.AiTaster.entity.PaymentTransaction;
-import com.example.AiTaster.entity.Project;
-import com.example.AiTaster.entity.ProjectEscrow;
+import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
@@ -51,6 +48,7 @@ public class SepayWebhookService {
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final ProjectRepo projectRepo;
     private final ProjectEscrowRepo projectEscrowRepo;
+    private final ProjectMilestoneService projectMilestoneService;
 
     @Transactional
     public void handleWebhook(String rawBody,  String secretKey) {
@@ -117,6 +115,7 @@ public class SepayWebhookService {
 
         Project newProject = createProjectByExpertAcceptInvitation(invitation,paymentTransaction);
         ProjectEscrow newProjectEscrow = createProjectEscrow(newProject);
+        projectMilestoneService.createMilestoneForProject(newProject);
 
         paymentTransaction.setPaymentStatus(PaymentStatus.SUCCESS);
         paymentTransaction.setProviderTransactionCode(providerTransactionCode);
