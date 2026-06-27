@@ -67,7 +67,7 @@ public class PaymentTransaction {
     @Column(nullable = false, length = 40)
     PaymentStatus paymentStatus;
 
-    // dữ liệu của dịch vụ cần thanh toán : projectid =1
+    // dữ liệu của dịch vụ cần thanh toán : projectid =1 ,serviceai =2 , probosla4
     //lấy id object đang được thanh toán
     @Column(nullable = false)
     Long referenceId;
