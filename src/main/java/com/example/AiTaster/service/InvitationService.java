@@ -31,6 +31,7 @@ public class InvitationService implements Iinvitation {
     private final JobPostRepo jobPostRepo;
     private final InvitationRepo invitationRepo;
     private final InvitationMapper invitationMapper;
+    private final NotificationService notificationService;
 
 
   // đẩy dữ liệu lên form cho client xem
@@ -75,6 +76,7 @@ public class InvitationService implements Iinvitation {
 
         Invitation saveInvitation = invitationRepo.save(invitation);
 
+        notificationService.notifyInvitationSent(saveInvitation);
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -128,6 +130,9 @@ public class InvitationService implements Iinvitation {
         invitation.setInvitationStatus(InvitationStatus.ACCEPTED);
         invitation.setRespondedAt(LocalDateTime.now());
         Invitation saveInvitation = invitationRepo.save(invitation);
+
+        notificationService.notifyInvitationAccepted(saveInvitation);
+
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
 
@@ -141,6 +146,9 @@ public class InvitationService implements Iinvitation {
         invitation.setInvitationStatus(InvitationStatus.REJECTED);
         invitation.setRespondedAt(LocalDateTime.now());
         Invitation saveInvitation = invitationRepo.save(invitation);
+
+        notificationService.notifyInvitationRejected(saveInvitation);
+
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
 
