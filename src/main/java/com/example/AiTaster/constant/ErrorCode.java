@@ -47,6 +47,9 @@ public enum ErrorCode {
     MESSAGE_NOT_FOUND("Message not found", HttpStatus.NOT_FOUND),
     MESSAGE_CONTENT_REQUIRED("Message content is required", HttpStatus.BAD_REQUEST),
     FILE_URL_REQUIRED("File URL is required", HttpStatus.BAD_REQUEST),
+
+    NOTIFICATION_NOT_FOUND("Notification not found", HttpStatus.NOT_FOUND),
+    NOT_NOTIFICATION_OWNER("You are not owner of this notification", HttpStatus.FORBIDDEN),
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED);

@@ -32,6 +32,7 @@ private final CurrentUserService currentUserService;
 private final ClientProfileRepo clientProfileRepo;
 private final ProposalUnlockRepo proposalUnlockRepo;
 private final JobPostRepo jobPostRepo;
+private final NotificationService notificationService;
 
     @Override
     public ExpertApplicationResponse applyJobPost(Long jobPostId, ExpertApplicationRequest request) {
@@ -58,7 +59,7 @@ private final JobPostRepo jobPostRepo;
 
             expertProposalResponse = expertProposalMapper.toResponse(saveexpertProposal,saveexpertProposal.getDetailContent(),true );
 
-        }
+        } notificationService.notifyExpertApplied(savedExpertApplication);
         return expertApplicationMapper.toResponse(savedExpertApplication,expertProposalResponse);
     }
     // Client owner của JobPost xem danh sách expert đã apply vào JobPost đó.
