@@ -1,6 +1,8 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.EscrowStatus;
 import com.example.AiTaster.constant.InvitationStatus;
+import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.constant.TimelineUnit;
 import com.example.AiTaster.dto.request.InvitationAcceptRequest;
 import com.example.AiTaster.dto.request.InvitationCreateRequest;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,6 +35,8 @@ public class InvitationService implements Iinvitation {
     private final InvitationRepo invitationRepo;
     private final InvitationMapper invitationMapper;
     private final NotificationService notificationService;
+    private final ProjectRepo projectRepo;
+    private final ProjectEscrowRepo projectEscrowRepo;
 
 
   // đẩy dữ liệu lên form cho client xem
@@ -114,7 +119,7 @@ public class InvitationService implements Iinvitation {
         checkInvitationOwnerClient(invitation,clientProfile);
         return invitationMapper.toResponseInvitation(invitation);
     }
-
+    @Transactional
     @Override
     public InvitationResponse acceptInvitation(Long invitationId, InvitationAcceptRequest request) {
         if(request == null || !Boolean.TRUE.equals(request.getExpertAcceptedTerms())) {
@@ -126,12 +131,21 @@ public class InvitationService implements Iinvitation {
 
         checkInvitedExpert(invitation,expertProfile);
         ensurePendingAndNotExpired(invitation);
+
         invitation.setExpertAcceptedTerms(true);
+
         invitation.setInvitationStatus(InvitationStatus.ACCEPTED);
+
         invitation.setRespondedAt(LocalDateTime.now());
+
         Invitation saveInvitation = invitationRepo.save(invitation);
 
         notificationService.notifyInvitationAccepted(saveInvitation);
+
+//     //tạo project
+//     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
+//     // tạo project
+//     createProjectEscrow(newproject);
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -277,7 +291,9 @@ public class InvitationService implements Iinvitation {
         return invitationRepo.findWithDetailByInvitationId(invitationId)
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
     }
-
-
+//
+//
+//
+//
 
 }

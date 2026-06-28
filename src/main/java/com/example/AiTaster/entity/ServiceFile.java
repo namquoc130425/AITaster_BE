@@ -43,9 +43,8 @@ public class ServiceFile {
     @JoinColumn(name = "expertServiceId")
     ExpertService expertService;
 
-    //    @OneToOne(fetch = FetchType.LAZY)
 
-//    @JoinColumn(name = "deliverableId")
-
-//    Deliverable deliverable;
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "deliverable_Id")
+Deliverable deliverable;
 }
