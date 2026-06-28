@@ -11,6 +11,7 @@ import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
+import com.example.AiTaster.service.PlatformFeeCalculator;
 import com.example.AiTaster.service.ProjectMilestoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
     private final ProjectEscrowRepo projectEscrowRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final ProjectMilestoneService projectMilestoneService   ;
+    private final PlatformFeeCalculator platformFeeCalculator;
     @Override
     public boolean supports(PaymentTransaction payment) {
         return PaymentMethod.SEPAY.equals(payment.getPaymentMethod())
@@ -88,15 +90,18 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
                 .getExpertApplication()
                 .getExpertProfile()
                 .getExpertProfileId();
+        BigDecimal agreedAmount = project.getAgreedPrice();
+        BigDecimal platformFee = platformFeeCalculator.calculatePlatformFee(agreedAmount);
+        BigDecimal expertAmount = agreedAmount.subtract(platformFee);
 
         ProjectEscrow escrow = ProjectEscrow.builder()
                 .projectId(project.getProjectId())
                 .clientProfileId(clientProfileId)
                 .expertProfileId(expertProfileId)
-                .agreedAmount(project.getAgreedPrice())
+                .agreedAmount(agreedAmount)
                 .heldAmount(BigDecimal.ZERO)
-                .platformFee(BigDecimal.ZERO)
-                .expertAmount(project.getAgreedPrice())
+                .platformFee(platformFee)
+                .expertAmount(expertAmount)
                 .escrowStatus(EscrowStatus.HELD)
                 .startedAt(null)
                 .build();

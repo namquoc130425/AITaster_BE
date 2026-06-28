@@ -20,7 +20,7 @@ public interface PaymentTransactionMapper {
 
     @Mapping(target = "walletId", source = "paymentTransaction.targetWalletId")
     @Mapping(target = "userId", source = "paymentTransaction.receiverId")
-    @Mapping(target = "checkoutForm", source = "checkoutForm")gitgit
+    @Mapping(target = "checkoutForm", source = "checkoutForm")
     WalletDepositPaymentResponse toWalletDepositPaymentResponse(
             PaymentTransaction paymentTransaction , SepayCheckoutFormResponse checkoutForm
     );
