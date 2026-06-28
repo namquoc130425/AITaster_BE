@@ -50,6 +50,12 @@ public enum ErrorCode {
 
     NOTIFICATION_NOT_FOUND("Notification not found", HttpStatus.NOT_FOUND),
     NOT_NOTIFICATION_OWNER("You are not owner of this notification", HttpStatus.FORBIDDEN),
+
+    REPORT_NOT_FOUND("Report not found", HttpStatus.NOT_FOUND),
+    NOT_REPORT_OWNER("You are not owner of this report", HttpStatus.FORBIDDEN),
+    CANNOT_UPDATE_REPORT("Only pending report can be updated", HttpStatus.BAD_REQUEST),
+    CANNOT_REPORT_YOURSELF("You cannot report yourself", HttpStatus.BAD_REQUEST),
+    EVIDENCE_FILE_INVALID("Evidence file invalid", HttpStatus.BAD_REQUEST),
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED);

@@ -9,9 +9,11 @@ import java.util.List;
 
 public interface ReportRepo extends JpaRepository<Report, Long> {
 
-    List<Report> findByReporter(User reporter);
+    List<Report> findByReporterOrderByCreatedAtDesc(User reporter);
 
     List<Report> findByReportedUser(User reportedUser);
 
     List<Report> findByReportStatus(ReportStatus reportStatus);
+
+    List<Report> findAllByOrderByCreatedAtDesc();
 }
