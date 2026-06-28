@@ -4,6 +4,7 @@ import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.repository.UserRepo;
+import com.example.AiTaster.service.UserWalletService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -14,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.Console;
+import java.util.Optional;
 
 @Component
 //Thấy @Component ở DataSeeder -> Spring tạo object DataSeeder thành bean để spring quản lý
@@ -33,6 +35,8 @@ public class DataSeeder implements CommandLineRunner { //CommandLineRunner
     @Lazy
     PasswordEncoder passwordEncoder;
 
+    UserWalletService userWalletService;
+
     //→ App start xong thì chạy run()
     @Override
     public void run(String... args) throws Exception {
@@ -41,7 +45,9 @@ public class DataSeeder implements CommandLineRunner { //CommandLineRunner
 
     private void seedCreateAdminUser() {
         // implement logic to create an admin user if not exists
-        if (userRepo.findByUsername("admin").isPresent()) {
+        Optional<User> existingAdmin = userRepo.findByUsername("admin");
+        if (existingAdmin.isPresent()) {
+            userWalletService.createWalletIfAbsent(existingAdmin.get());
             return;
         }
 
@@ -58,7 +64,8 @@ public class DataSeeder implements CommandLineRunner { //CommandLineRunner
                 // gender = null
                 .build();
 
-        userRepo.save(admin);
+        User savedAdmin = userRepo.save(admin);
+        userWalletService.createdUserWallet(savedAdmin);
 
         log.info("Seeded admin user!");
 

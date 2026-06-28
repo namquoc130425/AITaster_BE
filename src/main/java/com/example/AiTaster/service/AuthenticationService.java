@@ -71,6 +71,9 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Autowired
     CurrentUserResponseMapper currentUserResponseMapper;
 
+    @Autowired
+    UserWalletService userWalletService;
+
 //code quá bẩn
 
     // đăng ký client
@@ -102,6 +105,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
         userRepo.save(user);
 
+        userWalletService.createdUserWallet(user);
 
         return clientProfileMapper.toResponse(clientProfile);
     }
@@ -130,7 +134,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         // lưu xuong db
         user.setExpertProfile(expertProfile);
         userRepo.save(user);
-
+        userWalletService.createdUserWallet(user);
 
         return expertProfileMapper.toResponse(expertProfile);
     }
@@ -224,6 +228,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         user.setUserStatus(UserStatus.ACTIVE);
 
         User savedUser = userRepo.save(user);
+        userWalletService.createdUserWallet(savedUser);
 
         return userMapper.toResponser(savedUser);
     }

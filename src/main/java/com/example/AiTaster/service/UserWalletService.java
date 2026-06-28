@@ -25,10 +25,8 @@ public class UserWalletService implements IUserWalletService {
 
     @Override
     public UserWalletResponse createWallet(UserWalletRequest request) {
-
         User user = currentUserService.getCurrentUser();
-        // Có nên check role?
-        // Trả về thêm Id của profile (xem thử)
+
         if (userWalletRepo.findByUser(user).isPresent()) {
             throw new GlobalException(400, "Wallet already exists");
         }
@@ -41,10 +39,31 @@ public class UserWalletService implements IUserWalletService {
                 .status(UserWalletStatus.ACTIVE)
                 .build();
 
-        return userWalletMapper.toResponse(
-                userWalletRepo.save(wallet)
-        );
+        return userWalletMapper.toResponse(userWalletRepo.save(wallet));
     }
+
+//    @Override
+//    public UserWalletResponse createWallet(UserWalletRequest request) {
+//
+//        User user = currentUserService.getCurrentUser();
+//        // Có nên check role?
+//        // Trả về thêm Id của profile (xem thử)
+//        if (userWalletRepo.findByUser(user).isPresent()) {
+//            throw new GlobalException(400, "Wallet already exists");
+//        }
+//
+//        UserWallet wallet = UserWallet.builder()
+//                .user(user)
+//                .balance(BigDecimal.ZERO)
+//                .frozenBalance(BigDecimal.ZERO)
+//                .currency(request.getCurrency())
+//                .status(UserWalletStatus.ACTIVE)
+//                .build();
+//
+//        return userWalletMapper.toResponse(
+//                userWalletRepo.save(wallet)
+//        );
+//    }
 
 
     @Override
@@ -144,8 +163,22 @@ public class UserWalletService implements IUserWalletService {
 
     @Override
     public UserWallet createdUserWallet(User user) {
+        if (userWalletRepo.findByUser(user).isPresent()) {
+            throw new GlobalException(400, "User already has wallet");
+        }
+        UserWallet wallet = UserWallet.builder()
+                .user(user)
+                .status(UserWalletStatus.ACTIVE)
+                .balance(BigDecimal.ZERO)
+                .currency("VND")
+                .frozenBalance(BigDecimal.ZERO)
+                .build();
+        return userWalletRepo.save(wallet);
+    }
 
-        return null;
+    public UserWallet createWalletIfAbsent(User user) {
+        return userWalletRepo.findByUser(user)
+                .orElseGet(() -> createdUserWallet(user));
     }
 
     private UserWallet getWallet(Long walletId) {

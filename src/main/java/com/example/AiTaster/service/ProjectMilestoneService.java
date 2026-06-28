@@ -2,6 +2,7 @@ package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.dto.response.DeliverableResponse;
+import com.example.AiTaster.dto.response.MilestoneEventResponse;
 import com.example.AiTaster.dto.response.ProjectMilestoneResponse;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
@@ -9,6 +10,7 @@ import com.example.AiTaster.mapper.DeliverableMapper;
 import com.example.AiTaster.mapper.ProjectMilestoneMapper;
 import com.example.AiTaster.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +33,7 @@ public class ProjectMilestoneService {
 
     private final ProjectMilestoneMapper projectMilestoneMapper;
     private final DeliverableMapper deliverableMapper;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     // tạo milestone cho project ngay
     @Transactional
@@ -115,6 +118,13 @@ public class ProjectMilestoneService {
                 .build());
         milestone.setStatus(MilestoneStatus.WAITING_CLIENT_REVIEW);
         projectMilestoneRepo.save(milestone);
+        publishMilestoneEvent(
+                project,
+                milestone,
+                "SUBMITTED",
+                "Expert đã nộp file " + step.getTitle() + ", chờ bạn duyệt",
+                getClientUserId(project)
+        );
         return projectMilestoneMapper.toResponse(milestone);
     }
     // client reject yêu cầu làm lại
@@ -132,6 +142,14 @@ public class ProjectMilestoneService {
         }projectMilestone.setStatus(MilestoneStatus.REVISION_REQUESTED);
          ProjectMilestone saveProjectMilestone = projectMilestoneRepo.save(projectMilestone);
         markLatestDeliverableReviewed(projectId, saveProjectMilestone.getCurrentStep()); // đánh dấu đã xem và yêu cầu làm lại
+        // báo EXPERT phải làm lại
+        publishMilestoneEvent(
+                project,
+                saveProjectMilestone,
+                "REVISION_REQUESTED",
+                "Client yêu cầu chỉnh sửa lại " + saveProjectMilestone.getCurrentStep().getTitle(),
+                getExpertUserId(project)
+        );
         return projectMilestoneMapper.toResponse(saveProjectMilestone);
     }
 
@@ -168,6 +186,16 @@ public class ProjectMilestoneService {
             }
         }
         projectMilestoneRepo.save(projectMilestone);
+        //xong cả 3 mốc thì báo hoàn tất, ngược lại báo expert làm mốc tiếp
+     if (projectMilestone.getStatus() == MilestoneStatus.COMPLETED) {
+         publishMilestoneEvent(project, projectMilestone, "COMPLETED",
+                 "Dự án đã hoàn tất, tiền đã được giải ngân cho expert",
+                 getExpertUserId(project));
+     } else {
+         publishMilestoneEvent(project, projectMilestone, "APPROVED",
+                 "Client đã duyệt " + approvedStep.getTitle() + ", mời expert làm bước tiếp theo",
+                 getExpertUserId(project));
+     }
         return projectMilestoneMapper.toResponse(projectMilestone);
     }
 
@@ -302,5 +330,52 @@ public class ProjectMilestoneService {
         if (!isExpert && !isClient) {
             throw new GlobalException(403, "You are not a participant of this project");
         }
+    }
+    // tạo form thông báo milestone tới cả 2 người trong project + 1 topic riêng cho người nhận
+    private void publishMilestoneEvent(
+            Project project,
+            ProjectMilestone milestone,
+            String eventType,
+            String message,
+            Long targetUserId
+    ) {
+        MilestoneEventResponse event = MilestoneEventResponse.builder()
+                .projectId(project.getProjectId())
+                .eventType(eventType)
+                .currentStep(milestone.getCurrentStep())
+                .status(milestone.getStatus())
+                .message(message)
+                .targetUserId(targetUserId)
+                .at(java.time.LocalDateTime.now())
+                .build();
+        // Cả client + expert đang xem project đều nhận
+        simpMessagingTemplate.convertAndSend(
+                "/topic/projects/" + project.getProjectId() + "/milestone",
+                event
+        );
+        // Thông báo riêng cho người cần hành động tiếp theo
+        if (targetUserId != null) {
+            simpMessagingTemplate.convertAndSend(
+                    "/topic/users/" + targetUserId + "/notifications",
+                    event
+            );
+        }
+    }
+    // Lấy userId của expert trong project
+    private Long getExpertUserId(Project project) {
+        return project.getInvitation()
+                .getExpertApplication()
+                .getExpertProfile()
+                .getUser()
+                .getUserId();
+    }
+    // Lấy userId của client trong project
+    private Long getClientUserId(Project project) {
+        return project.getInvitation()
+                .getExpertApplication()
+                .getJobpost()
+                .getClientProfile()
+                .getUser()
+                .getUserId();
     }
 }

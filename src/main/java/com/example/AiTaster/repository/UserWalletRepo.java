@@ -10,4 +10,8 @@ public interface UserWalletRepo extends JpaRepository<UserWallet, Long> {
 
     Optional<UserWallet> findByUser(User user);
 
+    Optional<UserWallet> findByUserWalletId(Long UserWalletId);
+
+
+
 }
