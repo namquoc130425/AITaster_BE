@@ -1,10 +1,12 @@
 package com.example.AiTaster.controller;
 
+import com.example.AiTaster.dto.request.Category.CategoryFilterRequest;
 import com.example.AiTaster.dto.request.CategoryRequest;
 import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.CategoryResponse;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.service.CategoryService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -22,7 +24,21 @@ public class CategoryController {
     @Autowired
     CategoryService categoryService;
 
+    @PostMapping("/filter")
+    public ResponseEntity<APIResponse<PageResponse<CategoryResponse>>> getAllCategoriesPage(
+            @RequestBody @Valid CategoryFilterRequest request
+    ) {
+        PageResponse<CategoryResponse> response =
+                categoryService.getAllCategoriesPage(request);
 
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get categories with filter and pagination successfully",
+                        response
+                )
+        );
+    }
 
     @PostMapping()
     // @Valid để kích hoạt validation

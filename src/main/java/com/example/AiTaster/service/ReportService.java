@@ -42,26 +42,19 @@ public class ReportService implements IReportService {
                 getUserById(request.getReportedUserId());
 
         if (reporter.getUserId().equals(reportedUser.getUserId())) {
-            throw new GlobalException(
-                    ErrorCode.CANNOT_REPORT_YOURSELF
-            );
+            throw new GlobalException(ErrorCode.CANNOT_REPORT_YOURSELF);
         }
 
-        Report report =
-                reportMapper.toEntity(request);
+        Report report = reportMapper.toEntity(request);
 
-        String evidenceUrl =
-                localFileStorageService.saveReportEvidence(
-                        request.getEvidenceFile()
-                );
+        String evidenceUrl = localFileStorageService.saveReportEvidence(request.getEvidenceFile());
 
         report.setReporter(reporter);
         report.setReportedUser(reportedUser);
         report.setEvidenceFile(evidenceUrl);
         report.setReportStatus(ReportStatus.PENDING);
 
-        Report saved =
-                reportRepo.save(report);
+        Report saved = reportRepo.save(report);
 
         notificationService.notifyAdminNewReport(saved);
 
@@ -74,27 +67,21 @@ public class ReportService implements IReportService {
             Long reportId,
             ReportRequest request
     ) {
-        User currentUser =
-                currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
 
-        Report report =
-                getReport(reportId);
+        Report report = getReport(reportId);
 
         checkReporterOwner(report, currentUser);
 
         if (!ReportStatus.PENDING.equals(report.getReportStatus())) {
-            throw new GlobalException(
-                    ErrorCode.CANNOT_UPDATE_REPORT
-            );
+            throw new GlobalException(ErrorCode.CANNOT_UPDATE_REPORT);
         }
 
         User reportedUser =
                 getUserById(request.getReportedUserId());
 
         if (currentUser.getUserId().equals(reportedUser.getUserId())) {
-            throw new GlobalException(
-                    ErrorCode.CANNOT_REPORT_YOURSELF
-            );
+            throw new GlobalException(ErrorCode.CANNOT_REPORT_YOURSELF);
         }
 
         reportMapper.updateEntity(
@@ -126,8 +113,7 @@ public class ReportService implements IReportService {
             Long reportId
     ) {
 
-        User currentUser =
-                currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
 
         Report report =
                 getReport(reportId);
@@ -144,8 +130,7 @@ public class ReportService implements IReportService {
     @Override
     public List<ReportResponse> getAllReports() {
 
-        User currentUser =
-                currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
 
         checkAdmin(currentUser);
 
