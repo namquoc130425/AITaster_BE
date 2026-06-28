@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.Util.PageUtil;
+import com.example.AiTaster.constant.InvitationStatus;
 import com.example.AiTaster.constant.JobpostStatus;
 import com.example.AiTaster.dto.request.JobPost.JobPostFilterRequest;
 import com.example.AiTaster.dto.request.JobPostRequest;
@@ -21,7 +22,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +42,7 @@ public class JobPostService implements IJobPost {
     public JobPostResponse createJobPost(JobPostRequest jobPostRequest) {
         validateUserInputContent(jobPostRequest);
         ClientProfile clientProfileByUser = getCurrentClientProfile();
+        ensureNoDuplicateActiveJobPost(clientProfileByUser, jobPostRequest);
         List<Skill> selectedSkillByUser = getSkillBySkillId(jobPostRequest.getSelectedSkillIds());
         JobPost jobPost = jobPostMapper.toEntityJobPostDraft(jobPostRequest, clientProfileByUser);
                jobPost.setSkills(selectedSkillByUser);
@@ -74,15 +78,29 @@ public class JobPostService implements IJobPost {
 
     //lấy danh sách job của client mới nhất . ( đẩy dử liệu lên để cho người dùng chỉnh sửa )
     @Override
+    @Transactional
     public List<JobPostResponse> GetMyJobPostByClient() {
         ClientProfile clientProfile = getCurrentClientProfile();
+        jobPostRepo.closeOpenJobPostsWithAcceptedInvitation(
+                clientProfile,
+                JobpostStatus.OPEN,
+                JobpostStatus.CLOSED,
+                InvitationStatus.ACCEPTED
+        );
         return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile).stream().map(jobPostMapper::toResponse).toList();
     }
 
     //lấy danh sách job của client có status Opend hiện tại
     @Override
     public List<JobPostResponse> GetAllJobPostPublic() {
-        return jobPostRepo.findByJobPostStatus(JobpostStatus.OPEN).stream().map(jobPostMapper::toResponse).toList();
+        return jobPostRepo.findPublicOpenJobPosts(
+                JobpostStatus.OPEN,
+                List.of(
+                        InvitationStatus.PENDING,
+                        InvitationStatus.ACCEPTED,
+                        InvitationStatus.PAYMENT_EXPIRED
+                )
+        ).stream().map(jobPostMapper::toResponse).toList();
     }
 
     public PageResponse<JobPostResponse> getAllPublicJobPostsPage(JobPostFilterRequest jobPostFilterRequest) {
@@ -164,6 +182,31 @@ public class JobPostService implements IJobPost {
 
         // Check timeline
         contentManagerService.validateKeywordInput(request.getTimeLine());
+
+        if (request.getBudgets() == null || request.getBudgets().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new GlobalException(400, "Budget must be greater than 0");
+        }
+    }
+
+    private void ensureNoDuplicateActiveJobPost(ClientProfile clientProfile, JobPostRequest request) {
+        boolean duplicated = jobPostRepo.existsDuplicateActiveJobPost(
+                clientProfile,
+                List.of(JobpostStatus.DRAFT, JobpostStatus.OPEN),
+                normalizeText(request.getTitle()),
+                normalizeText(request.getRequirementDescription()),
+                normalizeText(request.getBusinessGoal()),
+                normalizeText(request.getMainFeatures()),
+                request.getBudgets(),
+                normalizeText(request.getTimeLine())
+        );
+
+        if (duplicated) {
+            throw new GlobalException(409, "Duplicate job post request. Please do not submit the same job post twice");
+        }
+    }
+
+    private String normalizeText(String value) {
+        return value == null ? "" : value.trim().toLowerCase();
     }
 
     private List<Skill> getSkillBySkillId(List<Long> selectedSkillIds) {
