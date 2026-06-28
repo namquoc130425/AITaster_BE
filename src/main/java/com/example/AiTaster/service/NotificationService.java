@@ -3,6 +3,7 @@ package com.example.AiTaster.service;
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ReferenceType;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.dto.request.NotificationCreateRequest;
 import com.example.AiTaster.dto.response.NotificationResponse;
 import com.example.AiTaster.dto.response.UnreadNotificationCountResponse;
@@ -10,6 +11,7 @@ import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.NotificationMapper;
 import com.example.AiTaster.repository.NotificationRepo;
+import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.INotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -26,6 +28,7 @@ public class NotificationService implements INotificationService {
     private final NotificationMapper notificationMapper;
     private final CurrentUserService currentUserService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepo userRepo;
 
     @Override
     @Transactional
@@ -268,6 +271,75 @@ public class NotificationService implements INotificationService {
                         .notificationType(NotificationType.INVITATION)
                         .referenceType(ReferenceType.INVITATION)
                         .referenceId(invitation.getInvitationId())
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void notifyAdminNewReport(Report report) {
+        if (report == null || report.getReporter() == null) {
+            return;
+        }
+
+        List<User> admins =
+                userRepo.findByRole(Role.ADMIN);
+
+        if (admins == null || admins.isEmpty()) {
+            return;
+        }
+
+        String reporterName =
+                safeName(report.getReporter());
+
+        for (User admin : admins) {
+            createAndSend(
+                    admin,
+                    NotificationCreateRequest.builder()
+                            .title("Có report mới")
+                            .content(reporterName + " đã gửi một report mới: " + report.getReportTitle())
+                            .notificationType(NotificationType.REPORT)
+                            .referenceType(ReferenceType.REPORT)
+                            .referenceId(report.getReportId())
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void notifyReporterReportResolved(Report report) {
+        if (report == null || report.getReporter() == null) {
+            return;
+        }
+
+        createAndSend(
+                report.getReporter(),
+                NotificationCreateRequest.builder()
+                        .title("Report của bạn đã được xử lý")
+                        .content("Admin đã xử lý report: " + report.getReportTitle())
+                        .notificationType(NotificationType.REPORT)
+                        .referenceType(ReferenceType.REPORT)
+                        .referenceId(report.getReportId())
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void notifyReporterReportRejected(Report report) {
+        if (report == null || report.getReporter() == null) {
+            return;
+        }
+
+        createAndSend(
+                report.getReporter(),
+                NotificationCreateRequest.builder()
+                        .title("Report của bạn đã bị từ chối")
+                        .content("Admin đã từ chối report: " + report.getReportTitle())
+                        .notificationType(NotificationType.REPORT)
+                        .referenceType(ReferenceType.REPORT)
+                        .referenceId(report.getReportId())
                         .build()
         );
     }

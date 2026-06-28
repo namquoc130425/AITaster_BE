@@ -11,5 +11,6 @@ public enum ReferenceType {
     WITHDRAW,
     DISPUTE,
     CONVERSATION,
+    REPORT,
     NONE
 }

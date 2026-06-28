@@ -33,4 +33,10 @@ public interface INotificationService {
     void notifyInvitationAccepted(Invitation invitation);
 
     void notifyInvitationRejected(Invitation invitation);
+
+    void notifyAdminNewReport(com.example.AiTaster.entity.Report report);
+
+    void notifyReporterReportResolved(com.example.AiTaster.entity.Report report);
+
+    void notifyReporterReportRejected(com.example.AiTaster.entity.Report report);
 }

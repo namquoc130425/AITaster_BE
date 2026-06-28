@@ -1,8 +1,9 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.ReportStatus;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.dto.request.ReportRequest;
-import com.example.AiTaster.dto.request.ReportStatusRequest;
 import com.example.AiTaster.dto.response.ReportResponse;
 import com.example.AiTaster.entity.Report;
 import com.example.AiTaster.entity.User;
@@ -13,6 +14,8 @@ import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,104 +27,195 @@ public class ReportService implements IReportService {
     private final UserRepo userRepo;
     private final CurrentUserService currentUserService;
     private final ReportMapper reportMapper;
+    private final LocalFileStorageService localFileStorageService;
+    private final NotificationService notificationService;
 
     @Override
-    public ReportResponse createReport( // trả thêm dữ liệu profile của 2 thằng báo và bị báo
+    @Transactional
+    public ReportResponse createReport(
             ReportRequest request
     ) {
-
         User reporter =
                 currentUserService.getCurrentUser();
 
         User reportedUser =
-                userRepo.findById(
-                        request.getReportedUserId()
-                ).orElseThrow(
-                        () -> new GlobalException(
-                                400,
-                                "User not found"
-                        )
-                );
+                getUserById(request.getReportedUserId());
+
+        if (reporter.getUserId().equals(reportedUser.getUserId())) {
+            throw new GlobalException(
+                    ErrorCode.CANNOT_REPORT_YOURSELF
+            );
+        }
 
         Report report =
-                reportMapper.toEntity(
-                        request
+                reportMapper.toEntity(request);
+
+        String evidenceUrl =
+                localFileStorageService.saveReportEvidence(
+                        request.getEvidenceFile()
                 );
 
         report.setReporter(reporter);
         report.setReportedUser(reportedUser);
-        report.setReportStatus(
-                ReportStatus.PENDING
-        );
+        report.setEvidenceFile(evidenceUrl);
+        report.setReportStatus(ReportStatus.PENDING);
 
-        report =
+        Report saved =
                 reportRepo.save(report);
 
-        return reportMapper.toResponse(
-                report
-        );
+        notificationService.notifyAdminNewReport(saved);
+
+        return reportMapper.toResponse(saved);
     }
 
     @Override
+    @Transactional
     public ReportResponse updateReport(
             Long reportId,
             ReportRequest request
     ) {
+        User currentUser =
+                currentUserService.getCurrentUser();
 
         Report report =
                 getReport(reportId);
 
+        checkReporterOwner(report, currentUser);
+
+        if (!ReportStatus.PENDING.equals(report.getReportStatus())) {
+            throw new GlobalException(
+                    ErrorCode.CANNOT_UPDATE_REPORT
+            );
+        }
+
         User reportedUser =
-                userRepo.findById(
-                        request.getReportedUserId()
-                ).orElseThrow(
-                        () -> new GlobalException(
-                                400,
-                                "User not found"
-                        )
-                );
+                getUserById(request.getReportedUserId());
+
+        if (currentUser.getUserId().equals(reportedUser.getUserId())) {
+            throw new GlobalException(
+                    ErrorCode.CANNOT_REPORT_YOURSELF
+            );
+        }
 
         reportMapper.updateEntity(
                 request,
                 report
         );
 
-        report.setReportedUser(
-                reportedUser
-        );
+        report.setReportedUser(reportedUser);
 
-        report =
-                reportRepo.save(
-                        report
-                );
+        if (request.getEvidenceFile() != null
+                && !request.getEvidenceFile().isEmpty()) {
 
-        return reportMapper.toResponse(
-                report
-        );
+            String evidenceUrl =
+                    localFileStorageService.saveReportEvidence(
+                            request.getEvidenceFile()
+                    );
+
+            report.setEvidenceFile(evidenceUrl);
+        }
+
+        Report saved =
+                reportRepo.save(report);
+
+        return reportMapper.toResponse(saved);
     }
 
     @Override
     public ReportResponse getReportById(
             Long reportId
     ) {
-        return reportMapper.toResponse(
-                getReport(reportId)
+
+        User currentUser =
+                currentUserService.getCurrentUser();
+
+        Report report =
+                getReport(reportId);
+
+        if (isAdmin(currentUser) || isReporter(report, currentUser)) {
+            return reportMapper.toResponse(report);
+        }
+
+        throw new GlobalException(
+                ErrorCode.NOT_REPORT_OWNER
         );
     }
 
     @Override
     public List<ReportResponse> getAllReports() {
 
-        return reportRepo.findAll()
+        User currentUser =
+                currentUserService.getCurrentUser();
+
+        checkAdmin(currentUser);
+
+        return reportRepo.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(reportMapper::toResponse)
                 .toList();
     }
 
     @Override
+    public List<ReportResponse> getMyReports() {
+
+        User currentUser =
+                currentUserService.getCurrentUser();
+
+        return reportRepo.findByReporterOrderByCreatedAtDesc(
+                        currentUser
+                )
+                .stream()
+                .map(reportMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public ReportResponse changeReportStatus(
+            Long reportId,
+            ReportStatus reportStatus,
+            String adminResponse
+    ) {
+
+        User currentUser =
+                currentUserService.getCurrentUser();
+
+        checkAdmin(currentUser);
+
+        Report report =
+                getReport(reportId);
+
+        report.setReportStatus(reportStatus);
+        report.setAdminResponse(adminResponse);
+
+        Report saved =
+                reportRepo.save(report);
+
+        switch (reportStatus) {
+
+            case RESOLVED ->
+                    notificationService.notifyReporterReportResolved(saved);
+
+            case REJECTED ->
+                    notificationService.notifyReporterReportRejected(saved);
+
+            default -> {
+            }
+        }
+
+        return reportMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public Void deleteReport(
             Long reportId
     ) {
+
+        User currentUser =
+                currentUserService.getCurrentUser();
+
+        checkAdmin(currentUser);
 
         Report report =
                 getReport(reportId);
@@ -131,38 +225,69 @@ public class ReportService implements IReportService {
         return null;
     }
 
-    @Override
-    public ReportResponse changeReportStatus(
-            Long reportId,
-            ReportStatusRequest request
-    ) {
-
-        Report report = getReport(reportId);
-
-        report.setReportStatus(
-                request.getReportStatus()
-        );
-
-        report.setAdminResponse(
-                request.getAdminResponse()
-        );
-
-        Report saved =
-                reportRepo.save(report);
-
-        return reportMapper.toResponse(saved);
-    }
-
     private Report getReport(
             Long reportId
     ) {
 
         return reportRepo.findById(reportId)
-                .orElseThrow(
-                        () -> new GlobalException(
-                                400,
-                                "Report not found"
+                .orElseThrow(() ->
+                        new GlobalException(
+                                ErrorCode.REPORT_NOT_FOUND
                         )
                 );
+    }
+
+    private User getUserById(
+            Long userId
+    ) {
+
+        return userRepo.findById(userId)
+                .orElseThrow(() ->
+                        new GlobalException(
+                                ErrorCode.USER_NOT_FOUND
+                        )
+                );
+    }
+
+    private void checkReporterOwner(
+            Report report,
+            User currentUser
+    ) {
+
+        if (!isReporter(report, currentUser)) {
+            throw new GlobalException(
+                    ErrorCode.NOT_REPORT_OWNER
+            );
+        }
+    }
+
+    private boolean isReporter(
+            Report report,
+            User currentUser
+    ) {
+
+        return report.getReporter()
+                .getUserId()
+                .equals(currentUser.getUserId());
+    }
+
+    private boolean isAdmin(
+            User user
+    ) {
+
+        return Role.ADMIN.equals(
+                user.getRole()
+        );
+    }
+
+    private void checkAdmin(
+            User user
+    ) {
+
+        if (!isAdmin(user)) {
+            throw new GlobalException(
+                    ErrorCode.INVALID_ROLE
+            );
+        }
     }
 }

@@ -10,5 +10,6 @@ public enum NotificationType {
     REVIEW,
     WITHDRAW,
     DISPUTE,
+    REPORT,
     SYSTEM
 }
