@@ -34,6 +34,7 @@ public class InvitationService implements Iinvitation {
     private final JobPostRepo jobPostRepo;
     private final InvitationRepo invitationRepo;
     private final InvitationMapper invitationMapper;
+    private final NotificationService notificationService;
     private final ProjectRepo projectRepo;
     private final ProjectEscrowRepo projectEscrowRepo;
 
@@ -80,6 +81,7 @@ public class InvitationService implements Iinvitation {
 
         Invitation saveInvitation = invitationRepo.save(invitation);
 
+        notificationService.notifyInvitationSent(saveInvitation);
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -137,6 +139,9 @@ public class InvitationService implements Iinvitation {
         invitation.setRespondedAt(LocalDateTime.now());
 
         Invitation saveInvitation = invitationRepo.save(invitation);
+
+        notificationService.notifyInvitationAccepted(saveInvitation);
+
 //     //tạo project
 //     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
 //     // tạo project
@@ -155,6 +160,9 @@ public class InvitationService implements Iinvitation {
         invitation.setInvitationStatus(InvitationStatus.REJECTED);
         invitation.setRespondedAt(LocalDateTime.now());
         Invitation saveInvitation = invitationRepo.save(invitation);
+
+        notificationService.notifyInvitationRejected(saveInvitation);
+
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
 
