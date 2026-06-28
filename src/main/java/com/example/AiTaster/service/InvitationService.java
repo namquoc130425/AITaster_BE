@@ -2,6 +2,7 @@ package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.EscrowStatus;
 import com.example.AiTaster.constant.InvitationStatus;
+import com.example.AiTaster.constant.JobpostStatus;
 import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.constant.TimelineUnit;
 import com.example.AiTaster.dto.request.InvitationAcceptRequest;
@@ -138,10 +139,13 @@ public class InvitationService implements Iinvitation {
 
         invitation.setRespondedAt(LocalDateTime.now());
 
-        Invitation saveInvitation = invitationRepo.save(invitation);
+        JobPost jobPost = invitation.getExpertApplication().getJobpost();
+        jobPost.setJobPostStatus(JobpostStatus.CLOSED);
+
+        Invitation saveInvitation = invitationRepo.saveAndFlush(invitation);
+        jobPostRepo.updateJobPostStatus(jobPost.getJobPostId(), JobpostStatus.CLOSED);
 
         notificationService.notifyInvitationAccepted(saveInvitation);
-
 //     //tạo project
 //     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
 //     // tạo project
