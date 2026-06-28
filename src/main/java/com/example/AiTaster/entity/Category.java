@@ -3,7 +3,10 @@ package com.example.AiTaster.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -25,6 +28,12 @@ public class Category {
 
     @Column(columnDefinition = "TEXT")
     String description;
+
+    @CreationTimestamp
+    LocalDateTime createAt;
+
+    @UpdateTimestamp
+    LocalDateTime updateAt;
 
 
     // cascade all là xóa tk cha thì tk con sẽ xóa theo
