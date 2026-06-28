@@ -51,7 +51,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 ,invitation.getInvitationId()
                 ,PaymentStatus.PENDING
                 ,PaymentMethod.SEPAY).orElseGet(() -> createPendingProjectPayment(invitation, currentUser));
-        SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction, invitation);
+        SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);
         // Trả về response đầy đủ cho FE render form hidden + submit.
         return paymentTransactionMapper.toInvitationPaymentResponse(
                 paymentTransaction,
@@ -70,7 +70,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 .targetWalletId(null)
                 .amount(invitation.getFinalOfferedPrice())
                 .currency("VND")
-                .transactionType(TransactionType.PROJECT_ESCROW)
+                .transactionType(TransactionType.PROJECT_ESCROW_DEPOSIT)
                 .paymentMethod(PaymentMethod.SEPAY)
                 .paymentStatus(PaymentStatus.PENDING)
                 .referenceId(invitation.getInvitationId())
