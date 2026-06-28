@@ -4,8 +4,10 @@ import com.example.AiTaster.constant.UserWalletStatus;
 import com.example.AiTaster.dto.request.UserWalletRequest;
 import com.example.AiTaster.dto.request.WalletBalanceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
+import com.example.AiTaster.dto.response.ProjectPaymentResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.service.UserWalletService;
+import com.example.AiTaster.service.WalletDepositService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.util.List;
 public class UserWalletController {
 
     private final UserWalletService userWalletService;
+    private final WalletDepositService walletDepositService;
 
     @PostMapping
     public ResponseEntity<APIResponse<UserWalletResponse>>
@@ -92,6 +95,22 @@ public class UserWalletController {
                                 walletId,
                                 request.getAmount()
                         )
+                )
+        );
+    }
+
+    @PostMapping("/{walletId}/deposit/sepay")
+    public ResponseEntity<APIResponse<ProjectPaymentResponse>>
+    createSepayDeposit(
+            @PathVariable Long walletId,
+            @RequestBody WalletBalanceRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "SePay wallet deposit created",
+                        walletDepositService.createWalletDeposit(walletId, request)
                 )
         );
     }

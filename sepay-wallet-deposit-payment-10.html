@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <title>SePay Wallet Deposit Test</title>
+</head>
+<body>
+<form id="sepayForm" action="https://pay-sandbox.sepay.vn/v1/checkout/init" method="POST">
+    <input type="hidden" name="order_amount" value="10000">
+    <input type="hidden" name="merchant" value="SP-TEST-NV89A638">
+    <input type="hidden" name="currency" value="VND">
+    <input type="hidden" name="operation" value="PURCHASE">
+    <input type="hidden" name="order_description" value="AIT-WALLET-IN-3-C019A3BF">
+    <input type="hidden" name="order_invoice_number" value="AIT-WALLET-IN-3-C019A3BF">
+    <input type="hidden" name="success_url" value="https://abc123.ngrok-free.app/payment/success">
+    <input type="hidden" name="error_url" value="https://abc123.ngrok-free.app/payment/error">
+    <input type="hidden" name="cancel_url" value="https://abc123.ngrok-free.app/payment/cancel">
+    <input type="hidden" name="signature" value="nN9iuSl+jnxasGyXUvLAGMQL7J6eeEekmD93BAsSDs8=">
+    <button type="submit">Open SePay</button>
+</form>
+<script>
+    document.getElementById("sepayForm").submit();
+</script>
+</body>
+</html>
