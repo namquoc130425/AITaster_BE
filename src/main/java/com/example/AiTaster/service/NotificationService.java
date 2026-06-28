@@ -1,22 +1,26 @@
 package com.example.AiTaster.service;
 
-import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ReferenceType;
 import com.example.AiTaster.constant.Role;
-import com.example.AiTaster.dto.request.NotificationCreateRequest;
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.response.NotificationResponse;
 import com.example.AiTaster.dto.response.UnreadNotificationCountResponse;
 import com.example.AiTaster.entity.*;
+import com.example.AiTaster.event.NotificationCreatedEvent;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.NotificationMapper;
 import com.example.AiTaster.repository.NotificationRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.INotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 
@@ -25,27 +29,43 @@ import java.util.List;
 public class NotificationService implements INotificationService {
 
     private final NotificationRepo notificationRepo;
+    private final UserRepo userRepo;
     private final NotificationMapper notificationMapper;
     private final CurrentUserService currentUserService;
     private final SimpMessagingTemplate messagingTemplate;
-    private final UserRepo userRepo;
+    private final ApplicationEventPublisher eventPublisher;
 
+    /*
+     * Dùng cho trường hợp cần tạo notification ngay.
+     * Thông thường business service KHÔNG gọi trực tiếp method này.
+     * Business service nên gọi notify...(), để notification chạy AFTER_COMMIT.
+     */
     @Override
     @Transactional
-    public NotificationResponse createAndSend(
-            User receiver,
-            NotificationCreateRequest request
+    public NotificationResponse createAndPushNow(
+            Long receiverUserId,
+            String title,
+            String content,
+            NotificationType notificationType,
+            ReferenceType referenceType,
+            Long referenceId
     ) {
-        if (receiver == null) {
-            throw new GlobalException(ErrorCode.USER_NOT_FOUND);
-        }
-
-        if (request == null) {
-            throw new GlobalException(ErrorCode.FIELD_REQUIRED);
-        }
+        User receiver =
+                userRepo.findById(receiverUserId)
+                        .orElseThrow(() ->
+                                new GlobalException(ErrorCode.USER_NOT_FOUND)
+                        );
 
         Notification notification =
-                notificationMapper.toEntity(request, receiver);
+                Notification.builder()
+                        .user(receiver)
+                        .title(title)
+                        .content(content)
+                        .notificationType(notificationType)
+                        .referenceType(referenceType)
+                        .referenceId(referenceId)
+                        .isRead(false)
+                        .build();
 
         Notification saved =
                 notificationRepo.save(notification);
@@ -53,9 +73,103 @@ public class NotificationService implements INotificationService {
         NotificationResponse response =
                 notificationMapper.toResponse(saved);
 
-        pushNotification(receiver.getUserId(), response);
+        pushToUser(receiver, response);
 
         return response;
+    }
+
+    /*
+     * Generic notification publisher.
+     * Đây là API reusable cho những service nghiệp vụ sau này.
+     */
+    @Override
+    public void notify(
+            User receiver,
+            NotificationType notificationType,
+            ReferenceType referenceType,
+            Long referenceId,
+            String title,
+            String content
+    ) {
+        if (receiver == null || receiver.getUserId() == null) {
+            return;
+        }
+
+        eventPublisher.publishEvent(
+                NotificationCreatedEvent.builder()
+                        .receiverUserId(receiver.getUserId())
+                        .title(title)
+                        .content(content)
+                        .notificationType(notificationType)
+                        .referenceType(referenceType)
+                        .referenceId(referenceId)
+                        .build()
+        );
+    }
+
+    /*
+     * Sau khi transaction của nghiệp vụ chính commit thành công,
+     * method này mới chạy.
+     *
+     * Nếu nghiệp vụ chính rollback,
+     * notification sẽ không được tạo và không bị push ảo lên FE.
+     */
+    @TransactionalEventListener(
+            phase = TransactionPhase.AFTER_COMMIT,
+            fallbackExecution = true
+    )
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleNotificationCreatedEvent(
+            NotificationCreatedEvent event
+    ) {
+        createAndPushNow(
+                event.getReceiverUserId(),
+                event.getTitle(),
+                event.getContent(),
+                event.getNotificationType(),
+                event.getReferenceType(),
+                event.getReferenceId()
+        );
+    }
+
+    /*
+     * Push riêng tư theo user destination.
+     *
+     * FE subscribe:
+     * /user/queue/notifications
+     *
+     * Vì WebSocket Principal hiện tại là UsernamePasswordAuthenticationToken,
+     * Spring dùng principal.getName().
+     * Với UserDetails, getName() thường trả về username.
+     *
+     * Nên ở đây gửi theo receiver.getUsername().
+     */
+    private void pushToUser(
+            User receiver,
+            NotificationResponse response
+    ) {
+        if (receiver.getUsername() == null || receiver.getUsername().isBlank()) {
+            return;
+        }
+
+        messagingTemplate.convertAndSendToUser(
+                receiver.getUsername(),
+                "/queue/notifications",
+                response
+        );
+
+        /*
+         * Optional backward compatible:
+         * Nếu FE cũ vẫn subscribe /topic/users/{id}/notifications
+         * thì vẫn nhận được.
+         *
+         * Sau khi FE chuyển hẳn sang /user/queue/notifications,
+         * có thể xóa đoạn này.
+         */
+        messagingTemplate.convertAndSend(
+                "/topic/users/" + receiver.getUserId() + "/notifications",
+                response
+        );
     }
 
     @Override
@@ -123,51 +237,66 @@ public class NotificationService implements INotificationService {
                 .build();
     }
 
+    /*
+     * CASE 1:
+     * Expert apply job post.
+     *
+     * Receiver: Client owner của JobPost.
+     */
     @Override
-    @Transactional
-    public void notifyExpertApplied(ExpertApplication application) {
-        if (application == null) {
-            return;
-        }
-
-        JobPost jobPost =
-                application.getJobpost();
-
-        ExpertProfile expertProfile =
-                application.getExpertProfile();
-
-        if (jobPost == null
-                || jobPost.getClientProfile() == null
-                || jobPost.getClientProfile().getUser() == null
-                || expertProfile == null
-                || expertProfile.getUser() == null) {
+    public void notifyExpertApplied(
+            ExpertApplication application
+    ) {
+        if (application == null
+                || application.getJobpost() == null
+                || application.getJobpost().getClientProfile() == null
+                || application.getJobpost().getClientProfile().getUser() == null
+                || application.getExpertProfile() == null
+                || application.getExpertProfile().getUser() == null) {
             return;
         }
 
         User clientUser =
-                jobPost.getClientProfile().getUser();
+                application.getJobpost()
+                        .getClientProfile()
+                        .getUser();
+
+        User expertUser =
+                application.getExpertProfile()
+                        .getUser();
 
         String expertName =
-                safeName(expertProfile.getUser());
+                safeName(expertUser);
 
         String jobTitle =
-                safeText(jobPost.getTitle(), "job post của bạn");
+                safeText(
+                        application.getJobpost().getTitle(),
+                        "job post của bạn"
+                );
 
-        createAndSend(
+        notify(
                 clientUser,
-                NotificationCreateRequest.builder()
-                        .title("Có expert mới ứng tuyển")
-                        .content(expertName + " đã ứng tuyển vào job post: " + jobTitle)
-                        .notificationType(NotificationType.APPLICATION)
-                        .referenceType(ReferenceType.APPLICATION)
-                        .referenceId(application.getApplicationId())
-                        .build()
+                NotificationType.APPLICATION,
+                ReferenceType.APPLICATION,
+                application.getApplicationId(),
+                "Có expert mới ứng tuyển",
+                expertName + " đã ứng tuyển vào job post: " + jobTitle
         );
     }
 
+    /*
+     * CASE 2:
+     * Client gửi invitation.
+     *
+     * Receiver: Expert được mời.
+     *
+     * Đây chính là case FE nói đang thiếu:
+     * client làm action nhưng expert không biết.
+     */
     @Override
-    @Transactional
-    public void notifyInvitationSent(Invitation invitation) {
+    public void notifyInvitationSent(
+            Invitation invitation
+    ) {
         if (invitation == null
                 || invitation.getExpertApplication() == null
                 || invitation.getExpertApplication().getExpertProfile() == null
@@ -181,28 +310,38 @@ public class NotificationService implements INotificationService {
                         .getUser();
 
         String projectTitle =
-                safeText(invitation.getProjectTitle(), "dự án mới");
+                safeText(
+                        invitation.getProjectTitle(),
+                        "dự án mới"
+                );
 
-        createAndSend(
+        notify(
                 expertUser,
-                NotificationCreateRequest.builder()
-                        .title("Bạn nhận được lời mời dự án")
-                        .content("Client đã gửi cho bạn lời mời tham gia dự án: " + projectTitle)
-                        .notificationType(NotificationType.INVITATION)
-                        .referenceType(ReferenceType.INVITATION)
-                        .referenceId(invitation.getInvitationId())
-                        .build()
+                NotificationType.INVITATION,
+                ReferenceType.INVITATION,
+                invitation.getInvitationId(),
+                "Bạn nhận được lời mời dự án",
+                "Client đã gửi cho bạn lời mời tham gia dự án: " + projectTitle
         );
     }
 
+    /*
+     * CASE 3:
+     * Expert accept invitation.
+     *
+     * Receiver: Client.
+     */
     @Override
-    @Transactional
-    public void notifyInvitationAccepted(Invitation invitation) {
+    public void notifyInvitationAccepted(
+            Invitation invitation
+    ) {
         if (invitation == null
                 || invitation.getExpertApplication() == null
                 || invitation.getExpertApplication().getJobpost() == null
                 || invitation.getExpertApplication().getJobpost().getClientProfile() == null
-                || invitation.getExpertApplication().getJobpost().getClientProfile().getUser() == null) {
+                || invitation.getExpertApplication().getJobpost().getClientProfile().getUser() == null
+                || invitation.getExpertApplication().getExpertProfile() == null
+                || invitation.getExpertApplication().getExpertProfile().getUser() == null) {
             return;
         }
 
@@ -221,28 +360,38 @@ public class NotificationService implements INotificationService {
                 safeName(expertUser);
 
         String projectTitle =
-                safeText(invitation.getProjectTitle(), "dự án");
+                safeText(
+                        invitation.getProjectTitle(),
+                        "dự án"
+                );
 
-        createAndSend(
+        notify(
                 clientUser,
-                NotificationCreateRequest.builder()
-                        .title("Expert đã chấp nhận lời mời")
-                        .content(expertName + " đã chấp nhận lời mời dự án: " + projectTitle)
-                        .notificationType(NotificationType.INVITATION)
-                        .referenceType(ReferenceType.INVITATION)
-                        .referenceId(invitation.getInvitationId())
-                        .build()
+                NotificationType.INVITATION,
+                ReferenceType.INVITATION,
+                invitation.getInvitationId(),
+                "Expert đã chấp nhận lời mời",
+                expertName + " đã chấp nhận lời mời dự án: " + projectTitle
         );
     }
 
+    /*
+     * CASE 4:
+     * Expert reject invitation.
+     *
+     * Receiver: Client.
+     */
     @Override
-    @Transactional
-    public void notifyInvitationRejected(Invitation invitation) {
+    public void notifyInvitationRejected(
+            Invitation invitation
+    ) {
         if (invitation == null
                 || invitation.getExpertApplication() == null
                 || invitation.getExpertApplication().getJobpost() == null
                 || invitation.getExpertApplication().getJobpost().getClientProfile() == null
-                || invitation.getExpertApplication().getJobpost().getClientProfile().getUser() == null) {
+                || invitation.getExpertApplication().getJobpost().getClientProfile().getUser() == null
+                || invitation.getExpertApplication().getExpertProfile() == null
+                || invitation.getExpertApplication().getExpertProfile().getUser() == null) {
             return;
         }
 
@@ -261,23 +410,29 @@ public class NotificationService implements INotificationService {
                 safeName(expertUser);
 
         String projectTitle =
-                safeText(invitation.getProjectTitle(), "dự án");
+                safeText(
+                        invitation.getProjectTitle(),
+                        "dự án"
+                );
 
-        createAndSend(
+        notify(
                 clientUser,
-                NotificationCreateRequest.builder()
-                        .title("Expert đã từ chối lời mời")
-                        .content(expertName + " đã từ chối lời mời dự án: " + projectTitle)
-                        .notificationType(NotificationType.INVITATION)
-                        .referenceType(ReferenceType.INVITATION)
-                        .referenceId(invitation.getInvitationId())
-                        .build()
+                NotificationType.INVITATION,
+                ReferenceType.INVITATION,
+                invitation.getInvitationId(),
+                "Expert đã từ chối lời mời",
+                expertName + " đã từ chối lời mời dự án: " + projectTitle
         );
     }
 
+    /*
+     * REPORT:
+     * User tạo report -> Admin nhận notification.
+     */
     @Override
-    @Transactional
-    public void notifyAdminNewReport(Report report) {
+    public void notifyAdminNewReport(
+            Report report
+    ) {
         if (report == null || report.getReporter() == null) {
             return;
         }
@@ -293,68 +448,70 @@ public class NotificationService implements INotificationService {
                 safeName(report.getReporter());
 
         for (User admin : admins) {
-            createAndSend(
+            notify(
                     admin,
-                    NotificationCreateRequest.builder()
-                            .title("Có report mới")
-                            .content(reporterName + " đã gửi một report mới: " + report.getReportTitle())
-                            .notificationType(NotificationType.REPORT)
-                            .referenceType(ReferenceType.REPORT)
-                            .referenceId(report.getReportId())
-                            .build()
+                    NotificationType.REPORT,
+                    ReferenceType.REPORT,
+                    report.getReportId(),
+                    "Có report mới",
+                    reporterName + " đã gửi một report mới: " + report.getReportTitle()
             );
         }
     }
 
+    /*
+     * REPORT:
+     * Admin xử lý report -> Reporter nhận notification.
+     */
     @Override
-    @Transactional
-    public void notifyReporterReportResolved(Report report) {
-        if (report == null || report.getReporter() == null) {
-            return;
-        }
-
-        createAndSend(
-                report.getReporter(),
-                NotificationCreateRequest.builder()
-                        .title("Report của bạn đã được xử lý")
-                        .content("Admin đã xử lý report: " + report.getReportTitle())
-                        .notificationType(NotificationType.REPORT)
-                        .referenceType(ReferenceType.REPORT)
-                        .referenceId(report.getReportId())
-                        .build()
-        );
-    }
-
-    @Override
-    @Transactional
-    public void notifyReporterReportRejected(Report report) {
-        if (report == null || report.getReporter() == null) {
-            return;
-        }
-
-        createAndSend(
-                report.getReporter(),
-                NotificationCreateRequest.builder()
-                        .title("Report của bạn đã bị từ chối")
-                        .content("Admin đã từ chối report: " + report.getReportTitle())
-                        .notificationType(NotificationType.REPORT)
-                        .referenceType(ReferenceType.REPORT)
-                        .referenceId(report.getReportId())
-                        .build()
-        );
-    }
-
-    private void pushNotification(
-            Long userId,
-            NotificationResponse response
+    public void notifyReporterReportResolved(
+            Report report
     ) {
-        messagingTemplate.convertAndSend(
-                "/topic/users/" + userId + "/notifications",
-                response
+        if (report == null || report.getReporter() == null) {
+            return;
+        }
+
+        notify(
+                report.getReporter(),
+                NotificationType.REPORT,
+                ReferenceType.REPORT,
+                report.getReportId(),
+                "Report của bạn đã được xử lý",
+                safeText(
+                        report.getAdminResponse(),
+                        "Admin đã xử lý report: " + report.getReportTitle()
+                )
         );
     }
 
-    private Notification getNotification(Long notificationId) {
+    /*
+     * REPORT:
+     * Admin reject report -> Reporter nhận notification.
+     */
+    @Override
+    public void notifyReporterReportRejected(
+            Report report
+    ) {
+        if (report == null || report.getReporter() == null) {
+            return;
+        }
+
+        notify(
+                report.getReporter(),
+                NotificationType.REPORT,
+                ReferenceType.REPORT,
+                report.getReportId(),
+                "Report của bạn đã bị từ chối",
+                safeText(
+                        report.getAdminResponse(),
+                        "Admin đã từ chối report: " + report.getReportTitle()
+                )
+        );
+    }
+
+    private Notification getNotification(
+            Long notificationId
+    ) {
         return notificationRepo.findByNotificationId(notificationId)
                 .orElseThrow(() ->
                         new GlobalException(ErrorCode.NOTIFICATION_NOT_FOUND)
@@ -372,7 +529,9 @@ public class NotificationService implements INotificationService {
         }
     }
 
-    private String safeName(User user) {
+    private String safeName(
+            User user
+    ) {
         if (user == null) {
             return "Người dùng";
         }
@@ -388,7 +547,10 @@ public class NotificationService implements INotificationService {
         return "Người dùng";
     }
 
-    private String safeText(String value, String fallback) {
+    private String safeText(
+            String value,
+            String fallback
+    ) {
         if (value == null || value.isBlank()) {
             return fallback;
         }

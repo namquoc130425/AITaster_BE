@@ -14,51 +14,38 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
 @Order(Ordered.HIGHEST_PRECEDENCE + 99)
-public class WebSocketConfig
-        implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final WebSocketAuthChannelInterceptor
-            webSocketAuthChannelInterceptor;
+    private final WebSocketAuthChannelInterceptor webSocketAuthChannelInterceptor;
 
     @Override
-    public void registerStompEndpoints(
-            StompEndpointRegistry registry
-    ) {
-        registry
-                .addEndpoint("/ws")
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 
     @Override
-    public void configureMessageBroker(
-            MessageBrokerRegistry registry
-    ) {
-        /*
-         * Server gửi dữ liệu ra những destination bắt đầu bằng:
-         * /topic
-         */
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker(
                 "/topic",
                 "/queue"
         );
 
-        /*
-         * Client gửi dữ liệu tới controller qua:
-         * /app/messages/send
-         * /app/conversations/read
-         */
         registry.setApplicationDestinationPrefixes("/app");
 
+        /*
+         * FE subscribe:
+         * /user/queue/notifications
+         *
+         * BE push:
+         * convertAndSendToUser(username, "/queue/notifications", response)
+         */
         registry.setUserDestinationPrefix("/user");
     }
 
     @Override
-    public void configureClientInboundChannel(
-            ChannelRegistration registration
-    ) {
-        registration.interceptors(
-                webSocketAuthChannelInterceptor
-        );
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketAuthChannelInterceptor);
     }
 }

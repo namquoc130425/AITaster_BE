@@ -1,19 +1,32 @@
 package com.example.AiTaster.service.imp;
 
-import com.example.AiTaster.dto.request.NotificationCreateRequest;
 import com.example.AiTaster.dto.response.NotificationResponse;
 import com.example.AiTaster.dto.response.UnreadNotificationCountResponse;
 import com.example.AiTaster.entity.ExpertApplication;
 import com.example.AiTaster.entity.Invitation;
+import com.example.AiTaster.entity.Report;
 import com.example.AiTaster.entity.User;
 
 import java.util.List;
 
 public interface INotificationService {
 
-    NotificationResponse createAndSend(
+    NotificationResponse createAndPushNow(
+            Long receiverUserId,
+            String title,
+            String content,
+            com.example.AiTaster.constant.NotificationType notificationType,
+            com.example.AiTaster.constant.ReferenceType referenceType,
+            Long referenceId
+    );
+
+    void notify(
             User receiver,
-            NotificationCreateRequest request
+            com.example.AiTaster.constant.NotificationType notificationType,
+            com.example.AiTaster.constant.ReferenceType referenceType,
+            Long referenceId,
+            String title,
+            String content
     );
 
     List<NotificationResponse> getMyNotifications();
@@ -34,9 +47,9 @@ public interface INotificationService {
 
     void notifyInvitationRejected(Invitation invitation);
 
-    void notifyAdminNewReport(com.example.AiTaster.entity.Report report);
+    void notifyAdminNewReport(Report report);
 
-    void notifyReporterReportResolved(com.example.AiTaster.entity.Report report);
+    void notifyReporterReportResolved(Report report);
 
-    void notifyReporterReportRejected(com.example.AiTaster.entity.Report report);
+    void notifyReporterReportRejected(Report report);
 }
