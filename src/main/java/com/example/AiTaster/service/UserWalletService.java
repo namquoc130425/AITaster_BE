@@ -46,6 +46,7 @@ public class UserWalletService implements IUserWalletService {
         );
     }
 
+
     @Override
     public UserWalletResponse getMyWallet() {
 
@@ -137,6 +138,12 @@ public class UserWalletService implements IUserWalletService {
         UserWallet wallet = getWallet(walletId);
 
         userWalletRepo.delete(wallet);
+
+        return null;
+    }
+
+    @Override
+    public UserWallet createdUserWallet(User user) {
 
         return null;
     }

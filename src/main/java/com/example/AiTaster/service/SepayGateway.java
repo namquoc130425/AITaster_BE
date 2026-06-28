@@ -12,7 +12,6 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Mac;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Service
@@ -42,7 +41,7 @@ public class SepayGateway {
     @Value("${app.sepay.ipn-url}")
     private String ipnUrl;
 
-    public SepayCheckoutFormResponse createCheckoutForm(PaymentTransaction payment, Invitation invitation) {
+    public SepayCheckoutFormResponse createCheckoutForm(PaymentTransaction payment) {
         // Lấy số tiền từ payment.
         // VND không dùng phần thập phân nên ép về số nguyên.
         String amount = payment.getAmount()
