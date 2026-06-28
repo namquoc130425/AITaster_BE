@@ -17,13 +17,23 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Entity
 public class Project {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long projectId;
+
     @Column(nullable = false)
     String title;
 
-    // Snapshot yêu cầu chốt tại thời điểm accept, để sau này client/expert sửa invitation cũng không đổi hợp đồng.
+    // Snapshot yêu cầu chốt tại thời điểm accept
     @Column(columnDefinition = "TEXT")
-    String requirementSnapshot;
+    String finalRequirementSnapshot; // yêu cầu cuối lấy từ invitation
+
+    @Column(columnDefinition = "TEXT")
+    String expectedOutputSnapshot;    // sản phẩm đầu ra mong muốn lấy từ invitaton
+    @Column(columnDefinition = "TEXT")
+    String acceptanceCriteriaSnapshot; // tiêu chí nghiệm tụ lấy từ invitation
 
     // Giá đã chốt cho cả project (lấy từ invitation.finalOfferedPrice). Đây mới là số tiền dùng cho escrow.
     @Column(precision = 12, scale = 2)
@@ -39,20 +49,25 @@ public class Project {
     @Column(name = "timeline_unit", length = 10)
     TimelineUnit timelineUnit;
 
-    // Hạn chót của CẢ PROJECT, set khi client thanh toán xong = startAt + timelineValue/timelineUnit (theo lịch).
+    // Hạn chót của CẢ PROJECT, set khi client thanh toán xong = paidAt + timelineValue/timelineUnit (theo lịch).
     LocalDateTime deadlineAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "project_status", nullable = false, length = 30)
     ProjectStatus projectStatus;
 
-    // isActive=false khi chờ escrow; chỉ bật true khi escrow đã giữ tiền (webhook payment success).
+    // isActive=false khi chờ escrow; chỉ bật true khi escrow đã giữ tiền (webhook payment success). // true thì expert mới được làm việt
     Boolean isActive;
 
-    // startAt: thời điểm project bắt đầu chạy (khi escrow HELD). completedAt: khi client approve final deliverable.
+    // Project bat dau chay tu luc payment success.
+     // Gia tri nay set bang paidAt cua PaymentTransaction.
     LocalDateTime startAt;
-
+    //completedAt: khi client approve final deliverable.
     LocalDateTime completedAt;
+
+    //hạn client phải thanh toán
+    @Column(nullable = false)
+    LocalDateTime paymentDeadlineAt;
 
     @CreationTimestamp
     LocalDateTime createAt;
@@ -63,6 +78,8 @@ public class Project {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invitation_id")
     Invitation invitation;
+
+
 
     @PrePersist
     public void prePersist() {
