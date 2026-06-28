@@ -16,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.security.Principal;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -28,15 +30,6 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             Message<?> message,
             MessageChannel channel
     ) {
-        /*
-         * Phải lấy accessor gốc của message.
-         *
-         * Không dùng:
-         * StompHeaderAccessor.wrap(message)
-         *
-         * vì wrap tạo accessor bằng cách copy header và Principal có thể
-         * không được lưu cho toàn bộ WebSocket session.
-         */
         StompHeaderAccessor accessor =
                 MessageHeaderAccessor.getAccessor(
                         message,
@@ -47,55 +40,114 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             return message;
         }
 
-        /*
-         * Chỉ cần authenticate tại frame CONNECT.
-         * Sau đó Spring lưu Principal cho các frame tiếp theo
-         * trong cùng WebSocket session.
-         */
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            String authorization = getAuthorizationHeader(accessor);
+            authenticateConnect(accessor);
+        }
 
-            if (!StringUtils.hasText(authorization)
-                    || !authorization.startsWith("Bearer ")) {
-
-                log.warn(
-                        "WebSocket CONNECT rejected: missing Authorization header, sessionId={}",
-                        accessor.getSessionId()
-                );
-
-                throw new GlobalException(ErrorCode.INVALID_TOKEN);
-            }
-
-            String token = authorization.substring(7).trim();
-
-            if (!StringUtils.hasText(token)) {
-                throw new GlobalException(ErrorCode.INVALID_TOKEN);
-            }
-
-            User user = tokenService.verifyAccessToken(token);
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            user.getAuthorities()
-                    );
-
-            /*
-             * Quan trọng nhất:
-             * gắn Authentication vào STOMP session.
-             */
-            accessor.setUser(authentication);
-
-            log.info(
-                    "WebSocket authenticated successfully: sessionId={}, userId={}, username={}",
-                    accessor.getSessionId(),
-                    user.getUserId(),
-                    user.getUsername()
-            );
+        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+            guardPrivateTopicSubscribe(accessor);
         }
 
         return message;
+    }
+
+    private void authenticateConnect(
+            StompHeaderAccessor accessor
+    ) {
+        String authorization =
+                getAuthorizationHeader(accessor);
+
+        if (!StringUtils.hasText(authorization)
+                || !authorization.startsWith("Bearer ")) {
+            log.warn(
+                    "WebSocket CONNECT rejected: missing token, sessionId={}",
+                    accessor.getSessionId()
+            );
+
+            throw new GlobalException(ErrorCode.INVALID_TOKEN);
+        }
+
+        String token =
+                authorization.substring(7).trim();
+
+        if (!StringUtils.hasText(token)) {
+            throw new GlobalException(ErrorCode.INVALID_TOKEN);
+        }
+
+        User user =
+                tokenService.verifyAccessToken(token);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        user,
+                        null,
+                        user.getAuthorities()
+                );
+
+        /*
+         * Quan trọng:
+         * Spring dùng Principal.getName() cho convertAndSendToUser.
+         * Với UserDetails, getName() thường là username.
+         */
+        accessor.setUser(authentication);
+
+        log.info(
+                "WebSocket authenticated: sessionId={}, userId={}, username={}",
+                accessor.getSessionId(),
+                user.getUserId(),
+                user.getUsername()
+        );
+    }
+
+    /*
+     * Nếu FE chuyển hẳn sang /user/queue/notifications
+     * thì đoạn guard này ít dùng.
+     *
+     * Nhưng giữ lại để chặn các topic cũ:
+     * /topic/users/{userId}/notifications
+     * /topic/users/{userId}/messages
+     */
+    private void guardPrivateTopicSubscribe(
+            StompHeaderAccessor accessor
+    ) {
+        String destination =
+                accessor.getDestination();
+
+        if (!StringUtils.hasText(destination)) {
+            return;
+        }
+
+        boolean isPrivateUserTopic =
+                destination.startsWith("/topic/users/")
+                        && (
+                        destination.endsWith("/notifications")
+                                || destination.endsWith("/messages")
+                );
+
+        if (!isPrivateUserTopic) {
+            return;
+        }
+
+        Principal principal =
+                accessor.getUser();
+
+        if (!(principal instanceof UsernamePasswordAuthenticationToken authentication)
+                || !(authentication.getPrincipal() instanceof User currentUser)) {
+            throw new GlobalException(ErrorCode.INVALID_TOKEN);
+        }
+
+        String expectedPrefix =
+                "/topic/users/" + currentUser.getUserId() + "/";
+
+        if (!destination.startsWith(expectedPrefix)) {
+            log.warn(
+                    "Blocked illegal subscribe: userId={}, destination={}",
+                    currentUser.getUserId(),
+                    destination
+            );
+
+            throw new GlobalException(ErrorCode.INVALID_ROLE);
+        }
     }
 
     private String getAuthorizationHeader(
@@ -104,9 +156,6 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         String authorization =
                 accessor.getFirstNativeHeader("Authorization");
 
-        /*
-         * Hỗ trợ cả trường hợp frontend gửi lowercase.
-         */
         if (!StringUtils.hasText(authorization)) {
             authorization =
                     accessor.getFirstNativeHeader("authorization");

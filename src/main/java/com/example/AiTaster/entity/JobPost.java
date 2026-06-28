@@ -68,6 +68,4 @@ public class JobPost {
 
     @OneToMany(mappedBy = "jobpost")
     List<ExpertApplication> expertApplications;
-
-
 }
