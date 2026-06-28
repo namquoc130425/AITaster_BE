@@ -11,39 +11,59 @@ import java.util.UUID;
 @Service
 public class LocalFileStorageService {
 
-    private static final String ROOT =
+    private static final String SERVICE_FILE_ROOT =
             "uploads/service-files";
 
+    private static final String REPORT_EVIDENCE_ROOT =
+            "uploads/report-evidence";
+
     public String saveFile(MultipartFile file) {
+        return saveFileToRoot(
+                file,
+                SERVICE_FILE_ROOT,
+                "/uploads/service-files/"
+        );
+    }
 
+    public String saveReportEvidence(MultipartFile file) {
+        return saveFileToRoot(
+                file,
+                REPORT_EVIDENCE_ROOT,
+                "/uploads/report-evidence/"
+        );
+    }
+
+    private String saveFileToRoot(
+            MultipartFile file,
+            String root,
+            String publicPrefix
+    ) {
         try {
-
             if (file == null || file.isEmpty()) {
                 return null;
             }
 
-            Files.createDirectories(
-                    Path.of(ROOT)
-            );
+            Files.createDirectories(Path.of(root));
+
+            String originalFilename =
+                    file.getOriginalFilename();
 
             String filename =
                     UUID.randomUUID()
                             + "_"
-                            + file.getOriginalFilename();
+                            + originalFilename;
 
             Path path =
-                    Path.of(ROOT, filename);
+                    Path.of(root, filename);
 
             Files.copy(
                     file.getInputStream(),
                     path
             );
 
-            return "/uploads/service-files/"
-                    + filename;
+            return publicPrefix + filename;
 
         } catch (Exception e) {
-
             throw new GlobalException(
                     500,
                     "Cannot save file"
