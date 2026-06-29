@@ -151,13 +151,13 @@ public class NotificationService implements INotificationService {
                 safeName(expertProfile.getUser());
 
         String jobTitle =
-                safeText(jobPost.getTitle(), "job post của bạn");
+                safeText(jobPost.getTitle(), "your job post");
 
         createAndSend(
                 clientUser,
                 NotificationCreateRequest.builder()
-                        .title("Có expert mới ứng tuyển")
-                        .content(expertName + " đã ứng tuyển vào job post: " + jobTitle)
+                        .title("New expert application")
+                        .content(expertName + " applied to job post: " + jobTitle)
                         .notificationType(NotificationType.APPLICATION)
                         .referenceType(ReferenceType.APPLICATION)
                         .referenceId(application.getApplicationId())
@@ -181,13 +181,13 @@ public class NotificationService implements INotificationService {
                         .getUser();
 
         String projectTitle =
-                safeText(invitation.getProjectTitle(), "dự án mới");
+                safeText(invitation.getProjectTitle(), "project");
 
         createAndSend(
                 expertUser,
                 NotificationCreateRequest.builder()
-                        .title("Bạn nhận được lời mời dự án")
-                        .content("Client đã gửi cho bạn lời mời tham gia dự án: " + projectTitle)
+                        .title("New project invitation")
+                        .content("A client invited you to join project: " + projectTitle)
                         .notificationType(NotificationType.INVITATION)
                         .referenceType(ReferenceType.INVITATION)
                         .referenceId(invitation.getInvitationId())
@@ -221,13 +221,13 @@ public class NotificationService implements INotificationService {
                 safeName(expertUser);
 
         String projectTitle =
-                safeText(invitation.getProjectTitle(), "dự án");
+                safeText(invitation.getProjectTitle(), "project");
 
         createAndSend(
                 clientUser,
                 NotificationCreateRequest.builder()
-                        .title("Expert đã chấp nhận lời mời")
-                        .content(expertName + " đã chấp nhận lời mời dự án: " + projectTitle)
+                        .title("Expert accepted your invitation")
+                        .content(expertName + " accepted the project invitation: " + projectTitle)
                         .notificationType(NotificationType.INVITATION)
                         .referenceType(ReferenceType.INVITATION)
                         .referenceId(invitation.getInvitationId())
@@ -261,16 +261,97 @@ public class NotificationService implements INotificationService {
                 safeName(expertUser);
 
         String projectTitle =
-                safeText(invitation.getProjectTitle(), "dự án");
+                safeText(invitation.getProjectTitle(), "project");
 
         createAndSend(
                 clientUser,
                 NotificationCreateRequest.builder()
-                        .title("Expert đã từ chối lời mời")
-                        .content(expertName + " đã từ chối lời mời dự án: " + projectTitle)
+                        .title("Expert rejected your invitation")
+                        .content(expertName + " rejected the project invitation: " + projectTitle)
                         .notificationType(NotificationType.INVITATION)
                         .referenceType(ReferenceType.INVITATION)
                         .referenceId(invitation.getInvitationId())
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void notifyProjectCompleted(Project project) {
+        if (project == null
+                || project.getInvitation() == null
+                || project.getInvitation().getExpertApplication() == null) {
+            return;
+        }
+
+        ExpertApplication application = project.getInvitation().getExpertApplication();
+        User clientUser = application.getJobpost().getClientProfile().getUser();
+        User expertUser = application.getExpertProfile().getUser();
+
+        String title = safeText(project.getTitle(), "Project");
+        NotificationCreateRequest request = NotificationCreateRequest.builder()
+                .title("Project completed")
+                .content(title + " is completed. Escrow has been released and files remain available in Projects.")
+                .notificationType(NotificationType.PROJECT)
+                .referenceType(ReferenceType.PROJECT)
+                .referenceId(project.getProjectId())
+                .build();
+
+        createAndSend(clientUser, request);
+        createAndSend(expertUser, request);
+    }
+
+    @Override
+    @Transactional
+    public void notifyProposalPurchased(ExpertProposal proposal, ClientProfile clientProfile) {
+        if (proposal == null
+                || proposal.getExpertApplication() == null
+                || proposal.getExpertApplication().getExpertProfile() == null
+                || proposal.getExpertApplication().getExpertProfile().getUser() == null
+                || clientProfile == null
+                || clientProfile.getUser() == null) {
+            return;
+        }
+
+        User expertUser = proposal.getExpertApplication().getExpertProfile().getUser();
+        String clientName = safeName(clientProfile.getUser());
+        String proposalTitle = safeText(proposal.getTitle(), "your proposal");
+
+        createAndSend(
+                expertUser,
+                NotificationCreateRequest.builder()
+                        .title("Proposal purchased")
+                        .content(clientName + " purchased proposal: " + proposalTitle)
+                        .notificationType(NotificationType.ESCROW)
+                        .referenceType(ReferenceType.APPLICATION)
+                        .referenceId(proposal.getExpertApplication().getApplicationId())
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void notifyExpertServicePurchased(ExpertService expertService, ClientProfile clientProfile) {
+        if (expertService == null
+                || expertService.getExpertProfile() == null
+                || expertService.getExpertProfile().getUser() == null
+                || clientProfile == null
+                || clientProfile.getUser() == null) {
+            return;
+        }
+
+        User expertUser = expertService.getExpertProfile().getUser();
+        String clientName = safeName(clientProfile.getUser());
+        String serviceName = safeText(expertService.getServiceName(), "your AI service");
+
+        createAndSend(
+                expertUser,
+                NotificationCreateRequest.builder()
+                        .title("AI service purchased")
+                        .content(clientName + " purchased AI service: " + serviceName)
+                        .notificationType(NotificationType.ESCROW)
+                        .referenceType(ReferenceType.NONE)
+                        .referenceId(expertService.getServiceId())
                         .build()
         );
     }
@@ -296,8 +377,10 @@ public class NotificationService implements INotificationService {
             createAndSend(
                     admin,
                     NotificationCreateRequest.builder()
-                            .title("Có report mới")
-                            .content(reporterName + " đã gửi một report mới: " + report.getReportTitle())
+                            .title("CÃ³ report má»›i")
+                            .content(reporterName + " Ä‘Ã£ gá»­i má»™t report má»›i: " + report.getReportTitle())
+                            .title("New report")
+                            .content(reporterName + " submitted a new report: " + report.getReportTitle())
                             .notificationType(NotificationType.REPORT)
                             .referenceType(ReferenceType.REPORT)
                             .referenceId(report.getReportId())
@@ -316,8 +399,10 @@ public class NotificationService implements INotificationService {
         createAndSend(
                 report.getReporter(),
                 NotificationCreateRequest.builder()
-                        .title("Report của bạn đã được xử lý")
-                        .content("Admin đã xử lý report: " + report.getReportTitle())
+                        .title("Report cá»§a báº¡n Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½")
+                        .content("Admin Ä‘Ã£ xá»­ lÃ½ report: " + report.getReportTitle())
+                        .title("Your report was resolved")
+                        .content("Admin resolved report: " + report.getReportTitle())
                         .notificationType(NotificationType.REPORT)
                         .referenceType(ReferenceType.REPORT)
                         .referenceId(report.getReportId())
@@ -335,8 +420,10 @@ public class NotificationService implements INotificationService {
         createAndSend(
                 report.getReporter(),
                 NotificationCreateRequest.builder()
-                        .title("Report của bạn đã bị từ chối")
-                        .content("Admin đã từ chối report: " + report.getReportTitle())
+                        .title("Report cá»§a báº¡n Ä‘Ã£ bá»‹ tá»« chá»‘i")
+                        .content("Admin Ä‘Ã£ tá»« chá»‘i report: " + report.getReportTitle())
+                        .title("Your report was rejected")
+                        .content("Admin rejected report: " + report.getReportTitle())
                         .notificationType(NotificationType.REPORT)
                         .referenceType(ReferenceType.REPORT)
                         .referenceId(report.getReportId())
@@ -374,7 +461,7 @@ public class NotificationService implements INotificationService {
 
     private String safeName(User user) {
         if (user == null) {
-            return "Người dùng";
+            return "NgÆ°á»i dÃ¹ng";
         }
 
         if (user.getFullName() != null && !user.getFullName().isBlank()) {
@@ -385,7 +472,7 @@ public class NotificationService implements INotificationService {
             return user.getUsername();
         }
 
-        return "Người dùng";
+        return "NgÆ°á»i dÃ¹ng";
     }
 
     private String safeText(String value, String fallback) {

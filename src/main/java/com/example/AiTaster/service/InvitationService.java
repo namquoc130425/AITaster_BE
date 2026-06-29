@@ -36,6 +36,7 @@ public class InvitationService implements Iinvitation {
     private final InvitationRepo invitationRepo;
     private final InvitationMapper invitationMapper;
     private final NotificationService notificationService;
+    private final ProjectRealtimeService projectRealtimeService;
     private final ProjectRepo projectRepo;
     private final ProjectEscrowRepo projectEscrowRepo;
 
@@ -146,6 +147,7 @@ public class InvitationService implements Iinvitation {
         jobPostRepo.updateJobPostStatus(jobPost.getJobPostId(), JobpostStatus.CLOSED);
 
         notificationService.notifyInvitationAccepted(saveInvitation);
+        projectRealtimeService.invitationAccepted(saveInvitation);
 //     //tạo project
 //     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
 //     // tạo project

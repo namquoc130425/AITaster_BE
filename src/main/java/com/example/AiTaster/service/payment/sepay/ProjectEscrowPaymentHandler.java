@@ -58,6 +58,9 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
         payment.setPaidAt(paidAt);
 
         payment.setProjectEscrowId(newProjectEscrow.getProjectEscrowId());
+        payment.setFromAmount(BigDecimal.ZERO);
+        payment.setReceiveAmount(payment.getAmount());
+        payment.setDescription("Escrow deposit for project " + newProject.getProjectId());
 
         newProjectEscrow.setHeldAmount(payment.getAmount());
 

@@ -4,7 +4,11 @@ import com.example.AiTaster.dto.request.NotificationCreateRequest;
 import com.example.AiTaster.dto.response.NotificationResponse;
 import com.example.AiTaster.dto.response.UnreadNotificationCountResponse;
 import com.example.AiTaster.entity.ExpertApplication;
+import com.example.AiTaster.entity.ExpertProposal;
+import com.example.AiTaster.entity.ExpertService;
 import com.example.AiTaster.entity.Invitation;
+import com.example.AiTaster.entity.ClientProfile;
+import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.User;
 
 import java.util.List;
@@ -33,6 +37,12 @@ public interface INotificationService {
     void notifyInvitationAccepted(Invitation invitation);
 
     void notifyInvitationRejected(Invitation invitation);
+
+    void notifyProjectCompleted(Project project);
+
+    void notifyProposalPurchased(ExpertProposal proposal, ClientProfile clientProfile);
+
+    void notifyExpertServicePurchased(ExpertService expertService, ClientProfile clientProfile);
 
     void notifyAdminNewReport(com.example.AiTaster.entity.Report report);
 

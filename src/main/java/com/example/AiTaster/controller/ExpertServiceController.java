@@ -4,10 +4,13 @@ import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.dto.request.ExpertProduct.ExpertServiceFillerRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
+import com.example.AiTaster.dto.response.ClientServiceResponse;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.dto.response.PageResponse;
+import com.example.AiTaster.dto.response.PurchaseResponse;
 import com.example.AiTaster.entity.ServiceFile;
 import com.example.AiTaster.service.ExpertProductService;
+import com.example.AiTaster.service.PurchaseService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,8 @@ import java.util.List;
 public class ExpertServiceController {
     @Autowired
     ExpertProductService expertProductService;
+    @Autowired
+    PurchaseService purchaseService;
 
 
     //filter
@@ -126,6 +131,30 @@ public class ExpertServiceController {
 
         return ResponseEntity.ok(
                 APIResponse.response(200, "Get public AI service detail successfully", response)
+        );
+    }
+
+    @PostMapping("/public/{serviceId}/purchase")
+    public ResponseEntity<APIResponse<PurchaseResponse>> purchaseService(
+            @PathVariable Long serviceId
+    ) {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Purchase AI service successfully",
+                        purchaseService.purchaseExpertService(serviceId)
+                )
+        );
+    }
+
+    @GetMapping("/client/my")
+    public ResponseEntity<APIResponse<List<ClientServiceResponse>>> getMyPurchasedServices() {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get purchased AI services successfully",
+                        purchaseService.getMyPurchasedServices()
+                )
         );
     }
 

@@ -1,4 +1,4 @@
-package com.example.AiTaster.dto.response;
+package com.example.AiTaster.dto.request;
 
 import com.example.AiTaster.constant.PaymentMethod;
 import com.example.AiTaster.constant.PaymentReferenceType;
@@ -16,40 +16,28 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class WalletDepositPaymentResponse {
-    Long paymentTransactionId;
-
-    Long walletId;
-
-    Long userId;
-
-    BigDecimal amount;
-
+public class PaymentTransferRequest {
+    Long senderId;
+    Long receiverId;
+    Long sourceWalletId;
+    Long targetWalletId;
+    Long projectEscrowId;
+    Long expertServiceId;
     BigDecimal fromAmount;
-
     BigDecimal receiveAmount;
-
     String currency;
-
     TransactionType transactionType;
-
     PaymentMethod paymentMethod;
-
     PaymentStatus paymentStatus;
-
-    PaymentReferenceType paymentReferenceType;
-
     Long referenceId;
-
+    PaymentReferenceType paymentReferenceType;
     String providerName;
-
+    String providerTransactionCode;
+    String paymentCode;
+    String providerContent;
     String description;
-
-    SepayCheckoutFormResponse checkoutForm;
-
+    LocalDateTime paidAt;
     LocalDateTime expiredAt;
-
-    LocalDateTime createAt;
-
-    LocalDateTime updateAt;
+    Boolean debitSourceWallet;
+    Boolean creditTargetWallet;
 }

@@ -1,8 +1,8 @@
 package com.example.AiTaster.service;
 import com.example.AiTaster.constant.*;
+import com.example.AiTaster.dto.request.PaymentTransferRequest;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
-import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.repository.UserWalletRepo;
@@ -22,8 +22,8 @@ public class ProjectEscrowReleaseService {
     private final ProjectEscrowRepo projectEscrowRepo;
     private final UserWalletRepo userWalletRepo;
     private final UserRepo userRepo;
-    private final PaymentTransactionRepo paymentTransactionRepo;
     private final PlatformFeeCalculator platformFeeCalculator;
+    private final PaymentTransferService paymentTransferService;
 
     @Value("${app.platform.admin-username:admin}")
     private String adminUsername;
@@ -60,23 +60,50 @@ public class ProjectEscrowReleaseService {
             throw new GlobalException(400, "Expert amount is invalid");
         }
 
-        expertWallet.setBalance(expertWallet.getBalance().add(expertAmount));
-        adminWallet.setBalance(adminWallet.getBalance().add(platformFee));
-
         escrow.setPlatformFee(platformFee);
         escrow.setExpertAmount(expertAmount);
-        escrow.setEscrowStatus(EscrowStatus.RELEASED);
 
-        userWalletRepo.save(expertWallet);
-        userWalletRepo.save(adminWallet);
-
-        paymentTransactionRepo.save(buildExpertReleaseTransaction(project, escrow, expertUser, expertWallet, expertAmount
-                )
-        );
+        paymentTransferService.transfer(PaymentTransferRequest.builder()
+                .projectEscrowId(escrow.getProjectEscrowId())
+                .senderId(null)
+                .receiverId(expertUser.getUserId())
+                .sourceWalletId(null)
+                .targetWalletId(expertWallet.getUserWalletId())
+                .fromAmount(BigDecimal.ZERO)
+                .receiveAmount(expertAmount)
+                .transactionType(TransactionType.PROJECT_ESCROW_RELEASE)
+                .paymentMethod(PaymentMethod.WALLET)
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .referenceId(project.getProjectId())
+                .paymentReferenceType(PaymentReferenceType.PROJECT)
+                .providerName("INTERNAL")
+                .paymentCode(generateInternalPaymentCode("AIT-REL", project.getProjectId()))
+                .description("Release escrow to expert for project " + project.getProjectId())
+                .creditTargetWallet(true)
+                .build());
 
         if (platformFee.compareTo(BigDecimal.ZERO) > 0) {
-            paymentTransactionRepo.save(buildPlatformFeeTransaction(project, escrow, adminUser, adminWallet, platformFee));
+            paymentTransferService.transfer(PaymentTransferRequest.builder()
+                    .projectEscrowId(escrow.getProjectEscrowId())
+                    .senderId(null)
+                    .receiverId(adminUser.getUserId())
+                    .sourceWalletId(null)
+                    .targetWalletId(adminWallet.getUserWalletId())
+                    .fromAmount(BigDecimal.ZERO)
+                    .receiveAmount(platformFee)
+                    .transactionType(TransactionType.PLATFORM_FEE)
+                    .paymentMethod(PaymentMethod.WALLET)
+                    .paymentStatus(PaymentStatus.SUCCESS)
+                    .referenceId(project.getProjectId())
+                    .paymentReferenceType(PaymentReferenceType.PROJECT)
+                    .providerName("INTERNAL")
+                    .paymentCode(generateInternalPaymentCode("AIT-FEE", project.getProjectId()))
+                    .description("Platform fee for project " + project.getProjectId())
+                    .creditTargetWallet(true)
+                    .build());
         }
+
+        escrow.setEscrowStatus(EscrowStatus.RELEASED);
 
         return projectEscrowRepo.save(escrow);
     }
@@ -89,57 +116,6 @@ public class ProjectEscrowReleaseService {
         if (!"VND".equalsIgnoreCase(wallet.getCurrency())) {
             throw new GlobalException(400, "Wallet currency is not supported");
         }
-    }
-
-    private PaymentTransaction buildExpertReleaseTransaction(Project project, ProjectEscrow escrow, User expertUser, UserWallet expertWallet, BigDecimal expertAmount
-    ) {
-        return PaymentTransaction.builder()
-                .projectEscrowId(escrow.getProjectEscrowId())
-                .expertServiceId(null)
-                .senderId(null)
-                .receiverId(expertUser.getUserId())
-                .sourceWalletId(null)
-                .targetWalletId(expertWallet.getUserWalletId())
-                .amount(expertAmount)
-                .currency("VND")
-                .transactionType(TransactionType.PROJECT_ESCROW_RELEASE)
-                .paymentMethod(PaymentMethod.WALLET)
-                .paymentStatus(PaymentStatus.SUCCESS)
-                .referenceId(project.getProjectId())
-                .paymentReferenceType(PaymentReferenceType.PROJECT)
-                .providerName("INTERNAL")
-                .paymentCode(generateInternalPaymentCode("AIT-REL", project.getProjectId()))
-                .providerTransactionCode(null)
-                .providerContent("Release escrow to expert for project " + project.getProjectId())
-                .paidAt(LocalDateTime.now())
-                .expiredAt(null)
-                .build();
-    }
-
-    private PaymentTransaction buildPlatformFeeTransaction(Project project, ProjectEscrow escrow, User adminUser, UserWallet adminWallet,
-            BigDecimal platformFee
-    ) {
-        return PaymentTransaction.builder()
-                .projectEscrowId(escrow.getProjectEscrowId())
-                .expertServiceId(null)
-                .senderId(null)
-                .receiverId(adminUser.getUserId())
-                .sourceWalletId(null)
-                .targetWalletId(adminWallet.getUserWalletId())
-                .amount(platformFee)
-                .currency("VND")
-                .transactionType(TransactionType.PLATFORM_FEE)
-                .paymentMethod(PaymentMethod.WALLET)
-                .paymentStatus(PaymentStatus.SUCCESS)
-                .referenceId(project.getProjectId())
-                .paymentReferenceType(PaymentReferenceType.PROJECT)
-                .providerName("INTERNAL")
-                .paymentCode(generateInternalPaymentCode("AIT-FEE", project.getProjectId()))
-                .providerTransactionCode(null)
-                .providerContent("Platform fee for project " + project.getProjectId())
-                .paidAt(LocalDateTime.now())
-                .expiredAt(null)
-                .build();
     }
 
     private String generateInternalPaymentCode(String prefix, Long projectId) {

@@ -14,5 +14,6 @@ public interface ConversationMapper {
     @Mapping(target = "clientName", source = "client.fullName")
     @Mapping(target = "expertId", source = "expert.userId")
     @Mapping(target = "expertName", source = "expert.fullName")
+    @Mapping(target = "unreadCount", ignore = true)
     ConversationResponse toResponse(Conversation conversation);
 }

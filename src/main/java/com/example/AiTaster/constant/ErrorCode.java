@@ -21,6 +21,7 @@ public enum ErrorCode {
 
     DUPLICATE_EMAIL("Duplicate email", HttpStatus.BAD_REQUEST),
     DUPLICATE_PHONE("Duplicate phone number", HttpStatus.BAD_REQUEST),
+    DUPLICATE_USERNAME("Duplicate username", HttpStatus.BAD_REQUEST),
 
     INVALID_TOKEN("Invalid Token", HttpStatus.UNAUTHORIZED),
     INVALID_ROLE("Invalid Role", HttpStatus.BAD_REQUEST),

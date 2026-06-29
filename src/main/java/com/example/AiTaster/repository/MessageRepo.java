@@ -26,6 +26,11 @@ public interface MessageRepo
             Conversation conversation
     );
 
+    long countByConversationAndReceiverAndIsReadFalse(
+            Conversation conversation,
+            User receiver
+    );
+
     @Modifying(
             flushAutomatically = true,
             clearAutomatically = true

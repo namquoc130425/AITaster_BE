@@ -118,7 +118,7 @@ public class ConversationService implements IConversationService {
         return conversationRepo
                 .findByClientOrExpertOrderByUpdateAtDesc(currentUser, currentUser)
                 .stream()
-                .map(conversationMapper::toResponse)
+                .map(conversation -> toResponseWithUnreadCount(conversation, currentUser))
                 .toList();
     }
 
@@ -130,7 +130,7 @@ public class ConversationService implements IConversationService {
 
         checkConversationMember(conversation, currentUser);
 
-        return conversationMapper.toResponse(conversation);
+        return toResponseWithUnreadCount(conversation, currentUser);
     }
 
     public Conversation getConversationEntity(Long conversationId) {
@@ -177,5 +177,19 @@ public class ConversationService implements IConversationService {
         conversation.setConvertedToProjectAt(LocalDateTime.now());
 
         conversationRepo.save(conversation);
+    }
+
+    private ConversationResponse toResponseWithUnreadCount(
+            Conversation conversation,
+            User currentUser
+    ) {
+        ConversationResponse response = conversationMapper.toResponse(conversation);
+        response.setUnreadCount(
+                messageRepo.countByConversationAndReceiverAndIsReadFalse(
+                        conversation,
+                        currentUser
+                )
+        );
+        return response;
     }
 }

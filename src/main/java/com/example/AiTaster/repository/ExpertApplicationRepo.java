@@ -21,6 +21,8 @@ public interface ExpertApplicationRepo extends JpaRepository<ExpertApplication, 
 
     List<ExpertApplication> findByJobpost(JobPost jobpost);
 
+    long countByJobpost(JobPost jobpost);
+
     List<ExpertApplication> findByExpertProfile(ExpertProfile expertProfile);
 
     @EntityGraph(attributePaths = {

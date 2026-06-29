@@ -30,6 +30,8 @@ public class ConversationResponse {
 
     ConversationType conversationType;
 
+    Long unreadCount;
+
     LocalDateTime convertedToProjectAt;
 
     LocalDateTime createAt;

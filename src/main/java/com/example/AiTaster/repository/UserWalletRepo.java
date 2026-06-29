@@ -24,4 +24,12 @@ public interface UserWalletRepo extends JpaRepository<UserWallet, Long> {
     """)
     Optional<UserWallet> findByUserForUpdate(@Param("user") User user);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT w
+        FROM UserWallet w
+        WHERE w.userWalletId = :walletId
+    """)
+    Optional<UserWallet> findByUserWalletIdForUpdate(@Param("walletId") Long walletId);
+
 }

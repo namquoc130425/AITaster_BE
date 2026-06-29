@@ -26,6 +26,7 @@ public interface ExpertApplicationMapper {
     @Mapping(target = "expertProfileId", source = "expertApplication.expertProfile.expertProfileId")
     @Mapping(target = "expertName", source = "expertApplication.expertProfile.user.fullName")
     @Mapping(target = "proposal", source = "expertProposal")
+    @Mapping(target = "invoice", ignore = true)
     @Mapping(target = "createAt", source = "expertApplication.createAt")
     @Mapping(target = "updateAt", source = "expertApplication.updateAt")
     ExpertApplicationResponse toResponse(ExpertApplication expertApplication, ExpertProposalResponse expertProposal);

@@ -80,7 +80,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Transactional
     public ClientProfileResponse registerClient(ClientRegisterRequest request) {
 
-        validateRegister(request.getEmail(), request.getPhone());
+        validateRegister(request.getEmail(), request.getPhone(), request.getUsername());
 
         //tạo User
         User user = userMapper.clientRegisterToUser(request);
@@ -113,7 +113,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Override
     @Transactional
     public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
-        validateRegister(request.getEmail(), request.getPhone());
+        validateRegister(request.getEmail(), request.getPhone(), request.getUsername());
 
         // tạo user
         User user = userMapper.expertRegisterToUser(request);
@@ -140,7 +140,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     }
 
 
-    private void validateRegister(String email, String phone) {
+    private void validateRegister(String email, String phone, String username) {
 
         if (userRepo.existsByPhone(phone)) {
             throw new GlobalException(
@@ -153,6 +153,13 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             throw new GlobalException(
                     ErrorCode.DUPLICATE_EMAIL.getCode(),
                     ErrorCode.DUPLICATE_EMAIL.getMessage()
+            );
+        }
+
+        if (userRepo.existsByUsername(username)) {
+            throw new GlobalException(
+                    ErrorCode.DUPLICATE_USERNAME.getCode(),
+                    ErrorCode.DUPLICATE_USERNAME.getMessage()
             );
         }
     }
@@ -219,7 +226,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Transactional
     public UserResponse registerAdmin(AdminRegisterRequest request) {
 
-        validateRegister(request.getEmail(), request.getPhone());
+        validateRegister(request.getEmail(), request.getPhone(), request.getUsername());
 
         User user = userMapper.adminRegisterToUser(request);
 

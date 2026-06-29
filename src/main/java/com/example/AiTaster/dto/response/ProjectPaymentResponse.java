@@ -25,6 +25,10 @@ public class ProjectPaymentResponse {
 
     BigDecimal amount;
 
+    BigDecimal fromAmount;
+
+    BigDecimal receiveAmount;
+
     String currency;
 
     TransactionType transactionType;
@@ -38,6 +42,8 @@ public class ProjectPaymentResponse {
     Long referenceId;
 
     String providerName;
+
+    String description;
 
     SepayCheckoutFormResponse checkoutForm;
 

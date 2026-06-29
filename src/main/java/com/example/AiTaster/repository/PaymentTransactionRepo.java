@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface PaymentTransactionRepo extends JpaRepository<PaymentTransaction, Long> {
     //SEpay webhook lấy paymentcode trong nội dung chuyển khoản ( trong content )
@@ -48,5 +49,6 @@ WHERE pt.paymentReferenceType = :paymentReferenceType
            @Param("paymentStatus")   PaymentStatus paymentStatus,
             @Param("paymentMethod") PaymentMethod paymentMethod
     );
-}
 
+    List<PaymentTransaction> findBySourceWalletIdOrTargetWalletIdOrderByCreateAtDesc(Long sourceWalletId, Long targetWalletId);
+}

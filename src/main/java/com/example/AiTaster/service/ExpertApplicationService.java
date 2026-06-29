@@ -5,6 +5,7 @@ import com.example.AiTaster.dto.request.ExpertApplicationRequest;
 import com.example.AiTaster.dto.request.ExpertProposalRequest;
 import com.example.AiTaster.dto.response.ExpertApplicationResponse;
 import com.example.AiTaster.dto.response.ExpertProposalResponse;
+import com.example.AiTaster.dto.response.PurchaseResponse;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ExpertApplicationMapper;
@@ -33,6 +34,7 @@ private final ClientProfileRepo clientProfileRepo;
 private final ProposalUnlockRepo proposalUnlockRepo;
 private final JobPostRepo jobPostRepo;
 private final NotificationService notificationService;
+private final PurchaseService purchaseService;
 
     @Override
     public ExpertApplicationResponse applyJobPost(Long jobPostId, ExpertApplicationRequest request) {
@@ -110,19 +112,16 @@ private final NotificationService notificationService;
         checkJobPostOwner(expertApplication.getJobpost(),clientProfile);
 
         boolean alreadyUnlocked = proposalUnlockRepo.existsByProposalAndClientProfileAndIsUnlockedTrue(expertProposal, clientProfile);
+        PurchaseResponse purchaseResponse = null;
         if(!alreadyUnlocked) {
-            ProposalUnlock unlock = ProposalUnlock.builder()
-                    .proposal(expertProposal)
-                    .clientProfile(clientProfile)
-                    .paymentTransactionId(null)
-                    .amount(expertProposal.getPriceToUnlock())
-                    .isUnlocked(true)
-                    .unlockedAt(LocalDateTime.now())
-                    .build();
-            proposalUnlockRepo.save(unlock);
+            purchaseResponse = purchaseService.purchaseProposal(proposalId);
         }
 
-        return mapApplicationForClient(expertApplication, clientProfile);
+        ExpertApplicationResponse response = mapApplicationForClient(expertApplication, clientProfile);
+        if (purchaseResponse != null) {
+            response.setInvoice(purchaseResponse.getInvoice());
+        }
+        return response;
     }
 
 

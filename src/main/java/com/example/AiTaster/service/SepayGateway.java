@@ -29,10 +29,10 @@ public class SepayGateway {
     private String checkoutUrl;
 
 
-    @Value("${app.sepay.checkout-api-url}")
+    @Value("${app.sepay.success-url:${app.sepay.checkout-api-url}}")
     private String successUrl;
 
-    @Value("${app.sepay.return-url}")
+    @Value("${app.sepay.error-url:${app.sepay.return-url}}")
     private String errorUrl;
 
     @Value("${app.sepay.cancel-url}")
@@ -42,6 +42,7 @@ public class SepayGateway {
     private String ipnUrl;
 
     public SepayCheckoutFormResponse createCheckoutForm(PaymentTransaction payment) {
+        validateGatewayMode();
         // Lấy số tiền từ payment.
         // VND không dùng phần thập phân nên ép về số nguyên.
         String amount = payment.getAmount()
@@ -93,6 +94,22 @@ public class SepayGateway {
                 .fields(fields)
                 .build();
     }
+    private void validateGatewayMode() {
+        boolean sandboxCheckout =
+                checkoutUrl != null && checkoutUrl.toLowerCase().contains("sandbox");
+        boolean liveMerchant =
+                merchantId != null && merchantId.startsWith("SP-LIVE");
+        boolean liveSecret =
+                secretKey != null && secretKey.startsWith("spsk_live");
+
+        if (sandboxCheckout && (liveMerchant || liveSecret)) {
+            throw new GlobalException(
+                    400,
+                    "SePay sandbox checkout cannot use live merchant credentials. Use sandbox credentials or switch checkout-url to live."
+            );
+        }
+    }
+
     private String signFields(Map<String, String> fields) {
         // Thứ tự field phải đúng SePay.
         // Không tự sort alphabet.

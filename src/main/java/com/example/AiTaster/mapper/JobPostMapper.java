@@ -45,6 +45,7 @@ public interface JobPostMapper {
     // jobpost -> response
     @Mapping(target = "clientId",source = "clientProfile")
     @Mapping(target = "skills",source = "skills")
+    @Mapping(target = "applicationCount", ignore = true)
 
     JobPostResponse toResponse(JobPost jobPost);
 

@@ -29,6 +29,8 @@ public class ExpertApplicationResponse {
 
     ExpertProposalResponse proposal;
 
+    InvoiceResponse invoice;
+
     LocalDateTime createAt;
 
     LocalDateTime updateAt;

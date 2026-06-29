@@ -99,6 +99,8 @@ public class WalletDepositService {
                 .sourceWalletId(null)
                 .targetWalletId(userWallet.getUserWalletId())
                 .amount(request.getAmount())
+                .fromAmount(BigDecimal.ZERO)
+                .receiveAmount(request.getAmount())
                 .currency("VND")
                 .transactionType(TransactionType.USER_DEPOSIT)
                 .paymentMethod(PaymentMethod.SEPAY)
@@ -109,6 +111,7 @@ public class WalletDepositService {
                 .paymentCode(generatePaymentCode(userWallet.getUserWalletId()))
                 .providerTransactionCode(null)
                 .providerContent(null)
+                .description("Wallet deposit via SePay")
                 .paidAt(null)
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();

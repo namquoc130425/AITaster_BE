@@ -1,6 +1,11 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.PaymentMethod;
+import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.PaymentStatus;
+import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.constant.UserWalletStatus;
+import com.example.AiTaster.dto.request.PaymentTransferRequest;
 import com.example.AiTaster.dto.request.UserWalletRequest;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.entity.User;
@@ -22,6 +27,7 @@ public class UserWalletService implements IUserWalletService {
     private final UserWalletRepo userWalletRepo;
     private final CurrentUserService currentUserService;
     private final UserWalletMapper userWalletMapper;
+    private final PaymentTransferService paymentTransferService;
 
     @Override
     public UserWalletResponse createWallet(UserWalletRequest request) {
@@ -103,13 +109,24 @@ public class UserWalletService implements IUserWalletService {
 
         UserWallet wallet = getWallet(walletId);
 
-        wallet.setBalance(
-                wallet.getBalance().add(amount)
-        );
+        paymentTransferService.transfer(PaymentTransferRequest.builder()
+                .senderId(wallet.getUser().getUserId())
+                .receiverId(wallet.getUser().getUserId())
+                .sourceWalletId(null)
+                .targetWalletId(wallet.getUserWalletId())
+                .fromAmount(BigDecimal.ZERO)
+                .receiveAmount(amount)
+                .transactionType(TransactionType.USER_DEPOSIT)
+                .paymentMethod(PaymentMethod.WALLET)
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .referenceId(wallet.getUserWalletId())
+                .paymentReferenceType(PaymentReferenceType.USER_WALLET)
+                .providerName("INTERNAL")
+                .description("Manual wallet deposit")
+                .creditTargetWallet(true)
+                .build());
 
-        return userWalletMapper.toResponse(
-                userWalletRepo.save(wallet)
-        );
+        return userWalletMapper.toResponse(getWallet(walletId));
     }
 
     @Override
@@ -120,20 +137,24 @@ public class UserWalletService implements IUserWalletService {
 
         UserWallet wallet = getWallet(walletId);
 
-        if (wallet.getBalance().compareTo(amount) < 0) {
-            throw new GlobalException(
-                    400,
-                    "Insufficient balance"
-            );
-        }
+        paymentTransferService.transfer(PaymentTransferRequest.builder()
+                .senderId(wallet.getUser().getUserId())
+                .receiverId(wallet.getUser().getUserId())
+                .sourceWalletId(wallet.getUserWalletId())
+                .targetWalletId(null)
+                .fromAmount(amount)
+                .receiveAmount(BigDecimal.ZERO)
+                .transactionType(TransactionType.USER_WITHDRAW)
+                .paymentMethod(PaymentMethod.WALLET)
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .referenceId(wallet.getUserWalletId())
+                .paymentReferenceType(PaymentReferenceType.WITHDRAW_REQUEST)
+                .providerName("INTERNAL")
+                .description("Manual wallet withdraw")
+                .debitSourceWallet(true)
+                .build());
 
-        wallet.setBalance(
-                wallet.getBalance().subtract(amount)
-        );
-
-        return userWalletMapper.toResponse(
-                userWalletRepo.save(wallet)
-        );
+        return userWalletMapper.toResponse(getWallet(walletId));
     }
 
     @Override

@@ -1,11 +1,16 @@
 package com.example.AiTaster.controller;
 
 import com.example.AiTaster.constant.UserWalletStatus;
+import com.example.AiTaster.dto.request.UserBankAccountRequest;
 import com.example.AiTaster.dto.request.UserWalletRequest;
 import com.example.AiTaster.dto.request.WalletBalanceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ProjectPaymentResponse;
+import com.example.AiTaster.dto.response.PaymentTransactionResponse;
+import com.example.AiTaster.dto.response.UserBankAccountResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
+import com.example.AiTaster.service.PaymentTransactionQueryService;
+import com.example.AiTaster.service.UserBankAccountService;
 import com.example.AiTaster.service.UserWalletService;
 import com.example.AiTaster.service.WalletDepositService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,6 +28,8 @@ public class UserWalletController {
 
     private final UserWalletService userWalletService;
     private final WalletDepositService walletDepositService;
+    private final UserBankAccountService userBankAccountService;
+    private final PaymentTransactionQueryService paymentTransactionQueryService;
 
     @PostMapping
     public ResponseEntity<APIResponse<UserWalletResponse>>
@@ -149,6 +156,41 @@ public class UserWalletController {
                                 walletId,
                                 status
                         )
+                )
+        );
+    }
+
+    @GetMapping("/transactions/my")
+    public ResponseEntity<APIResponse<List<PaymentTransactionResponse>>> getMyTransactions() {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get wallet transactions successfully",
+                        paymentTransactionQueryService.getMyWalletTransactions()
+                )
+        );
+    }
+
+    @GetMapping("/bank-account/my")
+    public ResponseEntity<APIResponse<UserBankAccountResponse>> getMyBankAccount() {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get bank account successfully",
+                        userBankAccountService.getMyDefaultBankAccount()
+                )
+        );
+    }
+
+    @PostMapping("/bank-account")
+    public ResponseEntity<APIResponse<UserBankAccountResponse>> integrateBankAccount(
+            @RequestBody UserBankAccountRequest request
+    ) {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Bank account verified",
+                        userBankAccountService.integrate(request)
                 )
         );
     }

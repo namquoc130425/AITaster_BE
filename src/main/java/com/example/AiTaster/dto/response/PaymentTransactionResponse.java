@@ -16,40 +16,30 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class WalletDepositPaymentResponse {
+public class PaymentTransactionResponse {
     Long paymentTransactionId;
-
-    Long walletId;
-
-    Long userId;
-
+    Long projectEscrowId;
+    Long expertServiceId;
+    Long senderId;
+    Long receiverId;
+    Long sourceWalletId;
+    Long targetWalletId;
     BigDecimal amount;
-
     BigDecimal fromAmount;
-
     BigDecimal receiveAmount;
-
     String currency;
-
     TransactionType transactionType;
-
     PaymentMethod paymentMethod;
-
     PaymentStatus paymentStatus;
-
-    PaymentReferenceType paymentReferenceType;
-
     Long referenceId;
-
+    PaymentReferenceType paymentReferenceType;
     String providerName;
-
+    String providerTransactionCode;
+    String paymentCode;
+    String providerContent;
     String description;
-
-    SepayCheckoutFormResponse checkoutForm;
-
+    LocalDateTime paidAt;
     LocalDateTime expiredAt;
-
     LocalDateTime createAt;
-
     LocalDateTime updateAt;
 }

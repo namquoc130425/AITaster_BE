@@ -14,6 +14,7 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
+import com.example.AiTaster.repository.ExpertApplicationRepo;
 import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.service.imp.IJobPost;
@@ -37,6 +38,7 @@ public class JobPostService implements IJobPost {
     private final CurrentUserService currentUserService;
     private final ContentManagerService  contentManagerService;
     private final SkillRepo skillRepo;
+    private final ExpertApplicationRepo expertApplicationRepo;
 
     //client tự tạo jobpost với status là Draft mà không dùng AI
     public JobPostResponse createJobPost(JobPostRequest jobPostRequest) {
@@ -48,7 +50,7 @@ public class JobPostService implements IJobPost {
                jobPost.setSkills(selectedSkillByUser);
         JobPost saveJobPost = jobPostRepo.save(jobPost);
 
-        return  jobPostMapper.toResponse(saveJobPost);
+        return toResponseWithApplicationCount(saveJobPost);
     }
 
     // Update Jobpost ( update lúc dang status Draft )
@@ -65,7 +67,7 @@ public class JobPostService implements IJobPost {
         List<Skill> selectedSkills = getSkillBySkillId(jobPostRequest.getSelectedSkillIds());
         jobPost.setSkills(selectedSkills);
         JobPost saveJobPost = jobPostRepo.save(jobPost);
-        return jobPostMapper.toResponse(saveJobPost);
+        return toResponseWithApplicationCount(saveJobPost);
 
     }
 
@@ -73,7 +75,7 @@ public class JobPostService implements IJobPost {
     @Override
     public JobPostResponse GetJobPostById(Long id) {
         JobPost jobPost = findJobPostById(id);
-        return jobPostMapper.toResponse(jobPost);
+        return toResponseWithApplicationCount(jobPost);
     }
 
     //lấy danh sách job của client mới nhất . ( đẩy dử liệu lên để cho người dùng chỉnh sửa )
@@ -87,7 +89,10 @@ public class JobPostService implements IJobPost {
                 JobpostStatus.CLOSED,
                 InvitationStatus.ACCEPTED
         );
-        return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile).stream().map(jobPostMapper::toResponse).toList();
+        return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile)
+                .stream()
+                .map(this::toResponseWithApplicationCount)
+                .toList();
     }
 
     //lấy danh sách job của client có status Opend hiện tại
@@ -100,13 +105,13 @@ public class JobPostService implements IJobPost {
                         InvitationStatus.ACCEPTED,
                         InvitationStatus.PAYMENT_EXPIRED
                 )
-        ).stream().map(jobPostMapper::toResponse).toList();
+        ).stream().map(this::toResponseWithApplicationCount).toList();
     }
 
     public PageResponse<JobPostResponse> getAllPublicJobPostsPage(JobPostFilterRequest jobPostFilterRequest) {
         Pageable pageable = PageUtil.createPageable(jobPostFilterRequest);
         Page<JobPost> jobPostPage = jobPostRepo.findAll(JobPostSpecification.filter(jobPostFilterRequest), pageable);
-        Page<JobPostResponse> responsePage = jobPostPage.map(jobPostMapper::toResponse);
+        Page<JobPostResponse> responsePage = jobPostPage.map(this::toResponseWithApplicationCount);
 
         return PageResponse.fromPage(responsePage);
     }
@@ -139,7 +144,7 @@ public class JobPostService implements IJobPost {
 
         JobPost saveJobPost = jobPostRepo.save(jobPost);
 
-        return jobPostMapper.toResponse(saveJobPost);
+        return toResponseWithApplicationCount(saveJobPost);
     }
 
 
@@ -238,6 +243,12 @@ public class JobPostService implements IJobPost {
         }
 
         return skillRepo.findAllById(checkskill);
+    }
+
+    private JobPostResponse toResponseWithApplicationCount(JobPost jobPost) {
+        JobPostResponse response = jobPostMapper.toResponse(jobPost);
+        response.setApplicationCount(expertApplicationRepo.countByJobpost(jobPost));
+        return response;
     }
 
 

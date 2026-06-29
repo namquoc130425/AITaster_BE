@@ -69,6 +69,8 @@ public class ProjectPaymentService implements IProjectPayment {
                 .sourceWalletId(null)
                 .targetWalletId(null)
                 .amount(invitation.getFinalOfferedPrice())
+                .fromAmount(BigDecimal.ZERO)
+                .receiveAmount(invitation.getFinalOfferedPrice())
                 .currency("VND")
                 .transactionType(TransactionType.PROJECT_ESCROW_DEPOSIT)
                 .paymentMethod(PaymentMethod.SEPAY)
@@ -79,6 +81,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 .paymentCode(generatePaymentCode(invitation.getInvitationId()))
                 .providerTransactionCode(null)
                 .providerContent(null)
+                .description("Escrow deposit for invitation " + invitation.getInvitationId())
                 .paidAt(null)
                 .expiredAt(invitation.getRespondedAt().plusHours(24))
                 .build();

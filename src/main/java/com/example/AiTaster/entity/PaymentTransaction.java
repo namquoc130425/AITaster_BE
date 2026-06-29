@@ -47,6 +47,12 @@ public class PaymentTransaction {
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal amount;
 
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal fromAmount;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal receiveAmount;
+
     // loại tiền
     @Column(nullable = false, length = 10)
     String currency;
@@ -95,6 +101,9 @@ public class PaymentTransaction {
     @Column(columnDefinition = "Text")
     String providerContent;
 
+    @Column(columnDefinition = "Text")
+    String description;
+
     // time thanh toán thành công
     LocalDateTime paidAt;
 
@@ -113,6 +122,8 @@ public class PaymentTransaction {
         if (currency == null) currency = "VND";
         if (paymentMethod == null) paymentMethod = PaymentMethod.SEPAY;
         if (providerName == null) providerName = "SEPAY";
+        if (fromAmount == null) fromAmount = BigDecimal.ZERO;
+        if (receiveAmount == null) receiveAmount = amount == null ? BigDecimal.ZERO : amount;
     }
 
 

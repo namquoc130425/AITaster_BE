@@ -37,6 +37,8 @@ public class JobPostResponse {
     JobpostStatus jobPostStatus;
     List<SkillResponse> skills;
 
+    Long applicationCount;
+
    // LocalDateTime createAt;
 
    // LocalDateTime updateAt;

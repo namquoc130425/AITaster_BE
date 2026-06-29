@@ -30,6 +30,9 @@ public class ProjectMilestoneService {
     private final ClientProfileRepo clientProfileRepo;
     private final CurrentUserService currentUserService;
     private final LocalFileStorageService localFileStorageService;
+    private final ProjectEscrowReleaseService projectEscrowReleaseService;
+    private final NotificationService notificationService;
+    private final ProjectRealtimeService projectRealtimeService;
 
     private final ProjectMilestoneMapper projectMilestoneMapper;
     private final DeliverableMapper deliverableMapper;
@@ -228,8 +231,9 @@ public class ProjectMilestoneService {
         project.setCompletedAt(LocalDateTime.now());
         projectRepo.save(project);
 
-        projectEscrow.setEscrowStatus(EscrowStatus.RELEASED);
-        projectEscrowRepo.save(projectEscrow);
+        projectEscrowReleaseService.releaseToExpert(project);
+        notificationService.notifyProjectCompleted(project);
+        projectRealtimeService.projectCompleted(project);
 
     }
 
