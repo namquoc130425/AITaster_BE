@@ -17,28 +17,28 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class SepayGateway {
-    @Value("${app.sepay.merchant-id}")
+    @Value("${app.sepay.merchant-id:${SEPAY_MERCHANT_ID:}}")
     private String merchantId;
 
-    @Value("${app.sepay.secret-key}")
+    @Value("${app.sepay.secret-key:${SEPAY_SECRET_KEY:}}")
     private String secretKey;
 
     // Endpoint submit form của SePay.
     // Ví dụ theo docs: https://pgapi.sepay.vn/v1/checkout/init
-    @Value("${app.sepay.checkout-url}")
+    @Value("${app.sepay.checkout-url:${SEPAY_CHECKOUT_URL:https://pgapi.sepay.vn/v1/checkout/init}}")
     private String checkoutUrl;
 
 
-    @Value("${app.sepay.success-url:${app.sepay.checkout-api-url}}")
+    @Value("${app.sepay.success-url:${SEPAY_SUCCESS_URL:http://localhost:5173/payment/success}}")
     private String successUrl;
 
-    @Value("${app.sepay.error-url:${app.sepay.return-url}}")
+    @Value("${app.sepay.error-url:${SEPAY_ERROR_URL:http://localhost:5173/payment/error}}")
     private String errorUrl;
 
-    @Value("${app.sepay.cancel-url}")
+    @Value("${app.sepay.cancel-url:${SEPAY_CANCEL_URL:http://localhost:5173/payment/cancel}}")
     private String cancelUrl;
 
-    @Value("${app.sepay.ipn-url}")
+    @Value("${app.sepay.ipn-url:${SEPAY_IPN_URL:}}")
     private String ipnUrl;
 
     public SepayCheckoutFormResponse createCheckoutForm(PaymentTransaction payment) {

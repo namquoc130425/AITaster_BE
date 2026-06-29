@@ -37,7 +37,7 @@ public class SepayWebhookService {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final InvitationRepo invitationRepo;
 
-    @Value("${app.sepay.webhook-secret}")
+    @Value("${app.sepay.webhook-secret:${SEPAY_WEBHOOK_SECRET:}}")
     private String webhookSecret;
 
     private final ObjectMapper objectMapper;
