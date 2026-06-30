@@ -1,12 +1,11 @@
-package com.example.AiTaster.service;
+package com.example.AiTaster.service.payment.sepay;
 
-import com.example.AiTaster.constant.PaymentMethod;
+
 import com.example.AiTaster.constant.PaymentReferenceType;
-import com.example.AiTaster.constant.PaymentStatus;
+
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.constant.UserWalletStatus;
 import com.example.AiTaster.dto.request.WalletBalanceRequest;
-import com.example.AiTaster.dto.response.ProjectPaymentResponse;
 import com.example.AiTaster.dto.response.SepayCheckoutFormResponse;
 import com.example.AiTaster.dto.response.WalletDepositPaymentResponse;
 import com.example.AiTaster.entity.PaymentTransaction;
@@ -14,15 +13,17 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.entity.UserWallet;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.PaymentTransactionMapper;
-import com.example.AiTaster.repository.PaymentTransactionRepo;
+
 import com.example.AiTaster.repository.UserWalletRepo;
+import com.example.AiTaster.service.CurrentUserService;
+import com.example.AiTaster.service.PendingPaymentService;
+import com.example.AiTaster.service.SepayGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,9 +31,10 @@ public class WalletDepositService {
 
     private final CurrentUserService currentUserService;
     private final UserWalletRepo userWalletRepo;
-    private final PaymentTransactionRepo paymentTransactionRepo;
+
     private final PaymentTransactionMapper paymentTransactionMapper;
     private final SepayGateway sepayGateway;
+    private final PendingPaymentService pendingPaymentService;
 
     @Transactional
     public WalletDepositPaymentResponse createWalletDeposit(Long userWalletId, WalletBalanceRequest request) {
@@ -41,21 +43,20 @@ public class WalletDepositService {
 
         checkWalletDeposit(userWallet, currentUser, request);
 
-        PaymentTransaction paymentTransaction = paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
-                PaymentReferenceType.USER_WALLET,
+        PaymentTransaction paymentTransaction = pendingPaymentService.createPendingPaymentTransaction(
+                currentUser.getUserId(),
+                currentUser.getUserId(),
+                null,
                 userWallet.getUserWalletId(),
-                PaymentStatus.PENDING,
-                PaymentMethod.SEPAY
-        ).map(existingPayment -> {
-            if (existingPayment.getGrossAmount().compareTo(request.getAmount()) == 0) {
-                return existingPayment;
-            }
-
-            existingPayment.setPaymentStatus(PaymentStatus.EXPIRED);
-            paymentTransactionRepo.save(existingPayment);
-            return createPendingUserWalletId(userWallet, currentUser, request);
-        }).orElseGet(() -> createPendingUserWalletId(userWallet, currentUser, request));
-
+                 null,
+                null,
+                TransactionType.USER_DEPOSIT,
+                userWallet.getUserWalletId(),
+                PaymentReferenceType.USER_WALLET
+                , request.getAmount(),
+                "SePay wallet deposit",
+                LocalDateTime.now().plusHours(1)
+        );
         SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);
         return paymentTransactionMapper.toWalletDepositPaymentResponse(paymentTransaction, checkoutForm);
     }
@@ -90,39 +91,6 @@ public class WalletDepositService {
         }
     }
 
-    private PaymentTransaction createPendingUserWalletId(UserWallet userWallet, User userCurrent, WalletBalanceRequest request) {
-        PaymentTransaction paymentTransaction = PaymentTransaction.builder()
-                .projectEscrowId(null)
-                .expertServiceId(null)
-                .senderId(userCurrent.getUserId())
-                .receiverId(userCurrent.getUserId())
-                .sourceWalletId(null)
-                .targetWalletId(userWallet.getUserWalletId())
-                .grossAmount(request.getAmount())
-                .currency("VND")
-                .transactionType(TransactionType.USER_DEPOSIT)
-                .paymentMethod(PaymentMethod.SEPAY)
-                .paymentStatus(PaymentStatus.PENDING)
-                .referenceId(userWallet.getUserWalletId())
-                .paymentReferenceType(PaymentReferenceType.USER_WALLET)
-                .providerName("SEPAY")
-                .paymentCode(generatePaymentCode(userWallet.getUserWalletId()))
-                .providerTransactionCode(null)
-                .providerContent(null)
-                .paidAt(null)
-                .expiredAt(LocalDateTime.now().plusHours(1))
-                .build();
-        return paymentTransactionRepo.save(paymentTransaction);
-    }
-
-    private String generatePaymentCode(Long userWalletId) {
-        String randomPart = UUID.randomUUID()
-                .toString()
-                .replace("-", "")
-                .substring(0, 8)
-                .toUpperCase();
-        return "AIT-WALLET-IN-" + userWalletId + "-" + randomPart;
-    }
 
     private UserWallet findUserWalletById(Long userWalletId) {
         return userWalletRepo.findByUserWalletId(userWalletId)

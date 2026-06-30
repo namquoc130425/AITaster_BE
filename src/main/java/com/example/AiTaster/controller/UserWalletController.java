@@ -7,7 +7,7 @@ import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ProjectPaymentResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.service.UserWalletService;
-import com.example.AiTaster.service.WalletDepositService;
+import com.example.AiTaster.service.payment.sepay.WalletDepositService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
