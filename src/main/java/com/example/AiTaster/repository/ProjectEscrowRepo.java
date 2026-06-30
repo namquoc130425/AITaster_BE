@@ -24,4 +24,12 @@ public interface ProjectEscrowRepo extends JpaRepository<ProjectEscrow, Long> {
         WHERE e.projectId = :projectId
     """)
     Optional<ProjectEscrow> findByProjectIdForUpdate(@Param("projectId") Long projectId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+    SELECT e
+    FROM ProjectEscrow e
+    WHERE e.projectEscrowId = :projectEscrowId
+""")
+    Optional<ProjectEscrow> findByProjectEscrowIdForUpdate(@Param("projectEscrowId") Long projectEscrowId);
 }

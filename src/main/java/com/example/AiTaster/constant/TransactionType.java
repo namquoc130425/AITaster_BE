@@ -3,9 +3,6 @@ package com.example.AiTaster.constant;
 public enum TransactionType {
     PROJECT_ESCROW, // client nạp tiền giữ cho Project
 
-
-
-
     USER_DEPOSIT,          // user nạp tiền vào ví riêng
     USER_WITHDRAW,         // user rút tiền khỏi ví riêng
 

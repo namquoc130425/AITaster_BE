@@ -43,9 +43,21 @@ public class PaymentTransaction {
     //ví đích, ví của hệ thống
     Long targetWalletId;
 
-    //tiền thanh toán
+    //tiền mua sản phẩm , tiền gốc mà user bỏ ra
     @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal amount;
+    BigDecimal grossAmount;
+
+    //tiền phí sàn
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal feeAmount;
+
+    //tiền thực tế đã trừ phí sàn đến tay người nhận
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal netAmount;
+
+//    //tiền thanh toán
+//    @Column(nullable = false, precision = 12, scale = 2)
+//    BigDecimal amount;
 
     // loại tiền
     @Column(nullable = false, length = 10)
@@ -91,6 +103,9 @@ public class PaymentTransaction {
     @Column(nullable = false, unique = true, length = 80)
     String paymentCode;
 
+    @Column(columnDefinition = "TEXT")
+    String description;
+
     // nội dung ck Sepay gữi về
     @Column(columnDefinition = "Text")
     String providerContent;
@@ -113,6 +128,7 @@ public class PaymentTransaction {
         if (currency == null) currency = "VND";
         if (paymentMethod == null) paymentMethod = PaymentMethod.SEPAY;
         if (providerName == null) providerName = "SEPAY";
+        if (feeAmount == null)     feeAmount = BigDecimal.ZERO;
     }
 
 

@@ -192,7 +192,7 @@ public class SepayWebhookService {
     }
 
     private boolean isAmountMatched(PaymentTransaction payment, BigDecimal transferAmount) {
-        return transferAmount != null && payment.getAmount() != null && payment.getAmount().compareTo(transferAmount) == 0;
+        return transferAmount != null && payment.getGrossAmount() != null && payment.getGrossAmount().compareTo(transferAmount) == 0;
     }
 
     // thanh toán thất bại set status payment , providerTransactionCode từ sepay gữi về ,ProviderContent từ lúc gữi đi cho sepay

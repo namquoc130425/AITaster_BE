@@ -11,10 +11,11 @@ import com.example.AiTaster.mapper.ExpertApplicationMapper;
 import com.example.AiTaster.mapper.ExpertProposalMapper;
 import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.imp.IExpertApplication;
+import com.example.AiTaster.service.payment.sepay.ProposalPurchaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 
@@ -32,6 +33,7 @@ private final CurrentUserService currentUserService;
 private final ClientProfileRepo clientProfileRepo;
 private final ProposalUnlockRepo proposalUnlockRepo;
 private final JobPostRepo jobPostRepo;
+private final ProposalPurchaseService proposalPurchaseService;
 
     @Override
     public ExpertApplicationResponse applyJobPost(Long jobPostId, ExpertApplicationRequest request) {
@@ -100,26 +102,13 @@ private final JobPostRepo jobPostRepo;
     // Client mua mở khóa proposal detailContent.
     @Override
     public ExpertApplicationResponse unlockProposal(Long proposalId) {
-        ClientProfile clientProfile = getCurrentClientProfile();
-       ExpertProposal expertProposal = getProposalById(proposalId);
-        if (Boolean.TRUE.equals(expertProposal.getIsDeleted())) {
-            throw new GlobalException(400, "Proposal was deleted");
-        }
-       ExpertApplication expertApplication = getExpertApplication(expertProposal.getExpertApplication().getApplicationId());
-        checkJobPostOwner(expertApplication.getJobpost(),clientProfile);
+        proposalPurchaseService.purchaseProposalByWallet(proposalId);
 
-        boolean alreadyUnlocked = proposalUnlockRepo.existsByProposalAndClientProfileAndIsUnlockedTrue(expertProposal, clientProfile);
-        if(!alreadyUnlocked) {
-            ProposalUnlock unlock = ProposalUnlock.builder()
-                    .proposal(expertProposal)
-                    .clientProfile(clientProfile)
-                    .paymentTransactionId(null)
-                    .amount(expertProposal.getPriceToUnlock())
-                    .isUnlocked(true)
-                    .unlockedAt(LocalDateTime.now())
-                    .build();
-            proposalUnlockRepo.save(unlock);
-        }
+        ClientProfile clientProfile = getCurrentClientProfile();
+        ExpertProposal expertProposal = getProposalById(proposalId);
+        ExpertApplication expertApplication = getExpertApplication(
+                expertProposal.getExpertApplication().getApplicationId()
+        );
 
         return mapApplicationForClient(expertApplication, clientProfile);
     }

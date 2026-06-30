@@ -11,6 +11,7 @@ import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
+import com.example.AiTaster.service.MoneyMovementService;
 import com.example.AiTaster.service.PlatformFeeCalculator;
 import com.example.AiTaster.service.ProjectMilestoneService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final ProjectMilestoneService projectMilestoneService   ;
     private final PlatformFeeCalculator platformFeeCalculator;
+    private  final MoneyMovementService moneyMovementService;
     @Override
     public boolean supports(PaymentTransaction payment) {
         return PaymentMethod.SEPAY.equals(payment.getPaymentMethod())
@@ -49,19 +51,22 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
 
         projectMilestoneService.createMilestoneForProject(newProject);
 
-        payment.setPaymentStatus(PaymentStatus.SUCCESS);
+        PaymentTransaction successTransaction  =   moneyMovementService.moneyTransactionManagement(
+                null,
+                newProjectEscrow.getProjectEscrowId(),
+                TransactionType.PROJECT_ESCROW_DEPOSIT,
+                newProject.getProjectId(),
+                PaymentReferenceType.PROJECT,
+                "SePay project escrow deposit",
+                BigDecimal.ZERO,
+                payment.getGrossAmount(),
+                payment.getPaymentTransactionId());
 
-        payment.setProviderTransactionCode(providerTransactionCode);
+        successTransaction.setProviderTransactionCode(providerTransactionCode);
+        successTransaction.setProviderContent(providerContent);
+        successTransaction.setPaidAt(paidAt);
 
-        payment.setProviderContent(providerContent);
-
-        payment.setPaidAt(paidAt);
-
-        payment.setProjectEscrowId(newProjectEscrow.getProjectEscrowId());
-
-        newProjectEscrow.setHeldAmount(payment.getAmount());
-
-        newProjectEscrow.setStartedAt(paidAt);
+      //  newProjectEscrow.setStartedAt(paidAt);
 
         newProject.setIsActive(true);
 
@@ -69,9 +74,13 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
 
         newProject.setDeadlineAt(setUpDeadlike(paidAt,newProject.getTimelineValue(),newProject.getTimelineUnit()));
 
-        paymentTransactionRepo.save(payment);
+        paymentTransactionRepo.save(successTransaction);
 
-        projectEscrowRepo.save(newProjectEscrow);
+        ProjectEscrow updatedEscrow = projectEscrowRepo.findByProjectEscrowId(newProjectEscrow.getProjectEscrowId())
+                .orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+
+        updatedEscrow.setStartedAt(paidAt);
+        projectEscrowRepo.save(updatedEscrow);
 
         projectRepo.save(newProject);
     }
@@ -102,7 +111,7 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
                 .heldAmount(BigDecimal.ZERO)
                 .platformFee(platformFee)
                 .expertAmount(expertAmount)
-                .escrowStatus(EscrowStatus.HELD)
+                .escrowStatus(EscrowStatus.WAITING_PAYMENT)
                 .startedAt(null)
                 .build();
 
