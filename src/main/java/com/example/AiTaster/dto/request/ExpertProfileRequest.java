@@ -1,10 +1,7 @@
 package com.example.AiTaster.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,15 +11,16 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-//dùng update cho expertprofile
 public class ExpertProfileRequest {
+
     @NotBlank(message = "FIELD_REQUIRED")
     @Email(message = "INVALID_FORMART")
     String email;
 
-    @NotBlank(message = "PASSWORD_REQURIED")
+    @NotBlank(message = "PASSWORD_REQUIRED")
     @Size(min = 8, message = "INVALID_FORMART")
     String password;
+
     @NotBlank(message = "FIELD_REQUIRED")
     @Size(max = 30, message = "fullName max 30 characters")
     String fullName;
@@ -44,9 +42,8 @@ public class ExpertProfileRequest {
     @Size(max = 1000, message = "skills max 1000 characters")
     String skills;
 
-
-    @JsonAlias("yearOfExperience")
-    Integer yearsOfExperience;
+    @JsonAlias({"yearOfExperience", "yearsOfExperience"})
+    Integer yearOfExperience;
 
     String portfolioUrl;
 }
