@@ -47,7 +47,7 @@ public class WalletDepositService {
                 PaymentStatus.PENDING,
                 PaymentMethod.SEPAY
         ).map(existingPayment -> {
-            if (existingPayment.getAmount().compareTo(request.getAmount()) == 0) {
+            if (existingPayment.getGrossAmount().compareTo(request.getAmount()) == 0) {
                 return existingPayment;
             }
 
@@ -98,7 +98,7 @@ public class WalletDepositService {
                 .receiverId(userCurrent.getUserId())
                 .sourceWalletId(null)
                 .targetWalletId(userWallet.getUserWalletId())
-                .amount(request.getAmount())
+                .grossAmount(request.getAmount())
                 .currency("VND")
                 .transactionType(TransactionType.USER_DEPOSIT)
                 .paymentMethod(PaymentMethod.SEPAY)
