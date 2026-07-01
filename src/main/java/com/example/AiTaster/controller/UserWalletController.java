@@ -4,7 +4,6 @@ import com.example.AiTaster.constant.UserWalletStatus;
 import com.example.AiTaster.dto.request.UserWalletRequest;
 import com.example.AiTaster.dto.request.WalletBalanceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
-import com.example.AiTaster.dto.response.ProjectPaymentResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.dto.response.WalletDepositPaymentResponse;
 import com.example.AiTaster.entity.PaymentTransaction;
@@ -83,25 +82,6 @@ public class UserWalletController {
         );
     }
 
-//    @PatchMapping("/{walletId}/deposit")
-//    public ResponseEntity<APIResponse<UserWalletResponse>>
-//    deposit(
-//            @PathVariable Long walletId,
-//            @RequestBody WalletBalanceRequest request
-//    ) {
-//
-//        return ResponseEntity.ok(
-//                APIResponse.response(
-//                        200,
-//                        "Deposit success",
-//                        userWalletService.deposit(
-//                                walletId,
-//                                request.getAmount()
-//                        )
-//                )
-//        );
-//    }
-
     @PostMapping("/{walletId}/deposit/sepay")
     public ResponseEntity<APIResponse<WalletDepositPaymentResponse>>
     createSepayDeposit(
@@ -114,25 +94,6 @@ public class UserWalletController {
                         200,
                         "SePay wallet deposit created",
                         walletDepositService.createWalletDeposit(walletId, request)
-                )
-        );
-    }
-
-    @PatchMapping("/{walletId}/withdraw")
-    public ResponseEntity<APIResponse<UserWalletResponse>>
-    withdraw(
-            @PathVariable Long walletId,
-            @RequestBody WalletBalanceRequest request
-    ) {
-
-        return ResponseEntity.ok(
-                APIResponse.response(
-                        200,
-                        "Withdraw success",
-                        userWalletService.withdraw(
-                                walletId,
-                                request.getAmount()
-                        )
                 )
         );
     }

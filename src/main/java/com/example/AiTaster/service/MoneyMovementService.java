@@ -21,7 +21,6 @@ public class MoneyMovementService {
     private final UserWalletRepo userWalletRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final UserRepo userRepo;
-    private final UserWalletService userWalletService;
     private final PlatformFeeCalculator platformFeeCalculator;
     private final ProjectEscrowBalanceService projectEscrowBalanceService;
 
@@ -244,6 +243,7 @@ public class MoneyMovementService {
             throw new GlobalException(400, fieldName + " must not be negative");
         }
     }
+    // trừ tiền trong ví,,không gọi qua UserWallerService nữa
     private Long withdrawMoney(Long fromId, BigDecimal amount, TransactionType transactionType) {
         if (fromId == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             return null;
@@ -255,11 +255,21 @@ public class MoneyMovementService {
             return null;
         }
 
-        return userWalletService
-                .withdrawByUserId(fromId, amount)
-                .getUserWalletId();
-    }
+        UserWallet wallet = userWalletRepo.findByUserIdForUpdate(fromId)
+                .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + fromId));
 
+        if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
+            throw new GlobalException(400, "Wallet is not active");
+        }
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new GlobalException(400, "Insufficient balance");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+        return userWalletRepo.save(wallet).getUserWalletId();
+    }
+    // cộng tiền trong ví ,không gọi qua UserWallerService nữa
     private Long depositMoney(Long toId, BigDecimal amount, TransactionType transactionType) {
         if (toId == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             return null;
@@ -270,10 +280,15 @@ public class MoneyMovementService {
             return null;
         }
 
+        UserWallet wallet = userWalletRepo.findByUserIdForUpdate(toId)
+                .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + toId));
 
-        return userWalletService
-                .depositByUserId(toId, amount)
-                .getUserWalletId();
+        if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
+            throw new GlobalException(400, "Wallet is not active");
+        }
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+        return userWalletRepo.save(wallet).getUserWalletId();
     }
     // Hàm này giúp transaction biết đang liên quan tới escrow nào.
     private Long resolveProjectEscrowId(TransactionType transactionType, Long fromId, Long toId) {

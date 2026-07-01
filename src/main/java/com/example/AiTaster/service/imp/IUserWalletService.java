@@ -6,7 +6,6 @@ import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.entity.UserWallet;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface IUserWalletService {
@@ -18,10 +17,6 @@ public interface IUserWalletService {
     UserWalletResponse getWalletById(Long walletId);
 
     List<UserWalletResponse> getAllWallets();
-
-    UserWalletResponse deposit(Long walletId, BigDecimal amount);
-
-    UserWalletResponse withdraw(Long walletId, BigDecimal amount);
 
     UserWalletResponse changeStatus(
             Long walletId,
