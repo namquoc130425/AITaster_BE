@@ -26,4 +26,15 @@ public class ProjectPaymentController {
                 APIResponse.response(200, "Create invitation payment successfully", response)
         );
     }
+
+    @PostMapping("/{invitationId}/payments/wallet")
+    public ResponseEntity<APIResponse<ProjectPaymentResponse>> createProjectPaymentByWallet(
+            @PathVariable Long invitationId
+    ) {
+        ProjectPaymentResponse response = projectPaymentService.createProjectPaymentByWallet(invitationId);
+
+        return ResponseEntity.ok(
+                APIResponse.response(200, "Pay project by wallet successfully", response)
+        );
+    }
 }

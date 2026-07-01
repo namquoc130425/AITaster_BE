@@ -12,6 +12,7 @@ import org.mapstruct.Mapping;
 public interface PaymentTransactionMapper {
     @Mapping(target = "invitationId", source = "invitationId")
     @Mapping(target = "checkoutForm", source = "checkoutForm")
+    @Mapping(target = "amount", source = "paymentTransaction.grossAmount")
     ProjectPaymentResponse  toInvitationPaymentResponse(
             PaymentTransaction paymentTransaction,
             Long invitationId,
