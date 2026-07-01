@@ -7,6 +7,7 @@ import com.example.AiTaster.entity.UserWallet;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.UserWalletRepo;
 import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
 
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final MoneyMovementService moneyMovementService;
+    private final RealtimeService realtimeService;
 
 
     @Override
@@ -58,6 +60,12 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
         successTransaction.setPaidAt(paidAt);
 
         paymentTransactionRepo.save(successTransaction);
+        realtimeService.pushUserWalletEvent(
+                wallet.getUser(),
+                "WALLET_DEPOSIT_SUCCEEDED",
+                wallet.getUserWalletId(),
+                "Wallet deposit succeeded"
+        );
     }
 
 

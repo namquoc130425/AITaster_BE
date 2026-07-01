@@ -26,6 +26,6 @@ public class ExpertApplicationRequest {
     String shortMessage;
 
     @Valid
-    ExpertProposalRequest proposal; // optional
+    ExpertProposalRequest proposal; // Không bắt buộc.
 
 }

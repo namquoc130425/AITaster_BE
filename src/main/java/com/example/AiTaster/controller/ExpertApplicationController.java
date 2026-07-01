@@ -22,7 +22,7 @@ import java.util.List;
 public class ExpertApplicationController {
     private final ExpertApplicationService expertApplicationService;
     private final ProposalPurchaseService proposalPurchaseService;
-    // Expert apply vào JobPost.
+    // Expert ứng tuyển vào JobPost.
     // Có thể gửi kèm proposal hoặc không.
     @PostMapping("/job-posts/{jobPostId}/applications")
     public ResponseEntity<APIResponse<ExpertApplicationResponse>> applyJobPost(
@@ -34,7 +34,7 @@ public class ExpertApplicationController {
                 APIResponse.response(201, "Apply job post successfully", response)
         );
     }
-  // thanh toán proposal qua sepay
+  // Thanh toán proposal qua SePay.
     @PostMapping("/proposals/{proposalId}/unlock/sepay")
     public ResponseEntity<APIResponse<SepayPurchasePaymentResponse>> createProposalSepayPayment(
             @PathVariable Long proposalId
@@ -47,7 +47,7 @@ public class ExpertApplicationController {
         );
     }
 
-    // Client owner của JobPost xem danh sách expert đã apply vào JobPost.
+    // Client sở hữu JobPost xem danh sách expert đã ứng tuyển.
     @GetMapping("/job-posts/{jobPostId}/applications")
     public ResponseEntity<APIResponse<List<ExpertApplicationResponse>>> getApplicationsByJobPost(
             @PathVariable Long jobPostId
@@ -71,7 +71,7 @@ public class ExpertApplicationController {
         );
     }
 
-    // Client owner hoặc expert owner xem chi tiết application.
+    // Client sở hữu hoặc expert sở hữu xem chi tiết application.
     @GetMapping("/applications/{applicationId}")
     public ResponseEntity<APIResponse<ExpertApplicationResponse>> getApplicationDetail(
             @PathVariable Long applicationId
@@ -84,8 +84,8 @@ public class ExpertApplicationController {
         );
     }
 
-    // Client unlock proposal detailContent.
-    // Trả về nguyên application response để FE update card dễ.
+    // Client mở khóa detailContent của proposal.
+    // Trả về nguyên dữ liệu application để FE cập nhật card dễ.
     @PostMapping("/proposals/{proposalId}/unlock")
     public ResponseEntity<APIResponse<ExpertApplicationResponse>> unlockProposal(
             @PathVariable Long proposalId

@@ -37,8 +37,8 @@ public class NotificationService implements INotificationService {
 
     /*
      * Dùng cho trường hợp cần tạo notification ngay.
-     * Thông thường business service KHÔNG gọi trực tiếp method này.
-     * Business service nên gọi notify...(), để notification chạy AFTER_COMMIT.
+     * Thông thường service nghiệp vụ KHÔNG gọi trực tiếp hàm này.
+     * Service nghiệp vụ nên gọi notify...() để notification chạy sau khi commit.
      */
     @Override
     @Transactional
@@ -79,8 +79,8 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * Generic notification publisher.
-     * Đây là API reusable cho những service nghiệp vụ sau này.
+     * Hàm phát notification dùng chung.
+     * Đây là API có thể tái sử dụng cho những service nghiệp vụ sau này.
      */
     @Override
     public void notify(
@@ -109,7 +109,7 @@ public class NotificationService implements INotificationService {
 
     /*
      * Sau khi transaction của nghiệp vụ chính commit thành công,
-     * method này mới chạy.
+     * hàm này mới chạy.
      *
      * Nếu nghiệp vụ chính rollback,
      * notification sẽ không được tạo và không bị push ảo lên FE.
@@ -133,9 +133,9 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * Push riêng tư theo user destination.
+     * Đẩy notification riêng tư theo user destination.
      *
-     * FE subscribe:
+     * FE lắng nghe:
      * /user/queue/notifications
      *
      * Vì WebSocket Principal hiện tại là UsernamePasswordAuthenticationToken,
@@ -159,8 +159,8 @@ public class NotificationService implements INotificationService {
         );
 
         /*
-         * Optional backward compatible:
-         * Nếu FE cũ vẫn subscribe /topic/users/{id}/notifications
+     * Tương thích ngược không bắt buộc:
+     * Nếu FE cũ vẫn lắng nghe /topic/users/{id}/notifications
          * thì vẫn nhận được.
          *
          * Sau khi FE chuyển hẳn sang /user/queue/notifications,
@@ -238,10 +238,10 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * CASE 1:
-     * Expert apply job post.
+     * Trường hợp 1:
+     * Expert ứng tuyển job post.
      *
-     * Receiver: Client owner của JobPost.
+     * Người nhận: client sở hữu JobPost.
      */
     @Override
     public void notifyExpertApplied(
@@ -285,13 +285,13 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * CASE 2:
+     * Trường hợp 2:
      * Client gửi invitation.
      *
-     * Receiver: Expert được mời.
+     * Người nhận: expert được mời.
      *
-     * Đây chính là case FE nói đang thiếu:
-     * client làm action nhưng expert không biết.
+     * Đây là trường hợp FE đang thiếu:
+     * client thao tác nhưng expert không biết.
      */
     @Override
     public void notifyInvitationSent(
@@ -326,10 +326,10 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * CASE 3:
-     * Expert accept invitation.
+     * Trường hợp 3:
+     * Expert chấp nhận invitation.
      *
-     * Receiver: Client.
+     * Người nhận: client.
      */
     @Override
     public void notifyInvitationAccepted(
@@ -376,10 +376,10 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * CASE 4:
-     * Expert reject invitation.
+     * Trường hợp 4:
+     * Expert từ chối invitation.
      *
-     * Receiver: Client.
+     * Người nhận: client.
      */
     @Override
     public void notifyInvitationRejected(
@@ -426,8 +426,8 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * REPORT:
-     * User tạo report -> Admin nhận notification.
+     * Report:
+     * User tạo report -> admin nhận notification.
      */
     @Override
     public void notifyAdminNewReport(
@@ -460,8 +460,8 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * REPORT:
-     * Admin xử lý report -> Reporter nhận notification.
+     * Report:
+     * Admin xử lý report -> người gửi report nhận notification.
      */
     @Override
     public void notifyReporterReportResolved(
@@ -485,8 +485,8 @@ public class NotificationService implements INotificationService {
     }
 
     /*
-     * REPORT:
-     * Admin reject report -> Reporter nhận notification.
+     * Report:
+     * Admin từ chối report -> người gửi report nhận notification.
      */
     @Override
     public void notifyReporterReportRejected(

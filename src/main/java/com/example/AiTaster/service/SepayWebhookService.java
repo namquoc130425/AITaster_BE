@@ -1,4 +1,5 @@
 package com.example.AiTaster.service;
+
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.dto.request.SepayWebhookRequest;
 import com.example.AiTaster.entity.*;
@@ -15,10 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -28,13 +27,18 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 public class SepayWebhookService {
-    private static final Pattern PAYMENT_CODE_PATTERN = Pattern.compile("AIT-INV-\\d+-[A-Z0-9]{8}", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PAYMENT_CODE_PATTERN =
+            Pattern.compile("AIT-INV-\\d+-[A-Z0-9]{8}", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern WALLET_DEPOSIT_PAYMENT_CODE_PATTERN =
             Pattern.compile("AIT-WALLET-IN-\\d+-[A-Z0-9]{8}", Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern GENERIC_PAYMENT_CODE_PATTERN =
+            Pattern.compile("AIT-PAY-\\d+-[A-Z0-9]{8}", Pattern.CASE_INSENSITIVE);
+
     private static final DateTimeFormatter SEPAY_DATE_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private final InvitationRepo invitationRepo;
 
     @Value("${app.sepay.webhook-secret}")
@@ -42,51 +46,50 @@ public class SepayWebhookService {
 
     private final ObjectMapper objectMapper;
     private final PaymentTransactionRepo paymentTransactionRepo;
-    private final List<SepayPaymentHandler>  sepayPaymentHandler;
+    private final List<SepayPaymentHandler> sepayPaymentHandler;
 
     @Transactional
-    public void handleWebhook(String rawBody,  String secretKey) {
-
+    public void handleWebhook(String rawBody, String secretKey) {
         verifySecretKey(secretKey);
 
         SepayWebhookRequest request = parseBody(rawBody);
 
-        // IPN cổng thanh toán mới check ORDER_PAID + CAPTURED + APPROVED.
+        // Chỉ nhận IPN Payment Gateway khi đủ ORDER_PAID + CAPTURED + APPROVED.
         if (!isPaidIpn(request)) {
             return;
         }
 
-
-        // IPN mới lấy transaction.transaction_id.
+        // Payload IPN mới dùng transaction.transaction_id.
         String providerTransactionCode = buildProviderTransactionCode(request);
         if (providerTransactionCode == null) {
             return;
         }
-        // xuong db tìm mã code này đã có giao dịch chưa , có là đã giao dịch -> ko sữ lý lại
+
+        // Bỏ qua webhook trùng đã xử lý trước đó.
         if (paymentTransactionRepo.findByProviderTransactionCode(providerTransactionCode).isPresent()) {
             return;
         }
 
-        // IPN mới ưu tiên order.order_invoice_number.
+        // Ưu tiên order.order_invoice_number vì đây là paymentCode của hệ thống.
         String paymentCode = extractPaymentCode(request);
         if (paymentCode == null) {
             return;
         }
 
-        PaymentTransaction paymentTransaction = paymentTransactionRepo.findByPaymentCode(paymentCode).orElse(null);
+        PaymentTransaction paymentTransaction =
+                paymentTransactionRepo.findByPaymentCode(paymentCode).orElse(null);
 
-        if(paymentTransaction == null || !PaymentStatus.PENDING.equals(paymentTransaction.getPaymentStatus())) {
+        if (paymentTransaction == null
+                || !PaymentStatus.PENDING.equals(paymentTransaction.getPaymentStatus())) {
             return;
         }
 
-
-        //quá hạn
         if (isExpired(paymentTransaction)) {
             checkPaymentExpired(paymentTransaction);
             return;
         }
-        //tiền
-        // IPN mới dùng request.getTransaction().getTransactionAmount().
+
+        // Payload IPN mới dùng amount từ transaction.
         BigDecimal paidAmount = request.getTransaction().getTransactionAmount();
 
         if (!isAmountMatched(paymentTransaction, paidAmount)) {
@@ -94,20 +97,32 @@ public class SepayWebhookService {
             return;
         }
 
-        LocalDateTime paidAt = parsetransactionDate(request.getTransaction().getTransactionDate());
+        LocalDateTime paidAt = parseTransactionDate(
+                request.getTransaction().getTransactionDate()
+        );
 
         String providerContent = buildProviderContent(request);
 
-        SepayPaymentHandler  paymentHandler = sepayPaymentHandler.stream()
-                .filter(h -> h.supports(paymentTransaction)).findFirst().orElse(null);
-        if(paymentHandler == null ) {
+        SepayPaymentHandler paymentHandler = sepayPaymentHandler.stream()
+                .filter(handler -> handler.supports(paymentTransaction))
+                .findFirst()
+                .orElse(null);
+
+        if (paymentHandler == null) {
             markFailed(paymentTransaction, request, providerTransactionCode);
             return;
         }
-        paymentHandler.handle(paymentTransaction,request,providerTransactionCode,providerContent,paidAt);
+
+        paymentHandler.handle(
+                paymentTransaction,
+                request,
+                providerTransactionCode,
+                providerContent,
+                paidAt
+        );
     }
 
-    //paseBody chuyển rawboy sang SePayRequest
+    // Parse raw webhook body sang DTO yêu cầu của SePay.
     private SepayWebhookRequest parseBody(String rawBody) {
         try {
             return objectMapper.readValue(rawBody, SepayWebhookRequest.class);
@@ -116,9 +131,7 @@ public class SepayWebhookService {
         }
     }
 
-
-    //  Cổng thanh toán SePay IPN dùng X-Secret-Key.
-
+    // IPN Payment Gateway của SePay dùng header X-Secret-Key.
     private void verifySecretKey(String secretKey) {
         if (webhookSecret == null || webhookSecret.isBlank()) {
             return;
@@ -133,8 +146,7 @@ public class SepayWebhookService {
         }
     }
 
-
-    // IPN cổng thanh toán mới check theo object order + transaction.
+    // IPN Payment Gateway mới được validate từ object order và transaction.
     private boolean isPaidIpn(SepayWebhookRequest request) {
         if (request == null || request.getOrder() == null || request.getTransaction() == null) {
             return false;
@@ -148,10 +160,7 @@ public class SepayWebhookService {
                 && "VND".equalsIgnoreCase(request.getTransaction().getTransactionCurrency());
     }
 
-     // Điều kiện:
-     // Khi tạo đơn SePay, phải set:
-     // order_invoice_number = paymentTransaction.getPaymentCode()
-
+    // Khi tạo đơn SePay, order_invoice_number phải bằng paymentCode.
     private String extractPaymentCode(SepayWebhookRequest sepayWebhookRequest) {
         if (sepayWebhookRequest == null || sepayWebhookRequest.getOrder() == null) {
             return null;
@@ -163,17 +172,24 @@ public class SepayWebhookService {
             return invoiceNumber.trim().toUpperCase(Locale.ROOT);
         }
 
-        // Fallback nếu invoiceNumber bị thiếu.
+        // Dự phòng khi invoiceNumber bị thiếu.
         String text = nullToEmpty(sepayWebhookRequest.getOrder().getOrderDescription());
 
-        String findPaymentCode = findPaymentCode(text,PAYMENT_CODE_PATTERN);
+        String findPaymentCode = findPaymentCode(text, PAYMENT_CODE_PATTERN);
         if (findPaymentCode != null) {
             return findPaymentCode;
         }
-        findPaymentCode = findPaymentCode(text,WALLET_DEPOSIT_PAYMENT_CODE_PATTERN);
+
+        findPaymentCode = findPaymentCode(text, WALLET_DEPOSIT_PAYMENT_CODE_PATTERN);
         if (findPaymentCode != null) {
             return findPaymentCode;
         }
+
+        findPaymentCode = findPaymentCode(text, GENERIC_PAYMENT_CODE_PATTERN);
+        if (findPaymentCode != null) {
+            return findPaymentCode;
+        }
+
         return null;
     }
 
@@ -188,42 +204,48 @@ public class SepayWebhookService {
     }
 
     private boolean isExpired(PaymentTransaction payment) {
-        return payment.getExpiredAt() != null && payment.getExpiredAt().isBefore(LocalDateTime.now());
+        return payment.getExpiredAt() != null
+                && payment.getExpiredAt().isBefore(LocalDateTime.now());
     }
 
     private boolean isAmountMatched(PaymentTransaction payment, BigDecimal transferAmount) {
-        return transferAmount != null && payment.getGrossAmount() != null && payment.getGrossAmount().compareTo(transferAmount) == 0;
+        return transferAmount != null
+                && payment.getGrossAmount() != null
+                && payment.getGrossAmount().compareTo(transferAmount) == 0;
     }
 
-    // thanh toán thất bại set status payment , providerTransactionCode từ sepay gữi về ,ProviderContent từ lúc gữi đi cho sepay
-    private void markFailed(PaymentTransaction paymentTransaction, SepayWebhookRequest sepayWebhookRequest, String providerTransactionCode) {
+    // Đánh dấu payment thất bại và giữ thông tin provider để audit/debug.
+    private void markFailed(
+            PaymentTransaction paymentTransaction,
+            SepayWebhookRequest sepayWebhookRequest,
+            String providerTransactionCode
+    ) {
         paymentTransaction.setPaymentStatus(PaymentStatus.FAILED);
         paymentTransaction.setProviderTransactionCode(providerTransactionCode);
-        paymentTransaction.setProviderContent(buildProviderContent(sepayWebhookRequest));;
+        paymentTransaction.setProviderContent(buildProviderContent(sepayWebhookRequest));
         paymentTransactionRepo.save(paymentTransaction);
     }
 
-    // thanh toán hết hạn thì đổi status sang Expired và invitation cũng đổi theo
+    // Đánh dấu payment hết hạn và cập nhật invitation nếu cần.
     private void checkPaymentExpired(PaymentTransaction paymentTransaction) {
         paymentTransaction.setPaymentStatus(PaymentStatus.EXPIRED);
         paymentTransactionRepo.save(paymentTransaction);
+
         if (PaymentReferenceType.INVITATION.equals(paymentTransaction.getPaymentReferenceType())) {
-            invitationRepo.findByInvitationId(paymentTransaction.getReferenceId()).ifPresent(
-                    invitation -> {
+            invitationRepo.findByInvitationId(paymentTransaction.getReferenceId())
+                    .ifPresent(invitation -> {
                         invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
                         invitationRepo.save(invitation);
-
                     });
         }
     }
 
-
-
-    //kiểm tra transactionDate mà sepay gữi về có hợp lệ không , nếu không lấy thời gian hiện tại . đúng format
-    private LocalDateTime parsetransactionDate(String transactionDate) {
+    // Parse ngày giao dịch SePay. Nếu thiếu hoặc sai format thì dùng thời gian hiện tại.
+    private LocalDateTime parseTransactionDate(String transactionDate) {
         if (transactionDate == null || transactionDate.isBlank()) {
             return LocalDateTime.now();
         }
+
         try {
             return LocalDateTime.parse(transactionDate, SEPAY_DATE_FORMAT);
         } catch (Exception e) {
@@ -231,12 +253,6 @@ public class SepayWebhookService {
         }
     }
 
-
-    /**
-     * SỬA:
-     * Webhook cũ lấy request.id hoặc referenceCode.
-     * IPN mới lấy transaction.transaction_id.
-     */
     private String buildProviderTransactionCode(SepayWebhookRequest sepayWebhookRequest) {
         if (sepayWebhookRequest == null || sepayWebhookRequest.getTransaction() == null) {
             return null;
@@ -248,11 +264,6 @@ public class SepayWebhookService {
         );
     }
 
-    /**
-     * SỬA:
-     * Webhook cũ có content/description ở root.
-     * IPN mới có order.order_description.
-     */
     private String buildProviderContent(SepayWebhookRequest sepayWebhookRequest) {
         if (sepayWebhookRequest == null || sepayWebhookRequest.getOrder() == null) {
             return null;
@@ -265,26 +276,21 @@ public class SepayWebhookService {
         );
     }
 
-
-
-
-
-    // lấy chuổi đầu tiên không null và không rỗng
     private String firstNotBlank(String... values) {
         if (values == null) {
             return null;
         }
+
         for (String value : values) {
             if (value != null && !value.isBlank()) {
                 return value;
             }
         }
+
         return null;
     }
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
     }
-
-
 }

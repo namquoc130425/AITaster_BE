@@ -101,7 +101,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 
     /*
      * Nếu FE chuyển hẳn sang /user/queue/notifications
-     * thì đoạn guard này ít dùng.
+     * thì đoạn chặn này ít dùng.
      *
      * Nhưng giữ lại để chặn các topic cũ:
      * /topic/users/{userId}/notifications

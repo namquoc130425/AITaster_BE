@@ -74,24 +74,24 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Autowired
     UserWalletService userWalletService;
 
-//code quá bẩn
+// Service xử lý đăng ký, đăng nhập và refresh token.
 
-    // đăng ký client
+    // Đăng ký client.
     @Transactional
     public ClientProfileResponse registerClient(ClientRegisterRequest request) {
 
         validateRegister(request.getEmail(), request.getPhone());
 
-        //tạo User
+        // Tạo User.
         User user = userMapper.clientRegisterToUser(request);
 
-        //setRole , mã hóa Password, setStatus
+        // Set role, mã hóa password và set status.
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CLIENT);
         user.setUserStatus(UserStatus.ACTIVE);
 
 
-        //builder:mapper thẳng
+        // Tạo ClientProfile từ dữ liệu yêu cầu.
         ClientProfile clientProfile = ClientProfile.builder()
                 .user(user)
                 .companyName(request.getCompanyName())
@@ -115,9 +115,9 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
         validateRegister(request.getEmail(), request.getPhone());
 
-        // tạo user
+        // Tạo user.
         User user = userMapper.expertRegisterToUser(request);
-        //setRole , mã hóa pass , setStatus
+        // Set role, mã hóa password và set status.
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.EXPERT);
         user.setUserStatus(UserStatus.ACTIVE);
@@ -131,7 +131,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 .portfolioUrl(request.getPortfolioUrl())
 
                 .build();
-        // lưu xuong db
+        // Lưu xuống DB.
         user.setExpertProfile(expertProfile);
         userRepo.save(user);
         userWalletService.createdUserWallet(user);
@@ -158,7 +158,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     }
 
 
-    //login
+    // Đăng nhập.
     @Override
     @Transactional
     public AuthenticationResponse login(LoginRequest loginRequest) {
@@ -196,7 +196,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
     }
 
-    //lấy username
+    // Lấy user theo username.
     @Override
     public UserDetails loadUserByUsername(String userName)
             throws UsernameNotFoundException {
@@ -249,7 +249,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                         ErrorCode.USER_NOT_FOUND.getMessage()
                 ));
 
-        //rotation: revoke cũ + cấp mới
+        // Xoay vòng token: thu hồi token cũ và cấp token mới.
         validateRefreshUserStatus(user);
 
         RefreshToken refreshToken = refreshTokenService.rotateToken(tokenRequest.getToken(), user);

@@ -11,9 +11,9 @@ import org.mapstruct.*;
 public interface UserMapper {
     User toEntity(RegisterRequest request);
 
-   // User toEntity(UserRequest request);  // admin create user
+   // User toEntity(UserRequest request);  // Admin tạo user.
 
-    // chuyển dữ liệu từ  entity qua response
+    // Chuyển dữ liệu từ entity sang dữ liệu trả về.
     UserResponse toResponser(User user);
     AdminResponse toAdminResponse(User user);
 

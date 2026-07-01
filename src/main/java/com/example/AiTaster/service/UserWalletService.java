@@ -4,12 +4,15 @@ import com.example.AiTaster.constant.PaymentReferenceType;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.constant.UserWalletStatus;
 import com.example.AiTaster.dto.request.UserWalletRequest;
+import com.example.AiTaster.dto.response.PaymentTransactionResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.entity.User;
+import com.example.AiTaster.entity.UserBankAccount;
 import com.example.AiTaster.entity.UserWallet;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.UserWalletMapper;
+import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.UserWalletRepo;
 import com.example.AiTaster.service.imp.IUserWalletService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,9 @@ public class UserWalletService implements IUserWalletService {
     private final CurrentUserService currentUserService;
     private final UserWalletMapper userWalletMapper;
     private final MoneyMovementService moneyMovementService;
+    private final UserBankAccountService userBankAccountService;
+    private final PaymentTransactionRepo paymentTransactionRepo;
+    private final RealtimeService realtimeService;
 
     @Override
     public UserWalletResponse createWallet(UserWalletRequest request) {
@@ -46,31 +52,6 @@ public class UserWalletService implements IUserWalletService {
 
         return userWalletMapper.toResponse(userWalletRepo.save(wallet));
     }
-
-//    @Override
-//    public UserWalletResponse createWallet(UserWalletRequest request) {
-//
-//        User user = currentUserService.getCurrentUser();
-//        // Có nên check role?
-//        // Trả về thêm Id của profile (xem thử)
-//        if (userWalletRepo.findByUser(user).isPresent()) {
-//            throw new GlobalException(400, "Wallet already exists");
-//        }
-//
-//        UserWallet wallet = UserWallet.builder()
-//                .user(user)
-//                .balance(BigDecimal.ZERO)
-//                .frozenBalance(BigDecimal.ZERO)
-//                .currency(request.getCurrency())
-//                .status(UserWalletStatus.ACTIVE)
-//                .build();
-//
-//        return userWalletMapper.toResponse(
-//                userWalletRepo.save(wallet)
-//        );
-//    }
-
-
     @Override
     public UserWalletResponse getMyWallet() {
 
@@ -97,6 +78,29 @@ public class UserWalletService implements IUserWalletService {
         return userWalletRepo.findAll()
                 .stream()
                 .map(userWalletMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<UserWalletResponse> getWithdrawalRequests() {
+        return userWalletRepo.findByRequestWithdrawalTrueOrderByUpdateAtDesc()
+                .stream()
+                .map(this::toWithdrawalRequestResponse)
+                .toList();
+    }
+
+    @Override
+    public List<PaymentTransactionResponse> getMyTransactions() {
+        User user = currentUserService.getCurrentUser();
+        UserWallet wallet = userWalletRepo.findByUser(user)
+                .orElseThrow(() -> new GlobalException(404, "Wallet not found"));
+
+        return paymentTransactionRepo.findMyWalletTransactions(
+                        user.getUserId(),
+                        wallet.getUserWalletId()
+                )
+                .stream()
+                .map(this::toTransactionResponse)
                 .toList();
     }
 
@@ -164,7 +168,7 @@ public class UserWalletService implements IUserWalletService {
             throw new GlobalException(400, "Amount must be greater than zero");
         }
     }
-    //hàm yêu cầu rút tiền . set setRequestWithdrawal true và truyền số tiền yêu cau rút về cho admin
+    // Lưu yêu cầu rút tiền để admin duyệt, chưa trừ số dư ví.
     @Transactional
     public UserWalletResponse requestWithdraw(Long walletId, BigDecimal amount) {
         validateAmount(amount);
@@ -188,10 +192,25 @@ public class UserWalletService implements IUserWalletService {
             throw new GlobalException(400, "Insufficient balance");
         }
 
+        userBankAccountService.getVerifiedBankAccountByUserId(currentUser.getUserId());
+
         wallet.setRequestWithdrawal(true);
         wallet.setAmountRequestWithdrawal(amount);
 
-        return userWalletMapper.toResponse(userWalletRepo.save(wallet));
+        UserWallet savedWallet = userWalletRepo.save(wallet);
+        realtimeService.pushUserWalletEvent(
+                currentUser,
+                "WITHDRAWAL_REQUESTED",
+                savedWallet.getUserWalletId(),
+                "Withdrawal requested"
+        );
+        realtimeService.pushAdminWithdrawalEvent(
+                "WITHDRAWAL_REQUESTED",
+                savedWallet.getUserWalletId(),
+                "New withdrawal request"
+        );
+
+        return userWalletMapper.toResponse(savedWallet);
     }
 
     @Transactional
@@ -203,6 +222,11 @@ public class UserWalletService implements IUserWalletService {
         }
 
         BigDecimal amount = wallet.getAmountRequestWithdrawal();
+        validateAmount(amount);
+        UserBankAccount bankAccount =
+                userBankAccountService.getVerifiedBankAccountByUserId(wallet.getUser().getUserId());
+        String manualReference = "MANUAL-WDR-" + wallet.getUserWalletId() + "-" + System.currentTimeMillis();
+        String description = "Manual wallet withdrawal confirmed - wallet " + wallet.getUserWalletId();
 
         PaymentTransaction transaction = moneyMovementService.moneyTransactionManagement(
                 wallet.getUser().getUserId(),
@@ -210,16 +234,114 @@ public class UserWalletService implements IUserWalletService {
                 TransactionType.USER_WITHDRAW,
                 wallet.getUserWalletId(),
                 PaymentReferenceType.WITHDRAW_REQUEST,
-                "Approve wallet withdrawal - wallet " + wallet.getUserWalletId(),
+                description,
                 amount,
                 BigDecimal.ZERO,
                 null
         );
 
+        transaction.setProviderName("MANUAL_BANK_TRANSFER");
+        transaction.setProviderTransactionCode(manualReference);
+        transaction.setProviderContent(buildManualWithdrawalProviderContent(bankAccount));
+        paymentTransactionRepo.save(transaction);
+
         wallet.setRequestWithdrawal(false);
         wallet.setAmountRequestWithdrawal(BigDecimal.ZERO);
         userWalletRepo.save(wallet);
+        realtimeService.pushUserWalletEvent(
+                wallet.getUser(),
+                "WITHDRAWAL_APPROVED",
+                wallet.getUserWalletId(),
+                "Withdrawal approved"
+        );
+        realtimeService.pushAdminWithdrawalEvent(
+                "WITHDRAWAL_APPROVED",
+                wallet.getUserWalletId(),
+                "Withdrawal approved"
+        );
 
         return transaction;
+    }
+
+    @Transactional
+    public UserWalletResponse rejectWithdraw(Long walletId) {
+        UserWallet wallet = getWallet(walletId);
+
+        if (!Boolean.TRUE.equals(wallet.getRequestWithdrawal())) {
+            throw new GlobalException(400, "No withdrawal request");
+        }
+
+        wallet.setRequestWithdrawal(false);
+        wallet.setAmountRequestWithdrawal(BigDecimal.ZERO);
+
+        UserWallet savedWallet = userWalletRepo.save(wallet);
+        realtimeService.pushUserWalletEvent(
+                wallet.getUser(),
+                "WITHDRAWAL_REJECTED",
+                wallet.getUserWalletId(),
+                "Withdrawal rejected"
+        );
+        realtimeService.pushAdminWithdrawalEvent(
+                "WITHDRAWAL_REJECTED",
+                wallet.getUserWalletId(),
+                "Withdrawal rejected"
+        );
+
+        return userWalletMapper.toResponse(savedWallet);
+    }
+
+    private UserWalletResponse toWithdrawalRequestResponse(UserWallet wallet) {
+        UserWalletResponse response = userWalletMapper.toResponse(wallet);
+
+        try {
+            response.setBankAccount(
+                    userBankAccountService.getVerifiedBankAccountResponseByUserId(
+                            wallet.getUser().getUserId()
+                    )
+            );
+        } catch (GlobalException ignored) {
+            response.setBankAccount(null);
+        }
+
+        return response;
+    }
+
+    private String buildManualWithdrawalProviderContent(UserBankAccount bankAccount) {
+        return String.format(
+                "Manual bank transfer confirmed by admin. Bank: %s, Account: %s, Holder: %s",
+                bankAccount.getBankCode(),
+                bankAccount.getAccountNumber(),
+                bankAccount.getAccountHolderName()
+        );
+    }
+
+    private PaymentTransactionResponse toTransactionResponse(PaymentTransaction transaction) {
+        return PaymentTransactionResponse.builder()
+                .paymentTransactionId(transaction.getPaymentTransactionId())
+                .projectEscrowId(transaction.getProjectEscrowId())
+                .expertServiceId(transaction.getExpertServiceId())
+                .senderId(transaction.getSenderId())
+                .receiverId(transaction.getReceiverId())
+                .sourceWalletId(transaction.getSourceWalletId())
+                .targetWalletId(transaction.getTargetWalletId())
+                .amount(transaction.getGrossAmount())
+                .fromAmount(transaction.getGrossAmount())
+                .receiveAmount(transaction.getNetAmount())
+                .currency(transaction.getCurrency())
+                .transactionType(transaction.getTransactionType())
+                .paymentMethod(transaction.getPaymentMethod())
+                .paymentStatus(transaction.getPaymentStatus())
+                .referenceId(transaction.getReferenceId())
+                .paymentReferenceType(transaction.getPaymentReferenceType())
+                .providerName(transaction.getProviderName())
+                .providerTransactionCode(transaction.getProviderTransactionCode())
+                .paymentCode(transaction.getPaymentCode())
+                .providerContent(transaction.getProviderContent())
+                .description(transaction.getDescription())
+                .paidAt(transaction.getPaidAt())
+                .expiredAt(transaction.getExpiredAt())
+                .createAt(transaction.getCreateAt())
+                .updateAt(transaction.getUpdateAt())
+                .build();
     }
 }

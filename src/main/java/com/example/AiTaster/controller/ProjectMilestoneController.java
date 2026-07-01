@@ -48,11 +48,11 @@ public class ProjectMilestoneController {
     @GetMapping("/{projectId}/milestone/current-deliverable")
     public ResponseEntity<APIResponse<DeliverableResponse>> getCurrentDeliverable(@PathVariable Long projectId) {
         return ResponseEntity.ok(APIResponse.response(200, "Get current deliverable successfully",
-                projectMilestoneService.getMilestone(projectId)));
+                projectMilestoneService.getDetailDeliverable(projectId)));
     }
     @GetMapping("/{projectId}/deliverables")
     public ResponseEntity<APIResponse<List<DeliverableResponse>>> getDeliverables(@PathVariable Long projectId) {
         return ResponseEntity.ok(APIResponse.response(200, "Get deliverables successfully",
-                projectMilestoneService.getDetailDeliverable(projectId)));
+                projectMilestoneService.findDeliverables(projectId)));
     }
 }

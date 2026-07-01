@@ -12,7 +12,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface JobPostMapper {
 
-    //GeminiResponse(result) -> Jobpost với status :Draft
+    // Chuyển GeminiResponse(result) thành JobPost với status Draft.
 
 @Mapping(target = "clientProfile", source = "clientProfile")
 @Mapping(target = "title",source = "geminiJobPostResult.title")
@@ -26,7 +26,7 @@ public interface JobPostMapper {
     JobPost toEntityJobPostDraft(GeminiJobPostResponse geminiJobPostResult , ClientProfile clientProfile)   ;
 
 
-    // dữ lieu nhap tay cua client
+    // Dữ liệu client nhập tay.
 
     @Mapping(target = "clientProfile", source = "clientProfile")
     @Mapping(target = "title",source = "jobPostRequest.title")
@@ -42,7 +42,7 @@ public interface JobPostMapper {
 
 
 
-    // jobpost -> response
+    // Chuyển job post sang dữ liệu trả về.
     @Mapping(target = "clientId",source = "clientProfile")
     @Mapping(target = "skills",source = "skills")
 

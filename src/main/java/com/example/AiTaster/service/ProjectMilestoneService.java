@@ -36,6 +36,8 @@ public class ProjectMilestoneService {
     private final DeliverableMapper deliverableMapper;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final ProjectEscrowPayoutService projectEscrowPayoutService;
+    private final RealtimeService realtimeService;
+    private final NotificationService notificationService;
     // tạo milestone cho project ngay
     @Transactional
     public ProjectMilestone createMilestoneForProject(Project project) {
@@ -235,6 +237,7 @@ public class ProjectMilestoneService {
 
     // lấy bản Deliverable file mới nhất của mốc đang xữ lý + danh sách file để client xem
     //Client dùng để tải file qua productFile.
+    @Transactional(readOnly = true)
     public DeliverableResponse getDetailDeliverable(Long projectId) {
         Project project = getProjectWithDetail(projectId);
         checkCurrentUser(project);
@@ -244,11 +247,12 @@ public class ProjectMilestoneService {
         if (deliverableStep == MilestoneStep.FINAL_CONFIRMATION) {
             deliverableStep = MilestoneStep.SOURCE_CODE;
         }
-        Deliverable deliverable = deliverableRepo.findTopByProjectIdAndStepOrderByVersionDesc(projectId,projectMilestone.getCurrentStep()).orElseThrow(()->  new  GlobalException(404, "No deliverable yet"));
+        Deliverable deliverable = deliverableRepo.findTopByProjectIdAndStepOrderByVersionDesc(projectId, deliverableStep).orElseThrow(()->  new  GlobalException(404, "No deliverable yet"));
         return deliverableMapper.toResponse(deliverable);
     }
 
     // show toàn bộ sản phẩm bàn giao mọi mốc , mọi version
+    @Transactional(readOnly = true)
     public List<DeliverableResponse> findDeliverables(Long projectId) {
         Project project = getProjectWithDetail(projectId);
         checkCurrentUser(project);
@@ -354,10 +358,21 @@ public class ProjectMilestoneService {
                 event
         );
         // Thông báo riêng cho người cần hành động tiếp theo
-        if (targetUserId != null) {
-            simpMessagingTemplate.convertAndSend(
-                    "/topic/users/" + targetUserId + "/notifications",
-                    event
+        realtimeService.pushProjectParticipants(
+                project,
+                "PROJECT_MILESTONE_" + eventType,
+                message
+        );
+
+        User targetUser = getTargetUser(project, targetUserId);
+        if (targetUser != null) {
+            notificationService.notify(
+                    targetUser,
+                    notificationTypeForMilestoneEvent(eventType),
+                    ReferenceType.PROJECT,
+                    project.getProjectId(),
+                    "Project update",
+                    message
             );
         }
     }
@@ -377,5 +392,44 @@ public class ProjectMilestoneService {
                 .getClientProfile()
                 .getUser()
                 .getUserId();
+    }
+
+    private User getTargetUser(Project project, Long targetUserId) {
+        if (targetUserId == null) {
+            return null;
+        }
+
+        User clientUser = project.getInvitation()
+                .getExpertApplication()
+                .getJobpost()
+                .getClientProfile()
+                .getUser();
+
+        if (targetUserId.equals(clientUser.getUserId())) {
+            return clientUser;
+        }
+
+        User expertUser = project.getInvitation()
+                .getExpertApplication()
+                .getExpertProfile()
+                .getUser();
+
+        if (targetUserId.equals(expertUser.getUserId())) {
+            return expertUser;
+        }
+
+        return null;
+    }
+
+    private NotificationType notificationTypeForMilestoneEvent(String eventType) {
+        if ("SUBMITTED".equals(eventType)) {
+            return NotificationType.DELIVERABLE;
+        }
+
+        if ("REVISION_REQUESTED".equals(eventType)) {
+            return NotificationType.REVISION;
+        }
+
+        return NotificationType.PROJECT;
     }
 }

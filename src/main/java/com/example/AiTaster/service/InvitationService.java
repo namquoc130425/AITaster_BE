@@ -36,6 +36,7 @@ public class InvitationService implements Iinvitation {
     private final InvitationRepo invitationRepo;
     private final InvitationMapper invitationMapper;
     private final NotificationService notificationService;
+    private final RealtimeService realtimeService;
     private final ProjectRepo projectRepo;
     private final ProjectEscrowRepo projectEscrowRepo;
 
@@ -83,6 +84,11 @@ public class InvitationService implements Iinvitation {
         Invitation saveInvitation = invitationRepo.save(invitation);
 
         notificationService.notifyInvitationSent(saveInvitation);
+        realtimeService.pushInvitationParticipants(
+                saveInvitation,
+                "INVITATION_CREATED",
+                "Invitation created"
+        );
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -94,6 +100,7 @@ public class InvitationService implements Iinvitation {
 
         return invitationRepo.findByExpertApplication_Jobpost_ClientProfileOrderByCreateAtDesc(clientProfile)
                 .stream()
+                .filter(invitation -> !Boolean.TRUE.equals(invitation.getClientDeleted()))
                 .map(invitationMapper::toResponseInvitation)
                 .toList();
 
@@ -105,6 +112,7 @@ public class InvitationService implements Iinvitation {
         pendingInvitationsExpire();
         return invitationRepo.findByExpertApplication_ExpertProfileOrderByCreateAtDesc(expertProfile)
                 .stream()
+                .filter(invitation -> !Boolean.TRUE.equals(invitation.getExpertDeleted()))
                 .map(invitationMapper :: toResponseInvitation).toList();
 
     }
@@ -146,12 +154,37 @@ public class InvitationService implements Iinvitation {
         jobPostRepo.updateJobPostStatus(jobPost.getJobPostId(), JobpostStatus.CLOSED);
 
         notificationService.notifyInvitationAccepted(saveInvitation);
+        realtimeService.pushInvitationParticipants(
+                saveInvitation,
+                "INVITATION_ACCEPTED",
+                "Invitation accepted"
+        );
 //     //tạo project
 //     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
 //     // tạo project
 //     createProjectEscrow(newproject);
 
         return invitationMapper.toResponseInvitation(saveInvitation);
+    }
+
+    @Transactional
+    @Override
+    public void deleteInvitation(Long invitationId) {
+        Invitation invitation = getInvitationWithDetail(invitationId);
+
+        expireIfNeeded(invitation);
+
+        if (InvitationStatus.PENDING.equals(invitation.getInvitationStatus())) {
+            throw new GlobalException(400, "Pending invitation cannot be deleted");
+        }
+
+        markInvitationDeletedForCurrentUser(invitation);
+        Invitation savedInvitation = invitationRepo.save(invitation);
+        realtimeService.pushInvitationParticipants(
+                savedInvitation,
+                "INVITATION_DELETED",
+                "Invitation deleted"
+        );
     }
 
     @Override
@@ -166,6 +199,11 @@ public class InvitationService implements Iinvitation {
         Invitation saveInvitation = invitationRepo.save(invitation);
 
         notificationService.notifyInvitationRejected(saveInvitation);
+        realtimeService.pushInvitationParticipants(
+                saveInvitation,
+                "INVITATION_REJECTED",
+                "Invitation rejected"
+        );
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -289,6 +327,37 @@ public class InvitationService implements Iinvitation {
             throw new GlobalException(403, "You are not invited expert of this invitation");
         }
 
+    }
+
+    private void markInvitationDeletedForCurrentUser(Invitation invitation) {
+        User user = currentUserService.getCurrentUser();
+
+        boolean isOwnerClient = clientProfileRepo.findByUser(user)
+                .map(clientProfile -> invitation.getExpertApplication()
+                        .getJobpost()
+                        .getClientProfile()
+                        .getClientProfileId()
+                        .equals(clientProfile.getClientProfileId()))
+                .orElse(false);
+
+        boolean isInvitedExpert = expertProfileRepo.findByUser(user)
+                .map(expertProfile -> invitation.getExpertApplication()
+                        .getExpertProfile()
+                        .getExpertProfileId()
+                        .equals(expertProfile.getExpertProfileId()))
+                .orElse(false);
+
+        if (!isOwnerClient && !isInvitedExpert) {
+            throw new GlobalException(403, "You are not allowed to delete this invitation");
+        }
+
+        if (isOwnerClient) {
+            invitation.setClientDeleted(true);
+        }
+
+        if (isInvitedExpert) {
+            invitation.setExpertDeleted(true);
+        }
     }
 
     private Invitation getInvitationWithDetail(Long invitationId) {

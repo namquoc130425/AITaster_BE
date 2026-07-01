@@ -23,7 +23,7 @@ public class SepayGateway {
     @Value("${app.sepay.secret-key}")
     private String secretKey;
 
-    // Endpoint submit form của SePay.
+    // Endpoint submit form checkout của SePay.
     // Ví dụ theo docs: https://pgapi.sepay.vn/v1/checkout/init
     @Value("${app.sepay.checkout-url}")
     private String checkoutUrl;
@@ -42,51 +42,47 @@ public class SepayGateway {
     private String ipnUrl;
 
     public SepayCheckoutFormResponse createCheckoutForm(PaymentTransaction payment) {
-        // Lấy số tiền từ payment.
-        // VND không dùng phần thập phân nên ép về số nguyên.
+        // Số tiền VND gửi sang checkout phải là số nguyên.
         String amount = payment.getGrossAmount()
                 .setScale(0, RoundingMode.UNNECESSARY)
                 .toPlainString();
 
-        // Mã thanh toán nội bộ của hệ thống bạn.
-        // Mã này nên unique trong database.
+        // Mã thanh toán nội bộ, bắt buộc unique trong database.
         String paymentCode = payment.getPaymentCode();
 
-        // Dùng LinkedHashMap để giữ thứ tự field khi trả về FE.
+        // LinkedHashMap giữ thứ tự field ổn định để FE render form.
         Map<String, String> fields = new LinkedHashMap<>();
 
         // Số tiền cần thanh toán.
         fields.put("order_amount", amount);
-        // Merchant ID của bạn trên SePay.
+        // Merchant ID lấy từ SePay.
         fields.put("merchant", merchantId);
         fields.put("currency", "VND");
-        // Giao dịch thanh toán mua hàng.
+        // Loại giao dịch checkout mua hàng.
         fields.put("operation", "PURCHASE");
 
-        // Mô tả đơn hàng.
-        //  dùng paymentCode để dễ check.
+        // Mô tả đơn hàng. Dùng paymentCode để webhook match dễ hơn.
         fields.put("order_description", paymentCode);
 
-        // Mã hóa đơn / mã đơn hàng.
-        // Bắt buộc phải unique.
+        // Mã hóa đơn / mã đơn hàng, bắt buộc unique.
         fields.put("order_invoice_number", paymentCode);
 
-        // URL SePay redirect về khi thành công.
+        // URL SePay redirect về khi checkout thành công.
         fields.put("success_url", successUrl);
 
-        // URL SePay redirect về khi lỗi.
+        // URL SePay redirect về khi checkout lỗi.
         fields.put("error_url", errorUrl);
 
-        // URL SePay redirect về khi user hủy.
+        // URL SePay redirect về khi user hủy checkout.
         fields.put("cancel_url", cancelUrl);
 
-        // Tạo chữ ký theo đúng fields phía trên.
+        // Tạo chữ ký từ đúng các field phía trên.
         String signature = signFields(fields);
 
-        // Thêm signature vào form fields.
+        // Thêm chữ ký vào form field.
         fields.put("signature", signature);
 
-        // Trả về cho FE để FE tạo form hidden rồi submit sang SePay.
+        // Trả về dữ liệu để FE tạo hidden form và submit sang SePay.
         return SepayCheckoutFormResponse.builder()
                 .actionUrl(checkoutUrl)
                 .method("POST")
@@ -94,8 +90,7 @@ public class SepayGateway {
                 .build();
     }
     private String signFields(Map<String, String> fields) {
-        // Thứ tự field phải đúng SePay.
-        // Không tự sort alphabet.
+        // Thứ tự field phải đúng yêu cầu SePay, không sort alphabet.
         List<String> allowedFields = List.of(
                 "order_amount",
                 "merchant",
@@ -115,30 +110,29 @@ public class SepayGateway {
         for (String field : allowedFields) {
             String value = fields.get(field);
 
-            // Field nào không có thì bỏ qua.
+            // Bỏ qua field không có giá trị.
             if (value == null || value.isBlank()) {
                 continue;
             }
 
-            // Ghép theo format: field=value
+            // Format: field=value
             signedParts.add(field + "=" + value);
         }
 
-        // Chuỗi ký có dạng:
+        // Ví dụ chuỗi ký:
         // order_amount=100000,merchant=MERCHANT_123,currency=VND,...
         String rawData = String.join(",", signedParts);
 
-        // Ký HMAC-SHA256 rồi encode Base64.
-        // chữ ký đc tạo từ dữ liệu và secretKey thông qua hmacSha256
+        // Ký bằng HMAC-SHA256 rồi encode kết quả sang Base64.
         return hmacSha256Base64(rawData, secretKey);
     }
 
     private String hmacSha256Base64(String rawData, String secret) {
         try {
-            // Tạo bộ ký HMAC-SHA256.
+            // Tạo signer HMAC-SHA256.
             Mac mac = Mac.getInstance("HmacSHA256");
 
-            // Nạp secret key vào bộ ký.
+            // Nạp secret key vào signer.
             mac.init(new SecretKeySpec(
                     secret.getBytes(StandardCharsets.UTF_8),
                     "HmacSHA256"
@@ -147,7 +141,7 @@ public class SepayGateway {
             // Ký rawData.
             byte[] digest = mac.doFinal(rawData.getBytes(StandardCharsets.UTF_8));
 
-            // SePay yêu cầu encode kết quả HMAC sang Base64.
+            // SePay yêu cầu kết quả HMAC ở dạng Base64.
             return Base64.getEncoder().encodeToString(digest);
 
         } catch (Exception e) {

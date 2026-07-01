@@ -20,5 +20,7 @@ public class ServiceFileResponse {
 
     String productFile;
 
+    String fileName;
+
     Boolean isActive;
 }

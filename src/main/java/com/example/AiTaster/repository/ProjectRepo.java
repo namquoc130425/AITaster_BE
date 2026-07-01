@@ -48,8 +48,16 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
             JOIN a.expertProfile e
             JOIN e.user u
             WHERE (
-                (:clientProfileId IS NOT NULL AND c.clientProfileId = :clientProfileId)
-                OR (:expertProfileId IS NOT NULL AND e.expertProfileId = :expertProfileId)
+                (
+                    :clientProfileId IS NOT NULL
+                    AND c.clientProfileId = :clientProfileId
+                    AND (p.clientDeleted IS NULL OR p.clientDeleted = false)
+                )
+                OR (
+                    :expertProfileId IS NOT NULL
+                    AND e.expertProfileId = :expertProfileId
+                    AND (p.expertDeleted IS NULL OR p.expertDeleted = false)
+                )
             )
             AND (
                 :search = ''

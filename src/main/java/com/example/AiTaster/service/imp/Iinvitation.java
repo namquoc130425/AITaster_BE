@@ -19,4 +19,6 @@ public interface Iinvitation {
     InvitationResponse acceptInvitation(Long invitationId, InvitationAcceptRequest request);
 
     InvitationResponse rejectInvitation(Long invitationId);
+
+    void deleteInvitation(Long invitationId);
 }

@@ -25,7 +25,7 @@ public class MessageController {
     private final MessageService messageService;
 
     /*
-     * REST gửi message.
+     * REST gửi tin nhắn.
      * Vẫn giữ để test Swagger hoặc dùng khi WebSocket mất kết nối.
      */
     @PostMapping
@@ -46,9 +46,9 @@ public class MessageController {
     }
 
     /*
-     * WebSocket gửi message:
+     * WebSocket gửi tin nhắn:
      *
-     * Client publish:
+     * Client gửi lên:
      * /app/messages/send
      */
     @MessageMapping("/messages/send")
@@ -65,7 +65,7 @@ public class MessageController {
     /*
      * Khi user mở conversation bằng REST:
      * - lấy lịch sử
-     * - tự mark read các message gửi đến current user
+     * - tự đánh dấu đã đọc các tin nhắn gửi đến user hiện tại
      */
     @GetMapping("/conversations/{conversationId}")
     public ResponseEntity<APIResponse<List<MessageResponse>>>
@@ -85,8 +85,8 @@ public class MessageController {
     }
 
     /*
-     * Khi frontend đang mở đúng cửa sổ chat và nhận message realtime,
-     * frontend publish:
+     * Khi frontend đang mở đúng cửa sổ chat và nhận tin nhắn realtime,
+     * frontend gửi lên:
      *
      * /app/conversations/read
      */

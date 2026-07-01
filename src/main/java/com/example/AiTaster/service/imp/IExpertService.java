@@ -23,7 +23,7 @@ public interface IExpertService {
 
     ExpertServiceResponse  getPublicServiceDetail(long serviceId);
 
-    //doi status thanh
+    // Đổi trạng thái service.
     ExpertServiceResponse changeServiceStatus(Long serviceId, ServiceStatus serviceStatus);
     ExpertServiceResponse getMyServiceDetail(Long serviceId);
 

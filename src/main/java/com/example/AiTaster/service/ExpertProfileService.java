@@ -67,12 +67,12 @@ public class ExpertProfileService implements IExpertProfile {
             throw new GlobalException("This user already has a client profile");
         }
 
-        // request mapper qua entity
+        // Mapper chuyển dữ liệu yêu cầu sang entity.
           ExpertProfile expertProfile = expertProfileMapper.registertoEntity(request);
         //  Gắn User vừa tạo vào ExpertProfile
         expertProfile.setUser(user);
 
-        // lưu database
+        // Lưu database.
         ExpertProfile save = expertProfileRepo.save(expertProfile);
         return expertProfileMapper.toResponse(save);
     }

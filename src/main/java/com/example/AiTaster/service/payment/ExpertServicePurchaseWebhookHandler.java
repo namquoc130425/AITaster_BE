@@ -38,16 +38,15 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
 
         BigDecimal amount = payment.getGrossAmount();
 
-        // Tinh phi admin rieng.
-        // calculateFee() tu tao transaction PLATFORM_FEE cho admin,
-        // va tra ve so tien net expert nhan.
+        // calculateFee() tự tạo transaction PLATFORM_FEE cho admin
+        // và trả về số tiền net expert nhận.
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
 
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
-        // SePay la tien tu ngan hang, nen khong tru vi client.
-        // deductibleAmount = 0
-        // receivedAmount = tien expert nhan sau khi tru phi.
+        // Tiền SePay đến từ chuyển khoản ngân hàng nên không trừ ví client.
+        // Số tiền cần trừ ví = 0.
+        // Số tiền nhận = số tiền net expert nhận sau phí sàn.
         PaymentTransaction successTransaction = moneyMovementService.moneyTransactionManagement(
                 null,
                 expertUserId,

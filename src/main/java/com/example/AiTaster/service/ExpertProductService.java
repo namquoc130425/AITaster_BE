@@ -1,8 +1,11 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.Util.PageUtil;
+import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.ProductType;
 import com.example.AiTaster.constant.ServiceStatus;
+import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.dto.request.ExpertProduct.ExpertServiceFillerRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
@@ -33,6 +36,8 @@ public class ExpertProductService implements IExpertService {
     private final CategoryRepo categoryRepo;
     private final ServiceFileRepo serviceFileRepo;
     private final LocalFileStorageService localFileStorageService;
+    private final ClientProfileRepo clientProfileRepo;
+    private final PaymentTransactionRepo paymentTransactionRepo;
 
     @Override
     public ExpertServiceResponse CreatService(
@@ -151,26 +156,47 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
         return expertServiceMapper.toResponse(expertService);
     }
 
+    public List<ExpertServiceResponse> getMyPurchasedServices() {
+        User currentUser = currentUserService.getCurrentUser();
+        ClientProfile clientProfile = clientProfileRepo.findByUser(currentUser)
+                .orElseThrow(() -> new GlobalException(403, "Only client can view purchased services"));
+
+        return paymentTransactionRepo
+                .findBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusOrderByCreateAtDesc(
+                        clientProfile.getUser().getUserId(),
+                        TransactionType.EXPERT_SERVICE_PURCHASE,
+                        PaymentReferenceType.EXPERT_SERVICE,
+                        PaymentStatus.SUCCESS
+                )
+                .stream()
+                .map(PaymentTransaction::getReferenceId)
+                .distinct()
+                .map(expertServiceRepo::findById)
+                .flatMap(java.util.Optional::stream)
+                .map(expertServiceMapper::toResponse)
+                .toList();
+    }
 
 
 
-    //tất cả bài đăng của hệ thống
+
+    // Lấy tất cả bài đăng public của hệ thống.
     @Override
     public List<ExpertServiceResponse> getAllPublicServices() {
         return expertServiceRepo.findByServiceStatus(ServiceStatus.OPEN).stream().map(expertServiceMapper ::toResponse).toList();
     }
 
-    //tất cả bài đăng của hệ thống kèm filter
+    // Lấy tất cả bài đăng public của hệ thống kèm bộ lọc.
     public PageResponse<ExpertServiceResponse> getAllPublicServicesPage(ExpertServiceFillerRequest expertServiceFillerRequest) {
-        //kiểm tra dữ liệu của fe nếu cái nào null thì dùng dữ liệu của pageRequest thông qua PageUtil
+        // Kiểm tra dữ liệu từ FE, field nào null thì dùng mặc định từ pageRequest thông qua PageUtil.
         Pageable pageable = PageUtil.createPageable(expertServiceFillerRequest);
 
-        //gọi db lấy dánh sách
-        // ExpertServiceSpecification.filter(...) dùng để tạo điều kiện search/filter.
+        // Gọi DB lấy danh sách.
+        // ExpertServiceSpecification.filter(...) dùng để tạo điều kiện tìm kiếm và lọc.
         // pageable dùng để phân trang và sắp xếp dữ liệu.
         Page<ExpertService> expertServicesPages =expertServiceRepo.findAll(ExpertServiceSpecification.filter(expertServiceFillerRequest),pageable)
                 ;
-        // mapp expertService sang expertResponse ở ngoài là Page những trong dữ liệu đã map
+        // Map ExpertService sang ExpertServiceResponse trong Page.
         Page<ExpertServiceResponse> responsePage = expertServicesPages.map(expertServiceMapper::toResponse);
 
         // Dùng PageResponse.fromPage để tự bọc content + metaData\
@@ -183,7 +209,7 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
 
 
 
-// chi tiết 1 bài đăng cua he thong
+// Chi tiết một bài đăng của hệ thống.
     @Override
     public ExpertServiceResponse getPublicServiceDetail(long serviceId) {
          ExpertService expertService = getExpertServiceById(serviceId);

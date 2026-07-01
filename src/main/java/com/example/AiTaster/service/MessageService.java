@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.ReferenceType;
 import com.example.AiTaster.dto.request.MessageRequest;
 import com.example.AiTaster.dto.response.MessageResponse;
 import com.example.AiTaster.dto.response.ReadReceiptResponse;
@@ -38,9 +39,10 @@ public class MessageService implements IMessageService {
     private final MessageMapper messageMapper;
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final RealtimeService realtimeService;
 
     /*
-     * Gửi message bằng REST.
+     * Gửi tin nhắn bằng REST.
      *
      * REST lấy user từ SecurityContextHolder thông qua CurrentUserService.
      */
@@ -59,7 +61,7 @@ public class MessageService implements IMessageService {
     }
 
     /*
-     * Gửi message bằng WebSocket.
+     * Gửi tin nhắn bằng WebSocket.
      *
      * Không dùng CurrentUserService vì WebSocket chạy trên thread khác.
      * User được lấy từ Principal của STOMP session.
@@ -112,11 +114,11 @@ public class MessageService implements IMessageService {
         );
 
         /*
-         * Defense in depth:
-         * expert không được gửi message đầu tiên.
+     * Chặn thêm ở tầng service:
+     * expert không được gửi tin nhắn đầu tiên.
          *
-         * Thông thường conversation đã được tạo cùng message đầu tiên
-         * của client, nhưng vẫn check để tránh dữ liệu sai.
+     * Thông thường conversation đã được tạo cùng tin nhắn đầu tiên
+     * của client, nhưng vẫn kiểm tra để tránh dữ liệu sai.
          */
         boolean hasMessage =
                 messageRepo.existsByConversation(conversation);
@@ -162,8 +164,8 @@ public class MessageService implements IMessageService {
                 messageMapper.toResponse(savedMessage);
 
         /*
-         * Cả client và expert đang subscribe conversation
-         * đều nhận được message.
+     * Cả client và expert đang lắng nghe conversation
+     * đều nhận được tin nhắn.
          */
         messagingTemplate.convertAndSend(
                 "/topic/conversations/"
@@ -172,14 +174,16 @@ public class MessageService implements IMessageService {
         );
 
         /*
-         * Topic notification riêng cho receiver.
+     * Kênh notification riêng cho người nhận.
          */
-        messagingTemplate.convertAndSend(
-                "/topic/users/"
-                        + receiver.getUserId()
-                        + "/messages",
-                response
+        realtimeService.pushUserDashboardEvent(
+                sender,
+                "MESSAGE_SENT",
+                ReferenceType.CONVERSATION,
+                conversation.getConversationId(),
+                "Message sent"
         );
+        realtimeService.pushUserMessage(receiver, response);
 
         return response;
     }
@@ -188,9 +192,9 @@ public class MessageService implements IMessageService {
      * REST lấy lịch sử conversation.
      *
      * Khi user mở chat:
-     * 1. Mark message gửi đến user hiện tại là đã đọc.
+     * 1. Đánh dấu tin nhắn gửi đến user hiện tại là đã đọc.
      * 2. Gửi read receipt cho người gửi.
-     * 3. Query và trả danh sách message.
+     * 3. Query và trả danh sách tin nhắn.
      */
     @Override
     @Transactional
@@ -221,6 +225,13 @@ public class MessageService implements IMessageService {
                     conversation,
                     readReceipt
             );
+            realtimeService.pushUserDashboardEvent(
+                    currentUser,
+                    "CONVERSATION_READ",
+                    ReferenceType.CONVERSATION,
+                    conversation.getConversationId(),
+                    "Conversation read"
+            );
         }
 
         return messageRepo
@@ -232,7 +243,7 @@ public class MessageService implements IMessageService {
 
     /*
      * Có thể dùng nội bộ cho REST nếu cần.
-     * Không cần expose PATCH endpoint.
+     * Không cần mở PATCH endpoint.
      */
     @Override
     @Transactional
@@ -263,18 +274,25 @@ public class MessageService implements IMessageService {
                     conversation,
                     response
             );
+            realtimeService.pushUserDashboardEvent(
+                    currentUser,
+                    "CONVERSATION_READ",
+                    ReferenceType.CONVERSATION,
+                    conversation.getConversationId(),
+                    "Conversation read"
+            );
         }
 
         return response;
     }
 
     /*
-     * WebSocket mark read.
+     * WebSocket đánh dấu đã đọc.
      *
-     * Frontend chỉ gọi khi:
+     * FE chỉ gọi khi:
      * - đang mở đúng conversation;
      * - tab hiện tại đang active;
-     * - vừa nhận message gửi đến current user.
+     * - vừa nhận tin nhắn gửi đến user hiện tại.
      */
     @Transactional
     public ReadReceiptResponse markConversationAsReadSocket(
@@ -305,6 +323,13 @@ public class MessageService implements IMessageService {
                     conversation,
                     response
             );
+            realtimeService.pushUserDashboardEvent(
+                    currentUser,
+                    "CONVERSATION_READ",
+                    ReferenceType.CONVERSATION,
+                    conversation.getConversationId(),
+                    "Conversation read"
+            );
         }
 
         return response;
@@ -315,11 +340,11 @@ public class MessageService implements IMessageService {
             User currentUser
     ) {
         /*
-         * Query chỉ update message:
-         * receiver = currentUser
+         * Query chỉ update tin nhắn:
+         * receiver = user hiện tại
          * isRead = false
          *
-         * Không update message do chính currentUser gửi.
+         * Không update tin nhắn do chính user hiện tại gửi.
          */
         int readCount =
                 messageRepo.markConversationAsRead(
@@ -381,7 +406,7 @@ public class MessageService implements IMessageService {
         }
 
         /*
-         * Fallback nếu Principal không phải Authentication
+         * Dự phòng nếu Principal không phải Authentication
          * nhưng vẫn có username.
          */
         return findUserByUsername(

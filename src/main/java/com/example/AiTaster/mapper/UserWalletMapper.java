@@ -9,6 +9,10 @@ import org.mapstruct.Mapping;
 public interface UserWalletMapper {
 
     @Mapping(target = "userId", source = "user.userId")
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "fullName", source = "user.fullName")
+    @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "bankAccount", ignore = true)
     UserWalletResponse toResponse(UserWallet wallet);
 
 }

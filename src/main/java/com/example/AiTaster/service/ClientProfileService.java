@@ -112,13 +112,13 @@ public class ClientProfileService implements IClientProfile {
         if (clientProfileRepo.existsByUser_UserId(savedUser.getUserId())) {
             throw new GlobalException("This user already has a client profile");
         }
-         // request mapper qua entity
+         // Mapper chuyển dữ liệu yêu cầu sang entity.
         ClientProfile profile = clientProfileMapper.registerToEntity(request);
 
-        // lưu user
+        // Gắn user vào profile.
         profile.setUser(savedUser);
 
-        // lưu database
+        // Lưu database.
         ClientProfile saved = clientProfileRepo.save(profile);
 
         return clientProfileMapper.toResponse(saved);

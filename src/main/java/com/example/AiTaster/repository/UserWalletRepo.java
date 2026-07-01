@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface UserWalletRepo extends JpaRepository<UserWallet, Long> {
 
@@ -25,6 +26,8 @@ public interface UserWalletRepo extends JpaRepository<UserWallet, Long> {
     Optional<UserWallet> findByUserForUpdate(@Param("user") User user);
 
     Optional<UserWallet> findByUser_UserId(Long userId);
+
+    List<UserWallet> findByRequestWithdrawalTrueOrderByUpdateAtDesc();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

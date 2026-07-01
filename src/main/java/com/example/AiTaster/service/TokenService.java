@@ -93,25 +93,26 @@ public class TokenService implements IToken {
             ));
 
         } catch (JwtValidationException e) {
-            log.error(e.getMessage());
             if (isExpiredJwt(e)) {
+                log.warn("Access token expired");
                 throw new GlobalException(
                         ErrorCode.ACCESS_TOKEN_EXPIRED.getCode(),
                         ErrorCode.ACCESS_TOKEN_EXPIRED.getMessage()
                 );
             }
+            log.warn("Invalid JWT validation: {}", e.getMessage());
             throw new GlobalException(
                     ErrorCode.INVALID_TOKEN.getCode(),
                     ErrorCode.INVALID_TOKEN.getMessage()
             );
         } catch (JwtException e) {
-            log.error(e.getMessage());
+            log.warn("Invalid JWT: {}", e.getMessage());
             throw new GlobalException(
                     ErrorCode.INVALID_TOKEN.getCode(),
                     ErrorCode.INVALID_TOKEN.getMessage()
             );
         } catch (NumberFormatException e) {
-            log.error(e.getMessage());
+            log.warn("Invalid JWT subject: {}", e.getMessage());
             throw new GlobalException(
                     ErrorCode.INVALID_TOKEN.getCode(),
                     ErrorCode.INVALID_TOKEN.getMessage()

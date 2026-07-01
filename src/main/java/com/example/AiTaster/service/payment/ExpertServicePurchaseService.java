@@ -30,8 +30,8 @@ public class ExpertServicePurchaseService {
     private final SepayGateway sepayGateway;
     private final PaymentTransactionMapper paymentTransactionMapper;
 
-    // Client dùng ví nội bộ để mua ExpertService
-    // Luồng: ví client → ví expert (trừ phí sàn → ví admin)
+    // Client mua expert service bằng ví nội bộ.
+    // Luồng: ví client -> ví expert; phí sàn được cộng vào ví admin.
     @Transactional
     public PaymentTransaction purchaseService(Long serviceId) {
         User user = currentUserService.getCurrentUser();
@@ -43,21 +43,21 @@ public class ExpertServicePurchaseService {
             throw new GlobalException(400, "Service is not available");
         }
         Long clientUserId = clientProfile.getUser().getUserId();
-        // expertService → expertProfile → user
+        // expertService -> expertProfile -> user.
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
 
         BigDecimal amount = expertService.getServiceFee();
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
 
-        // Chuyển tiền nội bộ: ví client → ví expert
-        // Nếu ví client không đủ tiền → MoneyMovementService tự throw lỗi
+        // Chuyển tiền nội bộ: ví client -> ví expert.
+        // MoneyMovementService tự throw lỗi nếu ví client không đủ tiền.
         return moneyMovementService.moneyTransactionManagement(
-                clientUserId,                            // fromId : client mua -> bị trừ tiền trong ví
-                expertUserId,                            // toId : expert mua -> được cộng tiền vào ví
-                TransactionType.EXPERT_SERVICE_PURCHASE, // nghiệp vụ client mua sản phẩm có sẵn
-                serviceId,                               // referenceId: id của service
-                PaymentReferenceType.EXPERT_SERVICE,     // mua service
+                clientUserId,
+                expertUserId,
+                TransactionType.EXPERT_SERVICE_PURCHASE,
+                serviceId,
+                PaymentReferenceType.EXPERT_SERVICE,
                 "Purchase service " + serviceId + ": " + expertService.getServiceName(),
                 amount,
                 balanceAmount ,
@@ -85,8 +85,7 @@ public class ExpertServicePurchaseService {
         Long clientUserId = clientProfile.getUser().getUserId();
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
-        // Tao transaction PENDING de SePay thanh toan.
-        // lúc này chưa công trừ tiền ví vì SePay chứa báo success.
+        // Tạo pending SePay transaction. Chưa đổi số dư ví cho đến khi webhook success.
         PaymentTransaction paymentTransaction = pendingPaymentService.createPendingPaymentTransaction(
                 clientUserId,
                 expertUserId,
