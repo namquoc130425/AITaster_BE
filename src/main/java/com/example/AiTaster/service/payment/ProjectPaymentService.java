@@ -8,13 +8,13 @@ import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.PaymentTransactionMapper;
 import com.example.AiTaster.repository.*;
-import com.example.AiTaster.service.CurrentUserService;
-import com.example.AiTaster.service.PendingPaymentService;
-import com.example.AiTaster.service.SepayGateway;
+import com.example.AiTaster.service.*;
 import com.example.AiTaster.service.imp.IProjectPayment;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 
@@ -29,6 +29,11 @@ public class ProjectPaymentService implements IProjectPayment {
     private final InvitationRepo invitationRepo;
     private final SepayGateway sepayGateway;
     private final PendingPaymentService pendingPaymentService;
+    private final ProjectRepo projectRepo;
+    private final ProjectEscrowRepo projectEscrowRepo;
+    private final ProjectMilestoneService projectMilestoneService;
+    private final PlatformFeeCalculator platformFeeCalculator;
+    private final MoneyMovementService moneyMovementService;
 
     @Transactional
     @Override
@@ -129,6 +134,138 @@ public class ProjectPaymentService implements IProjectPayment {
 
     private ClientProfile findClientProfileByCurrentUser(User currentUser) {
         return clientProfileRepo.findByUser(currentUser).orElseThrow(() -> new GlobalException(403, "Only client can create project payment"));
+    }
+
+    @Transactional
+    public ProjectPaymentResponse createProjectPaymentByWallet(Long invitationId) {
+        User currentUser = currentUserService.getCurrentUser();
+        ClientProfile clientProfile = findClientProfileByCurrentUser(currentUser);
+
+        Invitation invitation = invitationRepo.findWithDetailByInvitationId(invitationId)
+                .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
+
+        checkInvitationOwnerClient(invitation, clientProfile);
+        ensureInvitationCanBePaid(invitation);
+
+        if (projectRepo.existsByInvitation(invitation)) {
+            throw new GlobalException(400, "Project already exists for this invitation");
+        }
+
+        Project project = createProjectByInvitation(invitation);
+        ProjectEscrow escrow = createProjectEscrow(project);
+
+        projectMilestoneService.createMilestoneForProject(project);
+
+        BigDecimal amount = invitation.getFinalOfferedPrice();
+
+        // Thanh toán bằng ví:
+        // fromId = client userId -> trừ ví client
+        // toId = escrowId -> cộng tiền vào escrow
+        // transactionId = null vì ví xử lý thành công ngay, không có pending SePay
+        PaymentTransaction paymentTransaction = moneyMovementService.moneyTransactionManagement(
+                currentUser.getUserId(),
+                escrow.getProjectEscrowId(),
+                TransactionType.PROJECT_ESCROW_DEPOSIT,
+                project.getProjectId(),
+                PaymentReferenceType.PROJECT,
+                "Wallet project escrow deposit - project " + project.getProjectId(),
+                amount,
+                amount,
+                null
+        );
+
+        LocalDateTime paidAt = paymentTransaction.getPaidAt();
+
+        project.setIsActive(true);
+        project.setStartAt(paidAt);
+        project.setDeadlineAt(setUpDeadline(
+                paidAt,
+                project.getTimelineValue(),
+                project.getTimelineUnit()
+        ));
+
+        escrow.setStartedAt(paidAt);
+        escrow.setEscrowStatus(EscrowStatus.HELD);
+
+        projectRepo.save(project);
+        projectEscrowRepo.save(escrow);
+
+        return paymentTransactionMapper.toInvitationPaymentResponse(
+                paymentTransaction,
+                invitation.getInvitationId(),
+                null
+        );
+    }
+
+    private Project createProjectByInvitation(Invitation invitation) {
+        Project project = Project.builder()
+                .invitation(invitation)
+                .title(invitation.getProjectTitle())
+                .finalRequirementSnapshot(invitation.getFinalRequirement())
+                .expectedOutputSnapshot(invitation.getExpectedOutput())
+                .acceptanceCriteriaSnapshot(invitation.getAcceptanceCriteria())
+                .agreedPrice(invitation.getFinalOfferedPrice())
+                .timeline(invitation.getFinalTimeline())
+                .timelineValue(invitation.getFinalTimelineValue())
+                .timelineUnit(invitation.getFinalTimelineUnit())
+                .deadlineAt(null)
+                .startAt(null)
+                .completedAt(null)
+                .paymentDeadlineAt(invitation.getRespondedAt().plusHours(24))
+                .projectStatus(ProjectStatus.ACTIVE)
+                .isActive(false)
+                .build();
+
+        return projectRepo.save(project);
+    }
+
+    //tạo project
+    private ProjectEscrow createProjectEscrow(Project project) {
+        if (projectEscrowRepo.existsByProjectId(project.getProjectId())) {
+            throw new GlobalException(400, "Project escrow already exists");
+        }
+
+        Long clientProfileId = project.getInvitation()
+                .getExpertApplication()
+                .getJobpost()
+                .getClientProfile()
+                .getClientProfileId();
+
+        Long expertProfileId = project.getInvitation()
+                .getExpertApplication()
+                .getExpertProfile()
+                .getExpertProfileId();
+
+        BigDecimal agreedAmount = project.getAgreedPrice();
+        BigDecimal platformFee = platformFeeCalculator.calculatePlatformFee(agreedAmount);
+        BigDecimal expertAmount = agreedAmount.subtract(platformFee);
+
+        ProjectEscrow escrow = ProjectEscrow.builder()
+                .projectId(project.getProjectId())
+                .clientProfileId(clientProfileId)
+                .expertProfileId(expertProfileId)
+                .agreedAmount(agreedAmount)
+                .heldAmount(BigDecimal.ZERO)
+                .platformFee(platformFee)
+                .expertAmount(expertAmount)
+                .escrowStatus(EscrowStatus.WAITING_PAYMENT)
+                .startedAt(null)
+                .build();
+
+        return projectEscrowRepo.save(escrow);
+    }
+
+    //set deadlike
+    private LocalDateTime setUpDeadline(LocalDateTime paidAt, Integer value, TimelineUnit timelineUnit) {
+        if (paidAt == null || value == null || timelineUnit == null) {
+            return null;
+        }
+
+        return switch (timelineUnit) {
+            case DAY -> paidAt.plusDays(value);
+            case WEEK -> paidAt.plusWeeks(value);
+            case MONTH -> paidAt.plusMonths(value);
+        };
     }
 
 
