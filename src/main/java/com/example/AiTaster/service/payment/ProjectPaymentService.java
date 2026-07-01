@@ -34,6 +34,8 @@ public class ProjectPaymentService implements IProjectPayment {
     private final ProjectMilestoneService projectMilestoneService;
     private final PlatformFeeCalculator platformFeeCalculator;
     private final MoneyMovementService moneyMovementService;
+    private final ConversationService conversationService;
+    private final RealtimeService realtimeService;
 
     @Transactional
     @Override
@@ -47,7 +49,7 @@ public class ProjectPaymentService implements IProjectPayment {
         ensureInvitationCanBePaid(invitation);
 
 
-        //kiểm tra có transaction chưa nếu có dùng lại , nếu chưa tạo cái mới
+        // Nếu đã có pending SePay còn hạn thì dùng lại, nếu không thì tạo mới.
         PaymentTransaction paymentTransaction = pendingPaymentService.createPendingPaymentTransaction(
                 currentUser.getUserId(),
                 null,
@@ -64,7 +66,7 @@ public class ProjectPaymentService implements IProjectPayment {
 
         );
         SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);
-        // Trả về response đầy đủ cho FE render form hidden + submit.
+        // Trả về đầy đủ dữ liệu để FE render hidden checkout form và submit.
         return paymentTransactionMapper.toInvitationPaymentResponse(
                 paymentTransaction,
                 invitation.getInvitationId(),
@@ -73,7 +75,7 @@ public class ProjectPaymentService implements IProjectPayment {
 
 
 
-    // kiểm tra invi này có phải là của client không
+    // Kiểm tra invitation có thuộc client hiện tại không.
     private void checkInvitationOwnerClient(Invitation invitation, ClientProfile clientProfile) {
         Long ownerClientId = invitation.getExpertApplication()
                 .getJobpost()
@@ -86,16 +88,14 @@ public class ProjectPaymentService implements IProjectPayment {
     }
 
 
-    // tìm invitation theo id
+    // Tìm invitation theo id.
     private Invitation findInvitation(Long invitationId) {
         return invitationRepo.findByInvitationId(invitationId)
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
     }
 
 
-    // kiểm tra trạng  thái cuả invitation có được Accpert chưa
-    // accepted thì phải có respones
-    // và lời mời phải còn hạn
+    // Invitation phải được expert accept, có thời gian phản hồi, và còn hạn thanh toán.
     private void ensureInvitationCanBePaid(Invitation invitation) {
         if (!InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())) {
             throw new GlobalException(400, "Invitation is not accepted");
@@ -155,13 +155,17 @@ public class ProjectPaymentService implements IProjectPayment {
         ProjectEscrow escrow = createProjectEscrow(project);
 
         projectMilestoneService.createMilestoneForProject(project);
+        conversationService.attachProject(
+                invitation.getExpertApplication().getApplicationId(),
+                project.getProjectId()
+        );
 
         BigDecimal amount = invitation.getFinalOfferedPrice();
 
         // Thanh toán bằng ví:
         // fromId = client userId -> trừ ví client
-        // toId = escrowId -> cộng tiền vào escrow
-        // transactionId = null vì ví xử lý thành công ngay, không có pending SePay
+        // toId = escrowId -> cộng tiền vào project escrow
+        // transactionId = null vì ví xử lý thành công ngay.
         PaymentTransaction paymentTransaction = moneyMovementService.moneyTransactionManagement(
                 currentUser.getUserId(),
                 escrow.getProjectEscrowId(),
@@ -189,6 +193,17 @@ public class ProjectPaymentService implements IProjectPayment {
 
         projectRepo.save(project);
         projectEscrowRepo.save(escrow);
+        realtimeService.pushUserWalletEvent(
+                currentUser,
+                "PROJECT_ESCROW_PAID_BY_WALLET",
+                null,
+                "Project escrow paid by wallet"
+        );
+        realtimeService.pushProjectParticipants(
+                project,
+                "PROJECT_CREATED",
+                "Project created"
+        );
 
         return paymentTransactionMapper.toInvitationPaymentResponse(
                 paymentTransaction,
@@ -219,7 +234,7 @@ public class ProjectPaymentService implements IProjectPayment {
         return projectRepo.save(project);
     }
 
-    //tạo project
+    // Tạo project escrow.
     private ProjectEscrow createProjectEscrow(Project project) {
         if (projectEscrowRepo.existsByProjectId(project.getProjectId())) {
             throw new GlobalException(400, "Project escrow already exists");
@@ -255,7 +270,7 @@ public class ProjectPaymentService implements IProjectPayment {
         return projectEscrowRepo.save(escrow);
     }
 
-    //set deadlike
+    // Tính deadline project từ thời điểm thanh toán và timeline đã thống nhất.
     private LocalDateTime setUpDeadline(LocalDateTime paidAt, Integer value, TimelineUnit timelineUnit) {
         if (paidAt == null || value == null || timelineUnit == null) {
             return null;

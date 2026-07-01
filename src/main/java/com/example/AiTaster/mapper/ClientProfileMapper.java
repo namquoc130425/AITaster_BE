@@ -12,14 +12,14 @@ public interface ClientProfileMapper {
 
 
 
-    // Request -> Entity
+    // Chuyển dữ liệu yêu cầu sang entity.
 
     ClientProfile registerToEntity(ClientRegisterRequest request);
 
-    // Entity -> Response
+    // Chuyển entity sang dữ liệu trả về.
     ClientProfileResponse toResponse(ClientProfile clientProfile);
 
-    // Update existing entity
+    // Cập nhật entity hiện có.
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     ClientProfile updateEntity( ClientProfileRequest request, @MappingTarget ClientProfile clientProfile );
 }

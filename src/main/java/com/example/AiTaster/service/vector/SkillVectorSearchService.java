@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-// service sữ lý text người dùng nhập vào
+// Service xử lý text người dùng nhập vào.
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -23,32 +23,32 @@ public class SkillVectorSearchService {
     private final RestClient qdrantRestClient;
     private final QdrantProperties qdrantProperties;
 
-    // hàm này xữ lý search text mà người dùng nhập vào
+    // Hàm này xử lý search text mà người dùng nhập vào.
 public List<VectorSkillResult> searchSkillResult(String seachtext , int limit ) {
-    // kiểm tra Colection trong qdrant đã tồn tại chưa
+    // Kiểm tra collection trong Qdrant đã tồn tại chưa.
      qdrantCollectionService.checkSkillCollectionExits();
 
-    // chuyển text jobpost mà người dùng nhập vào thành vector để vào Qdrant tìm kím
+    // Chuyển text job post người dùng nhập thành vector để tìm kiếm trong Qdrant.
 float[] vectorQuerry = embeddingService.converTextToVector(seachtext);
 
-    //cầm vector chuyển thành dạng json để vô  Qdrant tìm kím
-    //querry : vector user nhập
-    // limt : xác định trả ra bao nhiêu record
-    //payload: mỗi point đi kèm với 1 payload . để true để trả về dữ liệu trong payload
+    // Chuyển vector thành JSON để tìm kiếm trong Qdrant.
+    // query: vector user nhập.
+    // limit: xác định trả ra bao nhiêu record.
+    // with_payload=true để trả về dữ liệu payload đi kèm mỗi point.
     Map<String,Object> body = Map.of(
             "query",vectorQuerry,
             "limit",limit,
             "with_payload",true
     );
 
-    // lấy tên colection trong file yaml(ko set cứng , sau này dể thay đổi thì thay đổi bên yaml)
+    // Lấy tên collection trong file YAML, không set cứng để dễ thay đổi.
     String collectionName = qdrantProperties.getCollection().getSkills();
 
 
-    //gữi request search cho Qdrant
-    //.body là gữi body là giống  point á
-    //.retrive gữi và nhận
-    //.body(Jsonnode.class) -> trả về Json và muốn đọc dưới dạng jsonNode
+    // Gửi request search cho Qdrant.
+    // .body gửi body request.
+    // .retrieve gửi request và nhận response.
+    // .body(JsonNode.class) đọc response dưới dạng JsonNode.
     JsonNode node = qdrantRestClient.post()
             .uri("/collections/{collectionName}/points/query", collectionName)
             .body(body)
@@ -57,46 +57,46 @@ float[] vectorQuerry = embeddingService.converTextToVector(seachtext);
 
 
 
-        // xu ly lai du lieu
+        // Xử lý lại dữ liệu.
     return formSkillResult(node);
 }
 
-// hàm này dùng để đọc Json từ Qdrant rồi chuyển thành list
-    // hàm trên trả ra dữ liệu thô nên cần hàm này xữ lý lại dữ liệu
+// Hàm này đọc JSON từ Qdrant rồi chuyển thành list.
+    // Hàm trên trả dữ liệu thô nên cần hàm này xử lý lại dữ liệu.
     private List<VectorSkillResult> formSkillResult(JsonNode response) {
     List<VectorSkillResult> results = new ArrayList<>();
 
-        // kiểm tra hàm trên trả vè có null không -> null trả về list rỗng
+        // Nếu response null thì trả về list rỗng.
         if(response == null) return results;
 
-        // lấy danh sách points
+        // Lấy danh sách points.
         JsonNode pointNode = response.path("result").path("points");
 
-        //trường hợp points trả ra forms khác thì vẫn bắt đc
+        // Trường hợp points trả ra format khác thì vẫn bắt được.
         if(pointNode.isMissingNode() || !pointNode.isArray()) {
             pointNode = response.path("result");
         }
 
         for(JsonNode point : pointNode) {
 
-            //lấy payload(thông tin phụ)
+            // Lấy payload là thông tin phụ.
             JsonNode payloadNode = point.path("payload");
 
-            // tạo biến chờ hứng dữ liệu
+            // Tạo biến để hứng dữ liệu.
             Long skillId = null;
             String skillName = null;
 
-            // lấy skillId ( ưu tiên lấy trong payload , không có thì lấy trong id )
+            // Lấy skillId, ưu tiên lấy trong payload; nếu không có thì lấy trong id.
             if(payloadNode.path("skillId").isNumber()) {
                 skillId = payloadNode.path("skillId").asLong();
             }else if(point.path("id").isNumber()) {
                 skillId = point.path("id").asLong();
             }
-            //lấy nameSkill
+            // Lấy skillName.
             if (payloadNode.path("skillName").isTextual()) {
                 skillName = payloadNode.path("skillName").asText();
             }
-            // lấy score ( điểm độ chính xác ( tương đồng )) ( nếu ko có mặc định lấy 0.0 )
+            // Lấy score là điểm tương đồng; nếu không có thì mặc định 0.0.
             double score = point.path("score").asDouble(0.0);
 
             if(skillId != null) {
@@ -119,7 +119,7 @@ float[] vectorQuerry = embeddingService.converTextToVector(seachtext);
 
 
 /*
-ví dụ về response.path("result").path("point");
+Ví dụ về response.path("result").path("point"):
 {
   "result": {
     "points": [

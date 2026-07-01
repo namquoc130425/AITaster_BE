@@ -11,22 +11,22 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-// hàm để kiểm tra và tạo Colellection nếu chưa có
-// thêm 1 hàm để tự động xuống Db để lấy dữ liệu mới nhất để tạo colection đó là service:SkillVectorSysService
+// Hàm kiểm tra và tạo collection nếu chưa có.
+// Có thể thêm service tự lấy dữ liệu mới nhất từ DB để tạo collection, ví dụ SkillVectorSyncService.
 public class QdrantCollectionService {
     private final RestClient qdrantRestClient;
     private final QdrantProperties qdrantProperties;
 
     public void checkSkillCollectionExits() {
 
-        String collectionName = qdrantProperties.getCollection().getSkills();      // lấy ten collection từ file yml
+        String collectionName = qdrantProperties.getCollection().getSkills();      // Lấy tên collection từ file YAML.
 
-        // tạo API để check
+        // Gọi API để kiểm tra collection.
         try{
          qdrantRestClient.get()
                  .uri("/collections/{collectionName}",collectionName)
-                 .retrieve()  // gữi request đi rồi nhận response
-                 .toBodilessEntity(); // request có thành công hay không,không quan tâm đến body trả về, chỉ cần biết status code
+                 .retrieve()  // Gửi request đi rồi nhận response.
+                 .toBodilessEntity(); // Chỉ cần biết status code, không cần body trả về.
 
 
 
@@ -36,13 +36,13 @@ public class QdrantCollectionService {
                 createCollection(collectionName);
                 return;
             }
-            throw exception; // lỗi khác 404 thì báo ra
+            throw exception; // Lỗi khác 404 thì báo ra.
 
         }
     }
 
     private void createCollection(String collectionName) {
-        //Qdrant dùng json nên dùng Map để tạo form build JSON
+        // Qdrant dùng JSON nên dùng Map để build body.
         Map<String ,Object> body = Map.of(
                 "vectors",Map.of(
                             "size",qdrantProperties.getVectorSize(),
@@ -50,7 +50,7 @@ public class QdrantCollectionService {
                 )
         );
 
-        // tạo api để thêm colection
+        // Gọi API để tạo collection.
 
         qdrantRestClient.put()
                 .uri("/collections/{collectionName}",collectionName)

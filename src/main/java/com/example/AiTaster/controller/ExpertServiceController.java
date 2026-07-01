@@ -31,7 +31,7 @@ public class ExpertServiceController {
     ExpertServicePurchaseService expertServicePurchaseService;
 
 
-    //filter
+    // Lọc, tìm kiếm và phân trang service public.
     @PostMapping("/public/filter")
     public ResponseEntity<APIResponse<PageResponse<ExpertServiceResponse>>> getAllPublicServicesPage(@RequestBody @Valid ExpertServiceFillerRequest expertServiceFillerRequest) {
         PageResponse<ExpertServiceResponse> expertServiceResponse = expertProductService.getAllPublicServicesPage(expertServiceFillerRequest);
@@ -39,7 +39,7 @@ public class ExpertServiceController {
     }
 
 
-    // thanh toán Aiservice bằng ví
+    // Thanh toán AI service bằng ví.
     @PostMapping("/{serviceId}/purchase")
     public ResponseEntity<APIResponse<PaymentTransaction>> purchaseService(
             @PathVariable Long serviceId
@@ -50,7 +50,7 @@ public class ExpertServiceController {
         );
     }
 
-    // thanh toán Aiservie bằng sepay
+    // Thanh toán AI service bằng SePay.
     @PostMapping("/{serviceId}/purchase/sepay")
     public ResponseEntity<APIResponse<SepayPurchasePaymentResponse>> createServiceSepayPayment(
             @PathVariable Long serviceId
@@ -87,7 +87,7 @@ public class ExpertServiceController {
         );
     }
 
-    // EXPERT: update bài đăng của mình
+    // Expert cập nhật bài đăng của mình.
     @PutMapping(value = "/{serviceId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse<ExpertServiceResponse>> updateService(
             @PathVariable Long serviceId,
@@ -100,7 +100,7 @@ public class ExpertServiceController {
         );
     }
 
-    // EXPERT xóa mềm bài đăng của mình
+    // Expert xóa mềm bài đăng của mình.
     @DeleteMapping("/{serviceId}")
     public ResponseEntity<APIResponse<Void>> deleteService(
             @PathVariable Long serviceId
@@ -112,7 +112,7 @@ public class ExpertServiceController {
         );
     }
 
-    // EXPERT xem tất cả bài đăng của mình
+    // Expert xem tất cả bài đăng của mình.
     @GetMapping("/my")
     public ResponseEntity<APIResponse<List<ExpertServiceResponse>>> getAllMyServices() {
 
@@ -123,7 +123,7 @@ public class ExpertServiceController {
         );
     }
 
-    // EXPERT xem chi tiết 1 bài đăng của  mình
+    // Expert xem chi tiết một bài đăng của mình.
     @GetMapping("/my/{serviceId}")
     public ResponseEntity<APIResponse<ExpertServiceResponse>> getMyServiceDetail(
             @PathVariable Long serviceId
@@ -135,7 +135,16 @@ public class ExpertServiceController {
         );
     }
 
-    // CLIENT xem tất cả bài đăng đang OPEN của toàn hệ thống
+    @GetMapping("/client/my")
+    public ResponseEntity<APIResponse<List<ExpertServiceResponse>>> getMyPurchasedServices() {
+        List<ExpertServiceResponse> responses = expertProductService.getMyPurchasedServices();
+
+        return ResponseEntity.ok(
+                APIResponse.response(200, "Get purchased AI services successfully", responses)
+        );
+    }
+
+    // Client xem tất cả bài đăng đang OPEN của toàn hệ thống.
     @GetMapping("/public")
     public ResponseEntity<APIResponse<List<ExpertServiceResponse>>> getAllPublicServices() {
 
@@ -146,7 +155,7 @@ public class ExpertServiceController {
         );
     }
 
-    // CLIENT xem chi tiết 1 bài đăng public
+    // Client xem chi tiết một bài đăng public.
     @GetMapping("/public/{serviceId}")
     public ResponseEntity<APIResponse<ExpertServiceResponse>> getPublicServiceDetail(
             @PathVariable Long serviceId
@@ -158,7 +167,7 @@ public class ExpertServiceController {
         );
     }
 
-    // nếu client mua thì fe truyền status với serviceid veef dde doi trang thaui
+    // FE truyền serviceId và status mới để đổi trạng thái service.
 
 
     @PatchMapping("/{serviceId}/status")

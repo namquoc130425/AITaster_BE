@@ -10,49 +10,48 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.List;
-@ControllerAdvice  // áp dụng cho tất cả controller trong hệ thống
+@ControllerAdvice  // Áp dụng cho tất cả controller trong hệ thống.
 @Slf4j
 public class GlobalExceptionHander {
-    // Bắt lỗi business do mình tự throw
+    // Bắt lỗi nghiệp vụ do mình tự throw.
     @ExceptionHandler(GlobalException.class)
     public ResponseEntity<APIResponse <Object>> handlerGlobal(GlobalException exception) {
         int status = (exception.getCode() != null)
                 ? exception.getCode()
-                : HttpStatus.INTERNAL_SERVER_ERROR.value(); // nếu có code thì lấy code , nếu không có code thì trả về lỗi 500 , exception.getcode là code mình tự set ví dụ 400,500 . nếu null thì dùng 500
+                : HttpStatus.INTERNAL_SERVER_ERROR.value(); // Nếu có code thì dùng code đó, nếu không thì trả về lỗi 500.
         return  ResponseEntity.status(status).body(APIResponse.response(status, exception.getMessage(), null));
-        // trả về JSON : {code : 400 , messages:"Duplicate PHONE,v.v.", result : null}
+        // Trả về JSON: {code: 400, messages: "...", result: null}.
     }
 
 
 
-    // Bắt lỗi validation: @NotBlank, @Size, @Email, @Pattern...
-    @ExceptionHandler(MethodArgumentNotValidException.class) // khi filed @NotBlank vi phạm -> Spring throw cái này tự động
-    // cấu hình bắt exception của thư vienj validation rồi trả về cho fe
-    public ResponseEntity<APIResponse<Object>> handleValidation(MethodArgumentNotValidException exception){ // hàm bắt lỗi tự tạo -> nếu thuộc lỗi loại GlobalException -> gọi hàm này đễ xữ lý  >
+    // Bắt lỗi kiểm tra dữ liệu: @NotBlank, @Size, @Email, @Pattern...
+    @ExceptionHandler(MethodArgumentNotValidException.class) // Khi field @NotBlank vi phạm, Spring tự throw lỗi này.
+    // Cấu hình bắt exception của thư viện kiểm tra dữ liệu rồi trả về cho FE.
+    public ResponseEntity<APIResponse<Object>> handleValidation(MethodArgumentNotValidException exception){ // Hàm xử lý lỗi kiểm tra dữ liệu.
         List<String> errors = exception
-                .getBindingResult() // lấy tất cả lỗi validation      ví dụ : name rổng , phone sai
-                .getFieldErrors() // lấy dánh sách Filed bị lỗi
-                .stream()  // chuyển list thành Stream đễ xú lý
-                .map( error -> {  // duyệt từng lõi
-                            String enumKey = error.getDefaultMessage(); // enumKey là cái message mình đã set trong vd @NotBlank(message = "FIELD_REQUIRED") , lấy ra để chuyển thành enum
+                .getBindingResult() // Lấy tất cả lỗi kiểm tra dữ liệu, ví dụ name rỗng hoặc phone sai.
+                .getFieldErrors() // Lấy danh sách field bị lỗi.
+                .stream()  // Chuyển list thành Stream để xử lý.
+                .map( error -> {  // Duyệt từng lỗi.
+                            String enumKey = error.getDefaultMessage(); // enumKey là thông báo đã set, ví dụ @NotBlank(message = "FIELD_REQUIRED").
                             ErrorCode errorCode;
-                            //tìm enum ErrorCode.FIELD_REQUIRED
-                            //lấy .getMessage() = "Cannot be blank"
+                            // Tìm enum ErrorCode.FIELD_REQUIRED.
+                            // Lấy .getMessage() tương ứng.
                             try {
                                 errorCode = ErrorCode.valueOf(enumKey);
                             } catch (IllegalArgumentException e) {
                                 errorCode = ErrorCode.FIELD_REQUIRED;
 
                             }
-                            return  error.getField() + "" +  errorCode.getMessage(); // → "userName Cannot be blank"
+                            return  error.getField() + "" +  errorCode.getMessage(); // Ví dụ: "userName Cannot be blank".
                         }
                 ).toList();
-        // trả về FE bắt buột phải dùng ResponseEntity
-        // badRequest() là lỗi 400
-        //APIResonse không trả về phía FE
-        // errors là tất các mã lỗi đã đc chuyển đổi
+        // Trả về FE bằng ResponseEntity.
+        // badRequest() là lỗi 400.
+        // errors là tất cả mã lỗi đã được chuyển đổi.
 
-        return ResponseEntity.badRequest().body(APIResponse.response(400, "Validation Failed", errors)); // → { code: 400, messages: "Validation Failed", result: ["userName Cannot be blank"] }
+        return ResponseEntity.badRequest().body(APIResponse.response(400, "Validation Failed", errors)); // Ví dụ: { code: 400, messages: "Validation Failed", result: [...] }.
     }
 }
 

@@ -83,8 +83,16 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
                   WHERE p.invitation = i
               )
               AND (
-                  (:clientProfileId IS NOT NULL AND c.clientProfileId = :clientProfileId)
-                  OR (:expertProfileId IS NOT NULL AND e.expertProfileId = :expertProfileId)
+                  (
+                      :clientProfileId IS NOT NULL
+                      AND c.clientProfileId = :clientProfileId
+                      AND (i.clientDeleted IS NULL OR i.clientDeleted = false)
+                  )
+                  OR (
+                      :expertProfileId IS NOT NULL
+                      AND e.expertProfileId = :expertProfileId
+                      AND (i.expertDeleted IS NULL OR i.expertDeleted = false)
+                  )
               )
               AND (
                   :search = ''

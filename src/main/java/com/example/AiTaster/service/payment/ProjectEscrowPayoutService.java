@@ -5,6 +5,7 @@ import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class ProjectEscrowPayoutService {
     private final ProjectEscrowRepo projectEscrowRepo;
     private final MoneyMovementService moneyMovementService;
     private final ProjectRepo projectRepo;
+    private final RealtimeService realtimeService;
 
 
 
@@ -39,7 +41,7 @@ public class ProjectEscrowPayoutService {
 
         User expertUser = project.getInvitation().getExpertApplication().getExpertProfile().getUser();
 
-        // calculateFee() se tu tao transaction PLATFORM_FEE cho admin,
+        // calculateFee() tự tạo transaction PLATFORM_FEE cho admin.
         BigDecimal expertAmount = moneyMovementService.calculateFee(heldAmount);
         BigDecimal platformFee = heldAmount.subtract(expertAmount);
 
@@ -69,7 +71,20 @@ public class ProjectEscrowPayoutService {
 
         projectRepo.save(project);
 
-        return projectEscrowRepo.save(escrow);
+        ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
+        realtimeService.pushUserWalletEvent(
+                expertUser,
+                "PROJECT_ESCROW_RELEASED",
+                null,
+                "Project escrow released"
+        );
+        realtimeService.pushProjectParticipants(
+                project,
+                "PROJECT_COMPLETED",
+                "Project completed"
+        );
+
+        return savedEscrow;
     }
     @Transactional
     public ProjectEscrow refundToClient(Project project) {
@@ -87,8 +102,8 @@ public class ProjectEscrowPayoutService {
 
         User clientUser = project.getInvitation().getExpertApplication().getJobpost().getClientProfile().getUser();
 
-        // Refund khong tinh phi:
-        // escrow tra lai full tien cho client.
+        // Hoàn tiền không tính phí:
+        // escrow trả lại toàn bộ tiền cho client.
         moneyMovementService.moneyTransactionManagement(
                 escrow.getProjectEscrowId(),
                 clientUser.getUserId(),
@@ -108,7 +123,20 @@ public class ProjectEscrowPayoutService {
 
         projectRepo.save(project);
 
-        return projectEscrowRepo.save(escrow);
+        ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
+        realtimeService.pushUserWalletEvent(
+                clientUser,
+                "PROJECT_ESCROW_REFUNDED",
+                null,
+                "Project escrow refunded"
+        );
+        realtimeService.pushProjectParticipants(
+                project,
+                "PROJECT_CANCELED",
+                "Project canceled"
+        );
+
+        return savedEscrow;
     }
 
 

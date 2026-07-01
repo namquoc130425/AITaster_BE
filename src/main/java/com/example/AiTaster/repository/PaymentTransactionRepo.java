@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentTransactionRepo extends JpaRepository<PaymentTransaction, Long> {
@@ -30,11 +31,11 @@ public interface PaymentTransactionRepo extends JpaRepository<PaymentTransaction
     Optional<PaymentTransaction>  findByProviderTransactionCode(String providerTransactionCode);;
 
     // Tìm payment PENDING của một object.
-    // Phase project payment:
+    // Luồng thanh toán project:
     // paymentReferenceType = INVITATION
     // referenceId = invitationId
     // paymentStatus = PENDING
-    //paymentMethod = SEPAY
+    // paymentMethod = SEPAY
     @Query("""
 SELECT pt 
 FROM PaymentTransaction pt
@@ -52,6 +53,27 @@ WHERE pt.paymentReferenceType = :paymentReferenceType
           @Param("senderId") Long senderId,
            @Param("paymentStatus")   PaymentStatus paymentStatus,
             @Param("paymentMethod") PaymentMethod paymentMethod
+    );
+
+    List<PaymentTransaction> findBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusOrderByCreateAtDesc(
+            Long senderId,
+            TransactionType transactionType,
+            PaymentReferenceType paymentReferenceType,
+            PaymentStatus paymentStatus
+    );
+
+    @Query("""
+            SELECT pt
+            FROM PaymentTransaction pt
+            WHERE pt.senderId = :userId
+               OR pt.receiverId = :userId
+               OR pt.sourceWalletId = :walletId
+               OR pt.targetWalletId = :walletId
+            ORDER BY pt.createAt DESC
+            """)
+    List<PaymentTransaction> findMyWalletTransactions(
+            @Param("userId") Long userId,
+            @Param("walletId") Long walletId
     );
 }
 

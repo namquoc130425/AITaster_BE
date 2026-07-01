@@ -41,7 +41,7 @@ public class ProjectEscrow {
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal heldAmount;
 
-    // Phí nền tảng. Phase đầu có thể để 0.
+    // Phí nền tảng. Giai đoạn đầu có thể để 0.
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal platformFee;
 

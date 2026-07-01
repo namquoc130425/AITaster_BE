@@ -163,7 +163,7 @@ public class JobPostService implements IJobPost {
     // Check nội dung user nhập có từ cấm / prompt injection không
     private void validateUserInputContent(JobPostRequest request) {
 
-        // Nếu request null thì chặn trước
+        // Nếu dữ liệu yêu cầu null thì chặn trước.
         if (request == null) {
             throw new GlobalException(400, "Request is required");
         }

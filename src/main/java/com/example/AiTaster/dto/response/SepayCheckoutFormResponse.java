@@ -15,7 +15,7 @@ public class SepayCheckoutFormResponse {
     // URL form sẽ submit sang SePay.
     private String actionUrl;
 
-    // Method submit form, theo docs là POST.
+    // Phương thức submit form, theo docs là POST.
     private String method;
 
     // Danh sách hidden input gửi sang SePay.

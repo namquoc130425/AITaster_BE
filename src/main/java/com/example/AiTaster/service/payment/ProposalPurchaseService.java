@@ -119,8 +119,7 @@ public class ProposalPurchaseService {
         Long clientUserId = clientProfile.getUser().getUserId();
         Long expertUserId = expertApplication.getExpertProfile().getUser().getUserId();
 
-        // Tao transaction PENDING cho SePay.
-        // Chua unlock proposal o day, doi webhook success moi unlock.
+        // Tạo pending SePay transaction. Proposal chỉ unlock sau khi webhook success.
         PaymentTransaction paymentTransaction = pendingPaymentService.createPendingPaymentTransaction(
                 clientUserId,
                 expertUserId,

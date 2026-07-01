@@ -19,30 +19,29 @@ public class ExpertServiceSpecification {
 
 public static Specification<ExpertService> filter(ExpertServiceFillerRequest request) {
     return(root,query,cb) -> {
-        // root đại diện cho entity expertService
-        // query câu truy vấn đang được tạo
-        //cb:CriteriaBuilder dùng để tạo điều kiện :equal , like ,greaterThan ,lessThan...
+        // root đại diện cho entity ExpertService.
+        // query là câu truy vấn đang được tạo.
+        // cb là CriteriaBuilder dùng để tạo điều kiện: equal, like, greaterThan, lessThan...
         List<Predicate> predicates = new ArrayList<>();
-        //chứa danh sách điều kiện
+        // Chứa danh sách điều kiện.
         SubExpertServiceFilterRequest filter = null;
 
         if (request != null) {
             filter = request.getFilter();
         }
-        //đk 1 lấy dánh sách expert đang status Open
+        // Điều kiện 1: chỉ lấy service đang OPEN.
         predicates.add(cb.equal(root.get("serviceStatus"), ServiceStatus.OPEN));
 
 
-        //search:
-        //đk 2 search theo name và description
+        // Điều kiện 2: tìm kiếm theo name và description.
         if(request != null && request.getSearch() != null &&  !request.getSearch().isBlank()) {
-            //%dulieunguoidungnhapvao% bỏ khoảng trắng , viết thường
+            // Tạo keyword dạng %dữ liệu người dùng nhập%, bỏ khoảng trắng đầu cuối và viết thường.
             String keyword = "%" + request.getSearch().trim().toLowerCase() + "%";
 
-            //like nghĩa gần đúng , lower chuyển thành chử thường ,
+            // like là tìm gần đúng, lower chuyển thành chữ thường.
             Predicate searchByName = cb.like(cb.lower(root.get("serviceName")),keyword);
             Predicate searchByDescription = cb.like(cb.lower(root.get("serviceDescription")), keyword);
-            //or chỉ cần đúng 1 trong hia điều kiện
+            // or chỉ cần đúng một trong hai điều kiện.
             predicates.add(cb.or(searchByName, searchByDescription));
 
 
@@ -50,12 +49,12 @@ public static Specification<ExpertService> filter(ExpertServiceFillerRequest req
 
         if(filter != null) {
 
-            //filter theo category
+            // Lọc theo category.
             if(filter.getCategoryId() != null ) {
                 predicates.add(cb.equal(root.get("category").get("categoryId"),filter.getCategoryId()));
             }
-            //filter theo skill
-            //vì expert có nhiều skill nên phải dùng join
+            // Lọc theo skill.
+            // Vì expert service có nhiều skill nên phải dùng join.
             //INNER JOIN: Chỉ lấy dữ liệu khớp ở cả 2 bảng.
             if(filter.getSkillIds() != null && !filter.getSkillIds().isEmpty()) {
                 Join<ExpertService, Skill> skillJoin = root.join("skills", JoinType.INNER);
@@ -63,12 +62,12 @@ public static Specification<ExpertService> filter(ExpertServiceFillerRequest req
                 query.distinct(true); // bỏ trùng
             }
 
-            //filter theo gia tien >=
+            // Lọc theo giá tiền >=.
             if(filter.getFeeFrom() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("serviceFee"),filter.getFeeFrom()));
             }
 
-            //filter theo gia tien <=
+            // Lọc theo giá tiền <=.
             if(filter.getFeeTo() != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("serviceFee"),filter.getFeeTo()));
             }

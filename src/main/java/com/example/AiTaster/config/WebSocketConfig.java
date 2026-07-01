@@ -35,10 +35,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setApplicationDestinationPrefixes("/app");
 
         /*
-         * FE subscribe:
+         * FE lắng nghe:
          * /user/queue/notifications
          *
-         * BE push:
+         * BE đẩy dữ liệu:
          * convertAndSendToUser(username, "/queue/notifications", response)
          */
         registry.setUserDestinationPrefix("/user");

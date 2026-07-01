@@ -1,15 +1,21 @@
 package com.example.AiTaster.controller;
 
 import com.example.AiTaster.constant.UserWalletStatus;
+import com.example.AiTaster.dto.request.BankAccountOtpVerifyRequest;
+import com.example.AiTaster.dto.request.UserBankAccountRequest;
 import com.example.AiTaster.dto.request.UserWalletRequest;
 import com.example.AiTaster.dto.request.WalletBalanceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
+import com.example.AiTaster.dto.response.PaymentTransactionResponse;
+import com.example.AiTaster.dto.response.UserBankAccountResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.dto.response.WalletDepositPaymentResponse;
 import com.example.AiTaster.entity.PaymentTransaction;
+import com.example.AiTaster.service.UserBankAccountService;
 import com.example.AiTaster.service.UserWalletService;
 import com.example.AiTaster.service.payment.WalletDepositService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +31,7 @@ public class UserWalletController {
 
     private final UserWalletService userWalletService;
     private final WalletDepositService walletDepositService;
+    private final UserBankAccountService userBankAccountService;
 
     @PostMapping
     public ResponseEntity<APIResponse<UserWalletResponse>>
@@ -70,6 +77,7 @@ public class UserWalletController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<List<UserWalletResponse>>>
     getAllWallets() {
 
@@ -78,6 +86,62 @@ public class UserWalletController {
                         200,
                         "Success",
                         userWalletService.getAllWallets()
+                )
+        );
+    }
+
+    @GetMapping("/transactions/my")
+    public ResponseEntity<APIResponse<List<PaymentTransactionResponse>>>
+    getMyTransactions() {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get wallet transactions successfully",
+                        userWalletService.getMyTransactions()
+                )
+        );
+    }
+
+    @GetMapping("/bank-account/my")
+    public ResponseEntity<APIResponse<UserBankAccountResponse>>
+    getMyBankAccount() {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get my bank account successfully",
+                        userBankAccountService.getMyBankAccount()
+                )
+        );
+    }
+
+    @PostMapping("/bank-account")
+    public ResponseEntity<APIResponse<UserBankAccountResponse>>
+    requestBankAccountOtp(
+            @RequestBody @Valid UserBankAccountRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Bank account OTP sent",
+                        userBankAccountService.requestBankAccountOtp(request)
+                )
+        );
+    }
+
+    @PostMapping("/bank-account/verify")
+    public ResponseEntity<APIResponse<UserBankAccountResponse>>
+    verifyBankAccountOtp(
+            @RequestBody @Valid BankAccountOtpVerifyRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Bank account verified",
+                        userBankAccountService.verifyBankAccountOtp(request)
                 )
         );
     }
@@ -99,8 +163,8 @@ public class UserWalletController {
     }
 
     // User gửi yêu cầu rút tiền.
-    // Bước này chỉ lưu yêu cầu: requestWithdrawal = true, amountRequestWithdrawal = amount.
-    // Chưa trừ tiền trong ví và chưa tạo PaymentTransaction SUCCESS.
+    // Bước này chỉ lưu requestWithdrawal và amountRequestWithdrawal.
+    // Chưa trừ ví cho đến khi admin xác nhận đã chuyển khoản thủ công.
     @PostMapping("/{walletId}/withdraw/request")
     public ResponseEntity<APIResponse<UserWalletResponse>>
     requestWithdraw(
@@ -120,9 +184,23 @@ public class UserWalletController {
         );
     }
 
-    // Admin duyệt yêu cầu rút tiền.
-    // Admin không nhập lại amount, service sẽ lấy amountRequestWithdrawal đã lưu trong ví.
-    // Bước này mới gọi MoneyMovementService để trừ ví user và tạo transaction USER_WITHDRAW SUCCESS.
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/withdraw/requests")
+    public ResponseEntity<APIResponse<List<UserWalletResponse>>>
+    getWithdrawalRequests() {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get withdrawal requests successfully",
+                        userWalletService.getWithdrawalRequests()
+                )
+        );
+    }
+
+    // Admin xác nhận đã chuyển khoản thủ công.
+    // Service dùng amountRequestWithdrawal đã lưu, trừ ví,
+    // và tạo transaction USER_WITHDRAW SUCCESS.
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{walletId}/withdraw/approve")
     public ResponseEntity<APIResponse<PaymentTransaction>>
@@ -139,7 +217,24 @@ public class UserWalletController {
         );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{walletId}/withdraw/reject")
+    public ResponseEntity<APIResponse<UserWalletResponse>>
+    rejectWithdraw(
+            @PathVariable Long walletId
+    ) {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Withdrawal rejected",
+                        userWalletService.rejectWithdraw(walletId)
+                )
+        );
+    }
+
     @PatchMapping("/{walletId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<UserWalletResponse>>
     changeStatus(
             @PathVariable Long walletId,
@@ -159,6 +254,7 @@ public class UserWalletController {
     }
 
     @DeleteMapping("/{walletId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<Void>>
     deleteWallet(
             @PathVariable Long walletId
