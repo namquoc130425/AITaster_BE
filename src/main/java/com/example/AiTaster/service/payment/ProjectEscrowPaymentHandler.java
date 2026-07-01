@@ -1,4 +1,4 @@
-package com.example.AiTaster.service.payment.sepay;
+package com.example.AiTaster.service.payment;
 
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.dto.request.SepayWebhookRequest;

@@ -38,9 +38,23 @@ public class UserWallet {
     @Enumerated(EnumType.STRING)
     UserWalletStatus status;
 
+    @Column(nullable = false)
+    Boolean requestWithdrawal;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal amountRequestWithdrawal;
+
     @CreationTimestamp
     LocalDateTime createAt;
 
     @UpdateTimestamp
     LocalDateTime updateAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (balance == null) balance = BigDecimal.ZERO;
+        if (frozenBalance == null) frozenBalance = BigDecimal.ZERO;
+        if (requestWithdrawal == null) requestWithdrawal = false;
+        if (amountRequestWithdrawal == null) amountRequestWithdrawal = BigDecimal.ZERO;
+    }
 }

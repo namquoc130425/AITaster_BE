@@ -1,4 +1,4 @@
-package com.example.AiTaster.service.payment.sepay;
+package com.example.AiTaster.service.payment;
 
 
 import com.example.AiTaster.constant.*;
@@ -113,6 +113,12 @@ public class ProjectPaymentService implements IProjectPayment {
         paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
                 PaymentReferenceType.INVITATION,
                 invitation.getInvitationId(),
+                TransactionType.PROJECT_ESCROW_DEPOSIT,
+                invitation.getExpertApplication()
+                        .getJobpost()
+                        .getClientProfile()
+                        .getUser()
+                        .getUserId(),
                 PaymentStatus.PENDING,
                 PaymentMethod.SEPAY
         ).ifPresent(payment -> {

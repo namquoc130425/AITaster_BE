@@ -2,7 +2,7 @@ package com.example.AiTaster.controller;
 
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ProjectPaymentResponse;
-import com.example.AiTaster.service.payment.sepay.ProjectPaymentService;
+import com.example.AiTaster.service.payment.ProjectPaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
