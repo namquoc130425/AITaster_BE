@@ -34,11 +34,13 @@ public class PendingPaymentService {
                                                               String description,
                                                               LocalDateTime expiredAt) {
                 validatePendingAmount(amount);
-                //tìm paymentTransaction có pending cũ
+                //tìm paymentTransaction có pending cũ,method SEPAY v.v.v.
 
                 return paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
                         referenceType,
                         referenceId,
+                        transactionType,
+                        senderId,
                         PaymentStatus.PENDING,
                         PaymentMethod.SEPAY
                 ).map(existingPayment  -> { // nếu paymentTransaction có pending cũ == amount cu thì trả về Pendding cũ

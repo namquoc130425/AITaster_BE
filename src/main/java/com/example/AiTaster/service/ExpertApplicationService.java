@@ -11,7 +11,7 @@ import com.example.AiTaster.mapper.ExpertApplicationMapper;
 import com.example.AiTaster.mapper.ExpertProposalMapper;
 import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.imp.IExpertApplication;
-import com.example.AiTaster.service.payment.sepay.ProposalPurchaseService;
+import com.example.AiTaster.service.payment.ProposalPurchaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

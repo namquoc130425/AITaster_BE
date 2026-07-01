@@ -9,6 +9,7 @@ import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.DeliverableMapper;
 import com.example.AiTaster.mapper.ProjectMilestoneMapper;
 import com.example.AiTaster.repository.*;
+import com.example.AiTaster.service.payment.ProjectEscrowPayoutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class ProjectMilestoneService {
     private final ProjectMilestoneMapper projectMilestoneMapper;
     private final DeliverableMapper deliverableMapper;
     private final SimpMessagingTemplate simpMessagingTemplate;
-
+    private final ProjectEscrowPayoutService projectEscrowPayoutService;
     // tạo milestone cho project ngay
     @Transactional
     public ProjectMilestone createMilestoneForProject(Project project) {
@@ -224,12 +225,11 @@ public class ProjectMilestoneService {
         milestone.setStatus(MilestoneStatus.COMPLETED);
         projectMilestoneRepo.save(milestone);
 
-        project.setProjectStatus(ProjectStatus.COMPLETED);
-        project.setCompletedAt(LocalDateTime.now());
-        projectRepo.save(project);
 
-        projectEscrow.setEscrowStatus(EscrowStatus.RELEASED);
-        projectEscrowRepo.save(projectEscrow);
+        // Khi client confirm bước cuối
+        // ProjectEscrowPayoutService se tu xu ly rut tien escrow,
+        // tinh phi admin, cong tien expert, tao transaction, va update project/escrow.
+        projectEscrowPayoutService.releaseToExpert(project);
 
     }
 

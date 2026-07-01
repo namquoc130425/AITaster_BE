@@ -2,7 +2,7 @@ package com.example.AiTaster.controller;
 
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ProjectPaymentResponse;
-import com.example.AiTaster.service.payment.sepay.ProjectPaymentService;
+import com.example.AiTaster.service.payment.ProjectPaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +24,17 @@ public class ProjectPaymentController {
 
         return ResponseEntity.ok(
                 APIResponse.response(200, "Create invitation payment successfully", response)
+        );
+    }
+
+    @PostMapping("/{invitationId}/payments/wallet")
+    public ResponseEntity<APIResponse<ProjectPaymentResponse>> createProjectPaymentByWallet(
+            @PathVariable Long invitationId
+    ) {
+        ProjectPaymentResponse response = projectPaymentService.createProjectPaymentByWallet(invitationId);
+
+        return ResponseEntity.ok(
+                APIResponse.response(200, "Pay project by wallet successfully", response)
         );
     }
 }

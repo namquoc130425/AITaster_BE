@@ -6,9 +6,10 @@ import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.dto.response.PageResponse;
+import com.example.AiTaster.dto.response.SepayPurchasePaymentResponse;
 import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.service.ExpertProductService;
-import com.example.AiTaster.service.payment.sepay.ExpertServicePurchaseService;
+import com.example.AiTaster.service.payment.ExpertServicePurchaseService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class ExpertServiceController {
     }
 
 
-    // thanh toán Aiservice
+    // thanh toán Aiservice bằng ví
     @PostMapping("/{serviceId}/purchase")
     public ResponseEntity<APIResponse<PaymentTransaction>> purchaseService(
             @PathVariable Long serviceId
@@ -46,6 +47,19 @@ public class ExpertServiceController {
         PaymentTransaction paymentTransaction = expertServicePurchaseService.purchaseService(serviceId);
         return ResponseEntity.ok(
                 APIResponse.response(200, "Purchase service successfully", paymentTransaction)
+        );
+    }
+
+    // thanh toán Aiservie bằng sepay
+    @PostMapping("/{serviceId}/purchase/sepay")
+    public ResponseEntity<APIResponse<SepayPurchasePaymentResponse>> createServiceSepayPayment(
+            @PathVariable Long serviceId
+    ) {
+        SepayPurchasePaymentResponse response =
+                expertServicePurchaseService.createServiceSepayPayment(serviceId);
+
+        return ResponseEntity.ok(
+                APIResponse.response(200, "SePay service payment created", response)
         );
     }
 
