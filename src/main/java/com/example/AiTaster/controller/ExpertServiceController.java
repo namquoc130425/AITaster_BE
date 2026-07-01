@@ -6,8 +6,9 @@ import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.dto.response.PageResponse;
-import com.example.AiTaster.entity.ServiceFile;
+import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.service.ExpertProductService;
+import com.example.AiTaster.service.payment.sepay.ExpertServicePurchaseService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -26,12 +26,27 @@ public class ExpertServiceController {
     @Autowired
     ExpertProductService expertProductService;
 
+    @Autowired
+    ExpertServicePurchaseService expertServicePurchaseService;
+
 
     //filter
     @PostMapping("/public/filter")
     public ResponseEntity<APIResponse<PageResponse<ExpertServiceResponse>>> getAllPublicServicesPage(@RequestBody @Valid ExpertServiceFillerRequest expertServiceFillerRequest) {
         PageResponse<ExpertServiceResponse> expertServiceResponse = expertProductService.getAllPublicServicesPage(expertServiceFillerRequest);
       return ResponseEntity.ok(APIResponse.response(200, "get All and Filter and Search Success", expertServiceResponse));
+    }
+
+
+    // thanh toán Aiservice
+    @PostMapping("/{serviceId}/purchase")
+    public ResponseEntity<APIResponse<PaymentTransaction>> purchaseService(
+            @PathVariable Long serviceId
+    ) {
+        PaymentTransaction paymentTransaction = expertServicePurchaseService.purchaseService(serviceId);
+        return ResponseEntity.ok(
+                APIResponse.response(200, "Purchase service successfully", paymentTransaction)
+        );
     }
 
 
@@ -143,5 +158,7 @@ public class ExpertServiceController {
                 APIResponse.response(200, "Change AI service status successfully", response)
         );
     }
+
+
 
 }

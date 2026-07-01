@@ -44,7 +44,7 @@ public class SepayGateway {
     public SepayCheckoutFormResponse createCheckoutForm(PaymentTransaction payment) {
         // Lấy số tiền từ payment.
         // VND không dùng phần thập phân nên ép về số nguyên.
-        String amount = payment.getAmount()
+        String amount = payment.getGrossAmount()
                 .setScale(0, RoundingMode.UNNECESSARY)
                 .toPlainString();
 

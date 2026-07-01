@@ -6,16 +6,20 @@ import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.entity.UserWallet;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.UserWalletRepo;
+import com.example.AiTaster.service.MoneyMovementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class WalletDepositWebhookHandler implements SepayPaymentHandler {
-    private final UserWalletRepo  userWalletRepo;
+    private final UserWalletRepo userWalletRepo;
 
     private final PaymentTransactionRepo paymentTransactionRepo;
+    private final MoneyMovementService moneyMovementService;
 
 
     @Override
@@ -34,19 +38,26 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
     ) {
         UserWallet wallet = userWalletRepo.findByUserWalletId(payment.getReferenceId()).orElseThrow(() -> new RuntimeException("UserWallet not found"));
 
-        if(wallet == null || !UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
-            markFailed(payment,request,providerTransactionCode);
+        if (wallet == null || !UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
+            markFailed(payment, request, providerTransactionCode);
             return;
         }
-        wallet.setBalance(wallet.getBalance().add(payment.getAmount()));
+        PaymentTransaction successTransaction = moneyMovementService.moneyTransactionManagement(
+                null,
+                wallet.getUser().getUserId(),
+                TransactionType.USER_DEPOSIT,
+                wallet.getUserWalletId(),
+                PaymentReferenceType.USER_WALLET,
+                "SePay wallet deposit",
+                BigDecimal.ZERO,
+                payment.getGrossAmount(),
+                payment.getPaymentTransactionId()
+        );
+        successTransaction.setProviderTransactionCode(providerTransactionCode);
+        successTransaction.setProviderContent(providerContent);
+        successTransaction.setPaidAt(paidAt);
 
-        payment.setPaymentStatus(PaymentStatus.SUCCESS);
-        payment.setProviderTransactionCode(providerTransactionCode)
-        ;
-        payment.setProviderContent(providerContent);
-        payment.setPaidAt(paidAt);
-        userWalletRepo.save(wallet);
-        paymentTransactionRepo.save(payment);
+        paymentTransactionRepo.save(successTransaction);
     }
 
 
@@ -56,6 +67,7 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
         paymentTransaction.setProviderContent(buildProviderContent(sepayWebhookRequest));
         paymentTransactionRepo.save(paymentTransaction);
     }
+
     private String buildProviderContent(SepayWebhookRequest sepayWebhookRequest) {
         if (sepayWebhookRequest == null || sepayWebhookRequest.getOrder() == null) {
             return null;
@@ -69,6 +81,7 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
 
 
     }
+
     private String firstNotBlank(String... values) {
         if (values == null) {
             return null;

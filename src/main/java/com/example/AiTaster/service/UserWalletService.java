@@ -190,4 +190,43 @@ public class UserWalletService implements IUserWalletService {
                                 "Wallet not found"
                         ));
     }
+
+    public UserWallet depositByUserId(Long userId, BigDecimal amount) {
+        validateAmount(amount);
+        UserWallet wallet = userWalletRepo.findByUserIdForUpdate(userId)
+                .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + userId));
+
+        if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
+            throw new GlobalException(400, "Wallet is not active");
+        }
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+        return userWalletRepo.save(wallet);
+    }
+
+    public UserWallet withdrawByUserId(Long userId, BigDecimal amount) {
+        validateAmount(amount);
+        UserWallet wallet = userWalletRepo.findByUserIdForUpdate(userId)
+                .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + userId));
+
+        if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
+            throw new GlobalException(400, "Wallet is not active");
+        }
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new GlobalException(400, "Insufficient balance");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+        return userWalletRepo.save(wallet);
+    }
+    private void validateAmount(BigDecimal amount) {
+        if (amount == null) {
+            throw new GlobalException(400, "Amount must not be null");
+        }
+
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new GlobalException(400, "Amount must be greater than zero");
+        }
+    }
 }
