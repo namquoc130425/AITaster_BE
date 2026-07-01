@@ -3,7 +3,9 @@ package com.example.AiTaster.controller;
 import com.example.AiTaster.dto.request.ExpertApplicationRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ExpertApplicationResponse;
+import com.example.AiTaster.dto.response.SepayPurchasePaymentResponse;
 import com.example.AiTaster.service.ExpertApplicationService;
+import com.example.AiTaster.service.payment.ProposalPurchaseService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExpertApplicationController {
     private final ExpertApplicationService expertApplicationService;
+    private final ProposalPurchaseService proposalPurchaseService;
     // Expert apply vào JobPost.
     // Có thể gửi kèm proposal hoặc không.
     @PostMapping("/job-posts/{jobPostId}/applications")
@@ -29,6 +32,18 @@ public class ExpertApplicationController {
         ExpertApplicationResponse response = expertApplicationService.applyJobPost(jobPostId, request);
         return ResponseEntity.ok(
                 APIResponse.response(201, "Apply job post successfully", response)
+        );
+    }
+  // thanh toán proposal qua sepay
+    @PostMapping("/proposals/{proposalId}/unlock/sepay")
+    public ResponseEntity<APIResponse<SepayPurchasePaymentResponse>> createProposalSepayPayment(
+            @PathVariable Long proposalId
+    ) {
+        SepayPurchasePaymentResponse response =
+                proposalPurchaseService.createProposalSepayPayment(proposalId);
+
+        return ResponseEntity.ok(
+                APIResponse.response(200, "SePay proposal payment created", response)
         );
     }
 

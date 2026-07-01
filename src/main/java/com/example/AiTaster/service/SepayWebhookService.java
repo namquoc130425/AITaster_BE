@@ -4,7 +4,7 @@ import com.example.AiTaster.dto.request.SepayWebhookRequest;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
-import com.example.AiTaster.service.payment.sepay.SepayPaymentHandler;
+import com.example.AiTaster.service.payment.SepayPaymentHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
