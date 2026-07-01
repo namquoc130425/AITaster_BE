@@ -3,6 +3,7 @@ package com.example.AiTaster.repository;
 import com.example.AiTaster.constant.PaymentMethod;
 import com.example.AiTaster.constant.PaymentReferenceType;
 import com.example.AiTaster.constant.PaymentStatus;
+import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.entity.PaymentTransaction;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,12 +40,16 @@ SELECT pt
 FROM PaymentTransaction pt
 WHERE pt.paymentReferenceType = :paymentReferenceType
       AND pt.referenceId = :referenceId
+      AND pt.transactionType = :transactionType
+      AND pt.senderId = :senderId
       AND pt.paymentStatus = :paymentStatus
       AND pt.paymentMethod = :paymentMethod
 """)
     Optional<PaymentTransaction> findPendingTransactionByReferenceAndMethod(
            @Param("paymentReferenceType") PaymentReferenceType paymentReferenceType,
           @Param("referenceId")  Long referenceId,
+          @Param("transactionType") TransactionType transactionType,
+          @Param("senderId") Long senderId,
            @Param("paymentStatus")   PaymentStatus paymentStatus,
             @Param("paymentMethod") PaymentMethod paymentMethod
     );

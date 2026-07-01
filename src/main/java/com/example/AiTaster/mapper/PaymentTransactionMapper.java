@@ -2,6 +2,7 @@ package com.example.AiTaster.mapper;
 
 import com.example.AiTaster.dto.response.ProjectPaymentResponse;
 import com.example.AiTaster.dto.response.SepayCheckoutFormResponse;
+import com.example.AiTaster.dto.response.SepayPurchasePaymentResponse;
 import com.example.AiTaster.dto.response.WalletDepositPaymentResponse;
 import com.example.AiTaster.entity.PaymentTransaction;
 import org.mapstruct.Mapper;
@@ -24,5 +25,13 @@ public interface PaymentTransactionMapper {
     WalletDepositPaymentResponse toWalletDepositPaymentResponse(
             PaymentTransaction paymentTransaction , SepayCheckoutFormResponse checkoutForm
     );
+
+
+    @Mapping(target = "checkoutForm", source = "checkoutForm")
+    @Mapping(target = "amount", source = "paymentTransaction.grossAmount")
+    SepayPurchasePaymentResponse toSepayPurchasePaymentResponse(PaymentTransaction paymentTransaction, SepayCheckoutFormResponse checkoutForm);
+
+
+
 
 }

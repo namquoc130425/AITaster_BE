@@ -6,11 +6,14 @@ import com.example.AiTaster.dto.request.WalletBalanceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.ProjectPaymentResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
+import com.example.AiTaster.dto.response.WalletDepositPaymentResponse;
+import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.service.UserWalletService;
-import com.example.AiTaster.service.payment.sepay.WalletDepositService;
+import com.example.AiTaster.service.payment.WalletDepositService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -80,27 +83,27 @@ public class UserWalletController {
         );
     }
 
-    @PatchMapping("/{walletId}/deposit")
-    public ResponseEntity<APIResponse<UserWalletResponse>>
-    deposit(
-            @PathVariable Long walletId,
-            @RequestBody WalletBalanceRequest request
-    ) {
-
-        return ResponseEntity.ok(
-                APIResponse.response(
-                        200,
-                        "Deposit success",
-                        userWalletService.deposit(
-                                walletId,
-                                request.getAmount()
-                        )
-                )
-        );
-    }
+//    @PatchMapping("/{walletId}/deposit")
+//    public ResponseEntity<APIResponse<UserWalletResponse>>
+//    deposit(
+//            @PathVariable Long walletId,
+//            @RequestBody WalletBalanceRequest request
+//    ) {
+//
+//        return ResponseEntity.ok(
+//                APIResponse.response(
+//                        200,
+//                        "Deposit success",
+//                        userWalletService.deposit(
+//                                walletId,
+//                                request.getAmount()
+//                        )
+//                )
+//        );
+//    }
 
     @PostMapping("/{walletId}/deposit/sepay")
-    public ResponseEntity<APIResponse<ProjectPaymentResponse>>
+    public ResponseEntity<APIResponse<WalletDepositPaymentResponse>>
     createSepayDeposit(
             @PathVariable Long walletId,
             @RequestBody WalletBalanceRequest request
@@ -130,6 +133,47 @@ public class UserWalletController {
                                 walletId,
                                 request.getAmount()
                         )
+                )
+        );
+    }
+
+    // User gửi yêu cầu rút tiền.
+    // Bước này chỉ lưu yêu cầu: requestWithdrawal = true, amountRequestWithdrawal = amount.
+    // Chưa trừ tiền trong ví và chưa tạo PaymentTransaction SUCCESS.
+    @PostMapping("/{walletId}/withdraw/request")
+    public ResponseEntity<APIResponse<UserWalletResponse>>
+    requestWithdraw(
+            @PathVariable Long walletId,
+            @RequestBody WalletBalanceRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Withdrawal requested",
+                        userWalletService.requestWithdraw(
+                                walletId,
+                                request.getAmount()
+                        )
+                )
+        );
+    }
+
+    // Admin duyệt yêu cầu rút tiền.
+    // Admin không nhập lại amount, service sẽ lấy amountRequestWithdrawal đã lưu trong ví.
+    // Bước này mới gọi MoneyMovementService để trừ ví user và tạo transaction USER_WITHDRAW SUCCESS.
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{walletId}/withdraw/approve")
+    public ResponseEntity<APIResponse<PaymentTransaction>>
+    approveWithdraw(
+            @PathVariable Long walletId
+    ) {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Withdrawal approved",
+                        userWalletService.approveWithdraw(walletId)
                 )
         );
     }

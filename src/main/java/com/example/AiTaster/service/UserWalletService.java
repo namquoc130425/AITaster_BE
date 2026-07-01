@@ -1,8 +1,11 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.constant.UserWalletStatus;
 import com.example.AiTaster.dto.request.UserWalletRequest;
 import com.example.AiTaster.dto.response.UserWalletResponse;
+import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.entity.UserWallet;
 import com.example.AiTaster.exception.GlobalException;
@@ -11,6 +14,7 @@ import com.example.AiTaster.repository.UserWalletRepo;
 import com.example.AiTaster.service.imp.IUserWalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,6 +26,7 @@ public class UserWalletService implements IUserWalletService {
     private final UserWalletRepo userWalletRepo;
     private final CurrentUserService currentUserService;
     private final UserWalletMapper userWalletMapper;
+    private final MoneyMovementService moneyMovementService;
 
     @Override
     public UserWalletResponse createWallet(UserWalletRequest request) {
@@ -228,5 +233,63 @@ public class UserWalletService implements IUserWalletService {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new GlobalException(400, "Amount must be greater than zero");
         }
+    }
+    //hàm yêu cầu rút tiền . set setRequestWithdrawal true và truyền số tiền yêu cau rút về cho admin
+    @Transactional
+    public UserWalletResponse requestWithdraw(Long walletId, BigDecimal amount) {
+        validateAmount(amount);
+
+        User currentUser = currentUserService.getCurrentUser();
+        UserWallet wallet = getWallet(walletId);
+
+        if (!wallet.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new GlobalException(403, "You are not owner of this wallet");
+        }
+
+        if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
+            throw new GlobalException(400, "Wallet is not active");
+        }
+
+        if (Boolean.TRUE.equals(wallet.getRequestWithdrawal())) {
+            throw new GlobalException(400, "Withdrawal request already exists");
+        }
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new GlobalException(400, "Insufficient balance");
+        }
+
+        wallet.setRequestWithdrawal(true);
+        wallet.setAmountRequestWithdrawal(amount);
+
+        return userWalletMapper.toResponse(userWalletRepo.save(wallet));
+    }
+
+    @Transactional
+    public PaymentTransaction approveWithdraw(Long walletId) {
+        UserWallet wallet = getWallet(walletId);
+
+        if (!Boolean.TRUE.equals(wallet.getRequestWithdrawal())) {
+            throw new GlobalException(400, "No withdrawal request");
+        }
+
+        BigDecimal amount = wallet.getAmountRequestWithdrawal();
+
+        PaymentTransaction transaction = moneyMovementService.moneyTransactionManagement(
+                wallet.getUser().getUserId(),
+                null,
+                TransactionType.USER_WITHDRAW,
+                wallet.getUserWalletId(),
+                PaymentReferenceType.WITHDRAW_REQUEST,
+                "Approve wallet withdrawal - wallet " + wallet.getUserWalletId(),
+                amount,
+                BigDecimal.ZERO,
+                null
+        );
+
+        wallet.setRequestWithdrawal(false);
+        wallet.setAmountRequestWithdrawal(BigDecimal.ZERO);
+        userWalletRepo.save(wallet);
+
+        return transaction;
     }
 }
