@@ -20,6 +20,7 @@ public class ExpertApplicationResponse {
     Long expertProfileId;
 
     String expertName;
+    String expertAvatarUrl;
 
     BigDecimal expectedPrice;
 
