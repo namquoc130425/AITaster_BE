@@ -35,8 +35,10 @@ public class ProjectCardResponse {
     String paymentStatus;
 
     String clientName;
+    String clientAvatarUrl;
     String companyName;
     String expertName;
+    String expertAvatarUrl;
 
     BigDecimal budget;
     String timeline;

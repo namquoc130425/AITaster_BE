@@ -150,7 +150,8 @@ public class JobPostService implements IJobPost {
     // lấy profile của user đang nhập hiện tại mà ko cần front end truyền id vào
     public ClientProfile getCurrentClientProfile() {
         User currentUser = currentUserService.getCurrentUser();
-        return clientProfileRepo.findByUser(currentUser).orElseThrow(() -> new GlobalException("Client Profile Not Found"));
+        return clientProfileRepo.findByUser(currentUser)
+                .orElseThrow(() -> new GlobalException(403, "Only client can access job posts"));
     }
 
     // hàm check jobPost thuộc về client Profile nào
