@@ -14,6 +14,7 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
+import com.example.AiTaster.repository.ExpertApplicationRepo;
 import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.service.imp.IJobPost;
@@ -37,6 +38,7 @@ public class JobPostService implements IJobPost {
     private final CurrentUserService currentUserService;
     private final ContentManagerService  contentManagerService;
     private final SkillRepo skillRepo;
+    private final ExpertApplicationRepo expertApplicationRepo;
 
     //client tự tạo jobpost với status là Draft mà không dùng AI
     public JobPostResponse createJobPost(JobPostRequest jobPostRequest) {
@@ -87,7 +89,10 @@ public class JobPostService implements IJobPost {
                 JobpostStatus.CLOSED,
                 InvitationStatus.ACCEPTED
         );
-        return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile).stream().map(jobPostMapper::toResponse).toList();
+        return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile)
+                .stream()
+                .map(this::toMyJobPostResponse)
+                .toList();
     }
 
     //lấy danh sách job của client có status Opend hiện tại
@@ -109,6 +114,12 @@ public class JobPostService implements IJobPost {
         Page<JobPostResponse> responsePage = jobPostPage.map(jobPostMapper::toResponse);
 
         return PageResponse.fromPage(responsePage);
+    }
+
+    private JobPostResponse toMyJobPostResponse(JobPost jobPost) {
+        JobPostResponse response = jobPostMapper.toResponse(jobPost);
+        response.setApplicationCount(expertApplicationRepo.countByJobpost(jobPost));
+        return response;
     }
 
 

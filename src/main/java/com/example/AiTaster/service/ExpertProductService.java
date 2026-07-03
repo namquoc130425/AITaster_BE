@@ -9,6 +9,7 @@ import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.dto.request.ExpertProduct.ExpertServiceFillerRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
+import com.example.AiTaster.dto.response.InvoiceResponse;
 import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
@@ -17,12 +18,19 @@ import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.imp.IExpertService;
 import com.example.AiTaster.specification.ExpertServiceSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +46,13 @@ public class ExpertProductService implements IExpertService {
     private final LocalFileStorageService localFileStorageService;
     private final ClientProfileRepo clientProfileRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
+
+    public record ServiceFileDownload(
+            Resource resource,
+            String fileName,
+            String contentType,
+            long contentLength
+    ) {}
 
     @Override
     public ExpertServiceResponse CreatService(
@@ -169,11 +184,12 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
                         PaymentStatus.SUCCESS
                 )
                 .stream()
-                .map(PaymentTransaction::getReferenceId)
-                .distinct()
-                .map(expertServiceRepo::findById)
-                .flatMap(java.util.Optional::stream)
-                .map(expertServiceMapper::toResponse)
+                .map(paymentTransaction ->
+                        expertServiceRepo.findById(paymentTransaction.getReferenceId())
+                                .map(expertService -> toPurchasedServiceResponse(expertService, paymentTransaction))
+                                .orElse(null)
+                )
+                .filter(Objects::nonNull)
                 .toList();
     }
 
@@ -225,10 +241,61 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
         ExpertProfile expertProfile = getCurrentExpertProfile();
         ExpertService expertService = getExpertServiceById(serviceId);
         checkAiservice(expertService, expertProfile);
+        if (serviceStatus == ServiceStatus.DELETED) {
+            throw new GlobalException(400, "Use delete endpoint to delete service");
+        }
+        if (expertService.getServiceStatus() == ServiceStatus.DELETED) {
+            throw new GlobalException(400, "Service already deleted");
+        }
         expertService.setServiceStatus(serviceStatus);
 
         ExpertService savedService = expertServiceRepo.save(expertService);
         return expertServiceMapper.toResponse(savedService);
+    }
+
+    @Transactional(readOnly = true)
+    public ServiceFileDownload downloadServiceFile(Long serviceId, Long serviceFileId, String kind) {
+        ExpertService expertService = getExpertServiceById(serviceId);
+        ServiceFile serviceFile = expertService.getServiceFile();
+
+        if (serviceFile == null || !serviceFileId.equals(serviceFile.getServiceFileId())) {
+            throw new GlobalException(404, "Service file not found");
+        }
+
+        checkCanDownloadServiceFile(expertService);
+
+        String requestedKind = kind == null || kind.isBlank()
+                ? "product"
+                : kind.trim().toLowerCase();
+        String filePathValue = switch (requestedKind) {
+            case "instruction" -> serviceFile.getFileContent();
+            case "product" -> serviceFile.getProductFile();
+            default -> throw new GlobalException(400, "Unsupported service file kind");
+        };
+
+        Path filePath = resolveLocalUploadPath(filePathValue);
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            throw new GlobalException(404, "Service file not found on server");
+        }
+
+        try {
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new GlobalException(404, "Service file is not readable");
+            }
+
+            String contentType = Files.probeContentType(filePath);
+            return new ServiceFileDownload(
+                    resource,
+                    resolveDownloadFileName(filePathValue),
+                    contentType != null ? contentType : "application/octet-stream",
+                    Files.size(filePath)
+            );
+        } catch (GlobalException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new GlobalException(500, "Cannot download service file");
+        }
     }
 
 
@@ -239,6 +306,105 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
         contentManagerService.validateKeywordInput(request.getServiceName());
         contentManagerService.validateKeywordInput(request.getServiceDescription());
 
+    }
+
+    private void checkCanDownloadServiceFile(ExpertService expertService) {
+        User currentUser = currentUserService.getCurrentUser();
+        boolean isExpertOwner = expertProfileRepo.findByUser(currentUser)
+                .map(expertProfile -> expertService.getExpertProfile() != null
+                        && expertProfile.getExpertProfileId().equals(
+                        expertService.getExpertProfile().getExpertProfileId()
+                ))
+                .orElse(false);
+        boolean isPurchasedClient = paymentTransactionRepo
+                .existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+                        currentUser.getUserId(),
+                        TransactionType.EXPERT_SERVICE_PURCHASE,
+                        PaymentReferenceType.EXPERT_SERVICE,
+                        PaymentStatus.SUCCESS,
+                        expertService.getServiceId()
+                );
+
+        if (!isExpertOwner && !isPurchasedClient) {
+            throw new GlobalException(403, "You cannot download this service file");
+        }
+    }
+
+    private ExpertServiceResponse toPurchasedServiceResponse(
+            ExpertService expertService,
+            PaymentTransaction paymentTransaction
+    ) {
+        ExpertServiceResponse response = expertServiceMapper.toResponse(expertService);
+        response.setPaymentTransactionId(paymentTransaction.getPaymentTransactionId());
+        response.setReceivedAt(
+                paymentTransaction.getPaidAt() != null
+                        ? paymentTransaction.getPaidAt()
+                        : paymentTransaction.getCreateAt()
+        );
+        response.setInvoice(toInvoiceResponse(paymentTransaction));
+        return response;
+    }
+
+    private InvoiceResponse toInvoiceResponse(PaymentTransaction paymentTransaction) {
+        BigDecimal subtotal = paymentTransaction.getGrossAmount() != null
+                ? paymentTransaction.getGrossAmount()
+                : BigDecimal.ZERO;
+        BigDecimal fee = paymentTransaction.getFeeAmount() != null
+                ? paymentTransaction.getFeeAmount()
+                : BigDecimal.ZERO;
+
+        return InvoiceResponse.builder()
+                .invoiceId(paymentTransaction.getPaymentTransactionId())
+                .invoiceCode(paymentTransaction.getPaymentCode())
+                .invoiceType(paymentTransaction.getPaymentReferenceType().name())
+                .invoiceStatus(paymentTransaction.getPaymentStatus().name())
+                .subtotalAmount(subtotal)
+                .platformFee(fee)
+                .taxAmount(BigDecimal.ZERO)
+                .discountAmount(BigDecimal.ZERO)
+                .totalAmount(subtotal)
+                .currency(paymentTransaction.getCurrency())
+                .paymentMethod(paymentTransaction.getPaymentMethod().name())
+                .description(paymentTransaction.getDescription())
+                .paidAt(paymentTransaction.getPaidAt())
+                .createAt(paymentTransaction.getCreateAt())
+                .build();
+    }
+
+    private Path resolveLocalUploadPath(String filePathValue) {
+        if (filePathValue == null || filePathValue.isBlank()) {
+            throw new GlobalException(404, "Service file path is empty");
+        }
+
+        if (filePathValue.matches("(?i)^https?://.*")) {
+            throw new GlobalException(400, "External service file is not supported");
+        }
+
+        String relativePath = filePathValue.replace('\\', '/');
+        while (relativePath.startsWith("/")) {
+            relativePath = relativePath.substring(1);
+        }
+
+        Path uploadsRoot = Path.of("uploads").toAbsolutePath().normalize();
+        Path filePath = Path.of(relativePath).toAbsolutePath().normalize();
+
+        if (!filePath.startsWith(uploadsRoot)) {
+            throw new GlobalException(403, "Invalid service file path");
+        }
+
+        return filePath;
+    }
+
+    private String resolveDownloadFileName(String filePathValue) {
+        String fileName = filePathValue.replace('\\', '/');
+        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+
+        int separatorIndex = fileName.indexOf("_");
+        if (separatorIndex >= 0 && separatorIndex + 1 < fileName.length()) {
+            return fileName.substring(separatorIndex + 1);
+        }
+
+        return fileName.isBlank() ? "service-file" : fileName;
     }
 
     private List<Skill> getSkillBySkillId(List<Long> selectedSkillIds) {

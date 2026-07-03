@@ -11,11 +11,15 @@ import com.example.AiTaster.mapper.ProjectMilestoneMapper;
 import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.payment.ProjectEscrowPayoutService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,6 +42,13 @@ public class ProjectMilestoneService {
     private final ProjectEscrowPayoutService projectEscrowPayoutService;
     private final RealtimeService realtimeService;
     private final NotificationService notificationService;
+
+    public record DeliverableFileDownload(
+            Resource resource,
+            String fileName,
+            String contentType,
+            long contentLength
+    ) {}
     // tạo milestone cho project ngay
     @Transactional
     public ProjectMilestone createMilestoneForProject(Project project) {
@@ -85,10 +96,7 @@ public class ProjectMilestoneService {
         }
 
         MilestoneStep step = milestone.getCurrentStep();
-        // Mốc 3 không cần expert nộp file
-        if (step == MilestoneStep.FINAL_CONFIRMATION) {
-            throw new GlobalException(400, "Final confirmation does not require submit");
-        }
+        // Expert must submit a deliverable for every active milestone, including final confirmation.
         // Chỉ được nộp khi đang chờ expert nộp, hoặc client yêu cầu làm lại
         if (milestone.getStatus() != MilestoneStatus.WAITING_EXPERT_SUBMIT
                 && milestone.getStatus() != MilestoneStatus.REVISION_REQUESTED) {
@@ -139,10 +147,7 @@ public class ProjectMilestoneService {
         if (projectMilestone.getStatus() != MilestoneStatus.WAITING_CLIENT_REVIEW) {
             throw new GlobalException(400, "Milestone is not waiting client review");
         }
-        // Mốc 3 không có gì để làm lại
-        if (projectMilestone.getCurrentStep() == MilestoneStep.FINAL_CONFIRMATION) {
-            throw new GlobalException(400, "Final confirmation cannot be revised");
-        }projectMilestone.setStatus(MilestoneStatus.REVISION_REQUESTED);
+        projectMilestone.setStatus(MilestoneStatus.REVISION_REQUESTED);
          ProjectMilestone saveProjectMilestone = projectMilestoneRepo.save(projectMilestone);
         markLatestDeliverableReviewed(projectId, saveProjectMilestone.getCurrentStep()); // đánh dấu đã xem và yêu cầu làm lại
         // báo EXPERT phải làm lại
@@ -179,12 +184,13 @@ public class ProjectMilestoneService {
 
             }
             case SOURCE_CODE -> {
-                projectMilestone.setStatus(MilestoneStatus.WAITING_CLIENT_REVIEW);
+                projectMilestone.setStatus(MilestoneStatus.WAITING_EXPERT_SUBMIT);
                 projectMilestone.setStep2ApprovedAt(now);
                 projectMilestone.setCurrentStep(MilestoneStep.FINAL_CONFIRMATION);
                 markLatestDeliverableReviewed(projectId,approvedStep);
             }
             case FINAL_CONFIRMATION -> {
+                markLatestDeliverableReviewed(projectId, approvedStep);
                 finalConfirm(project,projectMilestone);
             }
         }
@@ -244,9 +250,6 @@ public class ProjectMilestoneService {
         ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
         MilestoneStep deliverableStep = projectMilestone.getCurrentStep();
 
-        if (deliverableStep == MilestoneStep.FINAL_CONFIRMATION) {
-            deliverableStep = MilestoneStep.SOURCE_CODE;
-        }
         Deliverable deliverable = deliverableRepo.findTopByProjectIdAndStepOrderByVersionDesc(projectId, deliverableStep).orElseThrow(()->  new  GlobalException(404, "No deliverable yet"));
         return deliverableMapper.toResponse(deliverable);
     }
@@ -257,6 +260,44 @@ public class ProjectMilestoneService {
         Project project = getProjectWithDetail(projectId);
         checkCurrentUser(project);
         return deliverableRepo.findByProjectIdOrderBySubmittedAtDesc(projectId).stream().map(deliverableMapper ::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DeliverableFileDownload downloadDeliverableFile(Long projectId, Long serviceFileId) {
+        ServiceFile serviceFile = serviceFileRepo.findById(serviceFileId)
+                .orElseThrow(() -> new GlobalException(404, "Deliverable file not found"));
+
+        Deliverable deliverable = serviceFile.getDeliverable();
+        if (deliverable == null || !projectId.equals(deliverable.getProjectId())) {
+            throw new GlobalException(404, "Deliverable file not found");
+        }
+
+        Project project = getProjectWithDetail(projectId);
+        checkCurrentUser(project);
+
+        Path filePath = resolveLocalUploadPath(serviceFile.getProductFile());
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            throw new GlobalException(404, "Deliverable file not found on server");
+        }
+
+        try {
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new GlobalException(404, "Deliverable file is not readable");
+            }
+
+            String contentType = Files.probeContentType(filePath);
+            return new DeliverableFileDownload(
+                    resource,
+                    resolveDownloadFileName(serviceFile.getProductFile()),
+                    contentType != null ? contentType : "application/octet-stream",
+                    Files.size(filePath)
+            );
+        } catch (GlobalException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new GlobalException(500, "Cannot download deliverable file");
+        }
     }
 
 
@@ -334,6 +375,42 @@ public class ProjectMilestoneService {
         if (!isExpert && !isClient) {
             throw new GlobalException(403, "You are not a participant of this project");
         }
+    }
+
+    private Path resolveLocalUploadPath(String productFile) {
+        if (productFile == null || productFile.isBlank()) {
+            throw new GlobalException(404, "Deliverable file path is empty");
+        }
+
+        if (productFile.matches("(?i)^https?://.*")) {
+            throw new GlobalException(400, "External deliverable file is not supported");
+        }
+
+        String relativePath = productFile.replace('\\', '/');
+        while (relativePath.startsWith("/")) {
+            relativePath = relativePath.substring(1);
+        }
+
+        Path uploadsRoot = Path.of("uploads").toAbsolutePath().normalize();
+        Path filePath = Path.of(relativePath).toAbsolutePath().normalize();
+
+        if (!filePath.startsWith(uploadsRoot)) {
+            throw new GlobalException(403, "Invalid deliverable file path");
+        }
+
+        return filePath;
+    }
+
+    private String resolveDownloadFileName(String productFile) {
+        String fileName = productFile.replace('\\', '/');
+        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+
+        int separatorIndex = fileName.indexOf("_");
+        if (separatorIndex >= 0 && separatorIndex + 1 < fileName.length()) {
+            return fileName.substring(separatorIndex + 1);
+        }
+
+        return fileName.isBlank() ? "deliverable-file" : fileName;
     }
     // tạo form thông báo milestone tới cả 2 người trong project + 1 topic riêng cho người nhận
     private void publishMilestoneEvent(

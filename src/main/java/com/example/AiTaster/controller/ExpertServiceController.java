@@ -13,10 +13,14 @@ import com.example.AiTaster.service.payment.ExpertServicePurchaseService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -142,6 +146,28 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(200, "Get purchased AI services successfully", responses)
         );
+    }
+
+    @GetMapping("/{serviceId}/files/{serviceFileId}/download")
+    public ResponseEntity<Resource> downloadServiceFile(
+            @PathVariable Long serviceId,
+            @PathVariable Long serviceFileId,
+            @RequestParam(defaultValue = "product") String kind
+    ) {
+        ExpertProductService.ServiceFileDownload download =
+                expertProductService.downloadServiceFile(serviceId, serviceFileId, kind);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(download.contentType()))
+                .contentLength(download.contentLength())
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(download.fileName(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString()
+                )
+                .body(download.resource());
     }
 
     // Client xem tất cả bài đăng đang OPEN của toàn hệ thống.
