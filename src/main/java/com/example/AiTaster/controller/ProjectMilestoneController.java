@@ -5,10 +5,14 @@ import com.example.AiTaster.dto.response.ProjectMilestoneResponse;
 import com.example.AiTaster.service.ProjectMilestoneService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 @RestController
 @RequestMapping("/api/projects")
@@ -54,5 +58,26 @@ public class ProjectMilestoneController {
     public ResponseEntity<APIResponse<List<DeliverableResponse>>> getDeliverables(@PathVariable Long projectId) {
         return ResponseEntity.ok(APIResponse.response(200, "Get deliverables successfully",
                 projectMilestoneService.findDeliverables(projectId)));
+    }
+
+    @GetMapping("/{projectId}/deliverables/files/{serviceFileId}/download")
+    public ResponseEntity<Resource> downloadDeliverableFile(
+            @PathVariable Long projectId,
+            @PathVariable Long serviceFileId
+    ) {
+        ProjectMilestoneService.DeliverableFileDownload download =
+                projectMilestoneService.downloadDeliverableFile(projectId, serviceFileId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(download.contentType()))
+                .contentLength(download.contentLength())
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(download.fileName(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString()
+                )
+                .body(download.resource());
     }
 }

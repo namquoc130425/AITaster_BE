@@ -62,6 +62,14 @@ WHERE pt.paymentReferenceType = :paymentReferenceType
             PaymentStatus paymentStatus
     );
 
+    boolean existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+            Long senderId,
+            TransactionType transactionType,
+            PaymentReferenceType paymentReferenceType,
+            PaymentStatus paymentStatus,
+            Long referenceId
+    );
+
     @Query("""
             SELECT pt
             FROM PaymentTransaction pt

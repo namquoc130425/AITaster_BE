@@ -94,7 +94,7 @@ public class ConversationService implements IConversationService {
         Message savedMessage = messageRepo.save(firstMessage);
 
         ConversationResponse conversationResponse =
-                conversationMapper.toResponse(savedConversation);
+                toResponse(savedConversation, currentUser);
 
         MessageResponse messageResponse =
                 messageMapper.toResponse(savedMessage);
@@ -126,7 +126,7 @@ public class ConversationService implements IConversationService {
         return conversationRepo
                 .findByClientOrExpertOrderByUpdateAtDesc(currentUser, currentUser)
                 .stream()
-                .map(conversationMapper::toResponse)
+                .map(conversation -> toResponse(conversation, currentUser))
                 .toList();
     }
 
@@ -138,7 +138,7 @@ public class ConversationService implements IConversationService {
 
         checkConversationMember(conversation, currentUser);
 
-        return conversationMapper.toResponse(conversation);
+        return toResponse(conversation, currentUser);
     }
 
     @Transactional
@@ -154,7 +154,7 @@ public class ConversationService implements IConversationService {
 
         checkConversationMember(conversation, currentUser);
 
-        return conversationMapper.toResponse(conversation);
+        return toResponse(conversation, currentUser);
     }
 
     public Conversation getConversationEntity(Long conversationId) {
@@ -249,6 +249,17 @@ public class ConversationService implements IConversationService {
                 .build();
 
         return conversationRepo.save(conversation);
+    }
+
+    private ConversationResponse toResponse(Conversation conversation, User currentUser) {
+        ConversationResponse response = conversationMapper.toResponse(conversation);
+        response.setUnreadCount(
+                messageRepo.countByConversationAndReceiverAndIsReadFalse(
+                        conversation,
+                        currentUser
+                )
+        );
+        return response;
     }
 
     private void checkProjectMember(Project project, User user) {
