@@ -5,6 +5,7 @@ import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.NotificationService;
 import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 
 @Service
@@ -22,6 +25,7 @@ public class ProjectEscrowPayoutService {
     private final MoneyMovementService moneyMovementService;
     private final ProjectRepo projectRepo;
     private final RealtimeService realtimeService;
+    private final NotificationService notificationService;
 
 
 
@@ -76,12 +80,20 @@ public class ProjectEscrowPayoutService {
                 expertUser,
                 "PROJECT_ESCROW_RELEASED",
                 null,
-                "Project escrow released"
+                "Project escrow released: " + formatMoney(expertAmount)
         );
         realtimeService.pushProjectParticipants(
                 project,
                 "PROJECT_COMPLETED",
                 "Project completed"
+        );
+        notificationService.notify(
+                expertUser,
+                NotificationType.ESCROW,
+                ReferenceType.PROJECT,
+                project.getProjectId(),
+                "Project payment received",
+                "You received " + formatMoney(expertAmount) + " for project: " + project.getTitle()
         );
 
         return savedEscrow;
@@ -140,4 +152,9 @@ public class ProjectEscrowPayoutService {
     }
 
 
+    private String formatMoney(BigDecimal amount) {
+        BigDecimal safeAmount = amount != null ? amount : BigDecimal.ZERO;
+        return NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"))
+                .format(safeAmount) + " VND";
+    }
 }
