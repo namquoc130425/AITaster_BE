@@ -5,6 +5,7 @@ import com.example.AiTaster.dto.request.SepayWebhookRequest;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
+import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.service.payment.SepayPaymentHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class SepayWebhookService {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final InvitationRepo invitationRepo;
+    private final ProjectRepo projectRepo;
 
     @Value("${app.sepay.webhook-secret}")
     private String webhookSecret;
@@ -234,8 +236,11 @@ public class SepayWebhookService {
         if (PaymentReferenceType.INVITATION.equals(paymentTransaction.getPaymentReferenceType())) {
             invitationRepo.findByInvitationId(paymentTransaction.getReferenceId())
                     .ifPresent(invitation -> {
-                        invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
-                        invitationRepo.save(invitation);
+                        if (InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())
+                                && !projectRepo.existsByInvitation(invitation)) {
+                            invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
+                            invitationRepo.save(invitation);
+                        }
                     });
         }
     }
