@@ -31,4 +31,5 @@ public interface ExpertApplicationRepo extends JpaRepository<ExpertApplication, 
             "expertProfile.user"
     })
     Optional<ExpertApplication> findWithDetailByApplicationId(Long applicationId);
+
 }

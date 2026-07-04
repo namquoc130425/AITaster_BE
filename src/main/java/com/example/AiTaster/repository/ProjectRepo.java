@@ -1,5 +1,6 @@
 package com.example.AiTaster.repository;
 
+import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.entity.Invitation;
 import com.example.AiTaster.entity.Project;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -75,4 +76,6 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
             @Param("expertProfileId") Long expertProfileId,
             @Param("search") String search
     );
+
+    long countByProjectStatus(ProjectStatus projectStatus);
 }
