@@ -121,4 +121,23 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
             "expertApplication.expertProfile.user"
     })
     Optional<Invitation> findWithDetailByInvitationId(Long invitationId);
+
+    @Query("""
+        SELECT i
+        FROM Invitation i
+        WHERE i.invitationStatus = :status
+          AND i.respondedAt IS NOT NULL
+          AND i.respondedAt <= :deadline
+          AND NOT EXISTS (
+              SELECT p.projectId
+              FROM Project p
+              WHERE p.invitation = i
+          )
+        """)
+    List<Invitation> findAcceptedPaymentExpiredWithoutProject(
+            @Param("status") InvitationStatus status,
+            @Param("deadline") LocalDateTime deadline
+    );
+    // tìm Invitation Acception , đã hóa hạn thạnh toán , nhưng chưa tạo project . Nếu đã có project thì nghĩa là đã thanh toán rồi ,
+
 }
