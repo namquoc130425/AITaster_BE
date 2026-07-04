@@ -6,116 +6,105 @@ import com.example.AiTaster.constant.MilestoneStep;
 import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.dto.response.ProjectCardResponse;
 import com.example.AiTaster.dto.response.ProjectStepResponse;
-import com.example.AiTaster.entity.ExpertApplication;
 import com.example.AiTaster.entity.Invitation;
-import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.ProjectMilestone;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 
-@Component
-public class ProjectMapper {
+@Mapper(
+        componentModel = "spring",
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        imports = {InvitationStatus.class, ProjectStatus.class}
+)
+public interface ProjectMapper {
 
-    public ProjectCardResponse toCardResponse(
+    @Mapping(target = "projectId", source = "project.projectId")
+    @Mapping(target = "invitationId", source = "project.invitation.invitationId")
+    @Mapping(target = "applicationId", source = "project.invitation.expertApplication.applicationId")
+    @Mapping(target = "jobPostId", source = "project.invitation.expertApplication.jobpost.jobPostId")
+    @Mapping(target = "currentUserRole", expression = "java(isClientProject ? \"CLIENT\" : \"EXPERT\")")
+    @Mapping(target = "sourceType", constant = "PROJECT")
+    @Mapping(target = "workflowStatus", expression = "java(project.getProjectStatus().name())")
+    @Mapping(target = "title", source = "project.title")
+    @Mapping(target = "description", source = "project.finalRequirementSnapshot")
+    @Mapping(target = "expectedOutput", source = "project.expectedOutputSnapshot")
+    @Mapping(target = "acceptanceCriteria", source = "project.acceptanceCriteriaSnapshot")
+    @Mapping(target = "projectStatus", source = "project.projectStatus")
+    @Mapping(target = "invitationStatus", source = "project.invitation.invitationStatus")
+    @Mapping(target = "escrowStatus", expression = "java(getEscrowStatus(project.getProjectStatus()))")
+    @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(project.getProjectStatus()))")
+    @Mapping(target = "clientName", source = "project.invitation.expertApplication.jobpost.clientProfile.contactName")
+    @Mapping(target = "companyName", source = "project.invitation.expertApplication.jobpost.clientProfile.companyName")
+    @Mapping(target = "expertName", source = "project.invitation.expertApplication.expertProfile.user.fullName")
+    @Mapping(target = "budget", source = "project.agreedPrice")
+    @Mapping(target = "timeline", source = "project.timeline")
+    @Mapping(target = "deadlineAt", source = "project.deadlineAt")
+    @Mapping(target = "paymentDeadlineAt", source = "project.paymentDeadlineAt")
+    @Mapping(target = "currentStepCode", expression = "java(getCurrentStepCode(project.getProjectStatus(), milestone))")
+    @Mapping(target = "currentStepTitle", expression = "java(getCurrentStepTitle(project.getProjectStatus(), milestone))")
+    @Mapping(target = "currentStepDescription", expression = "java(getCurrentStepDescription(project.getProjectStatus(), milestone))")
+    @Mapping(target = "milestoneStatus", expression = "java(milestone != null ? milestone.getStatus().name() : null)")
+    @Mapping(target = "canPayWithSepay", expression = "java(isClientProject && project.getProjectStatus() == ProjectStatus.WAITING_ESCROW)")
+    @Mapping(target = "canOpenWorkspace", expression = "java(project.getProjectStatus() == ProjectStatus.ACTIVE)")
+    @Mapping(target = "canViewPaymentStatus", expression = "java(isClientProject)")
+    @Mapping(target = "canViewDetails", expression = "java(true)")
+    @Mapping(target = "canViewSummary", expression = "java(project.getProjectStatus() == ProjectStatus.COMPLETED)")
+    @Mapping(target = "canDownloadReceipt", expression = "java(isClientProject && project.getProjectStatus() == ProjectStatus.COMPLETED)")
+    @Mapping(target = "steps", expression = "java(buildSteps(project.getProjectStatus(), milestone))")
+    @Mapping(target = "startAt", source = "project.startAt")
+    @Mapping(target = "completedAt", source = "project.completedAt")
+    @Mapping(target = "createAt", source = "project.createAt")
+    @Mapping(target = "updateAt", source = "project.updateAt")
+    ProjectCardResponse toCardResponse(
             Project project,
             ProjectMilestone milestone,
             boolean isClientProject
-    ) {
-        Invitation invitation = project.getInvitation();
-        ExpertApplication application = invitation.getExpertApplication();
-        JobPost jobPost = application.getJobpost();
-        ProjectStatus projectStatus = project.getProjectStatus();
+    );
 
-        return ProjectCardResponse.builder()
-                .projectId(project.getProjectId())
-                .invitationId(invitation.getInvitationId())
-                .applicationId(application.getApplicationId())
-                .jobPostId(jobPost.getJobPostId())
-                .currentUserRole(isClientProject ? "CLIENT" : "EXPERT")
-                .sourceType("PROJECT")
-                .workflowStatus(projectStatus.name())
-                .title(project.getTitle())
-                .description(project.getFinalRequirementSnapshot())
-                .expectedOutput(project.getExpectedOutputSnapshot())
-                .acceptanceCriteria(project.getAcceptanceCriteriaSnapshot())
-                .projectStatus(projectStatus)
-                .invitationStatus(invitation.getInvitationStatus())
-                .escrowStatus(getEscrowStatus(projectStatus))
-                .paymentStatus(getPaymentStatus(projectStatus))
-                .clientName(jobPost.getClientProfile().getContactName())
-                .companyName(jobPost.getClientProfile().getCompanyName())
-                .expertName(application.getExpertProfile().getUser().getFullName())
-                .budget(project.getAgreedPrice())
-                .timeline(project.getTimeline())
-                .deadlineAt(project.getDeadlineAt())
-                .paymentDeadlineAt(project.getPaymentDeadlineAt())
-                .currentStepCode(getCurrentStepCode(projectStatus, milestone))
-                .currentStepTitle(getCurrentStepTitle(projectStatus, milestone))
-                .currentStepDescription(getCurrentStepDescription(projectStatus, milestone))
-                .milestoneStatus(milestone != null ? milestone.getStatus().name() : null)
-                .canPayWithSepay(isClientProject && projectStatus == ProjectStatus.WAITING_ESCROW)
-                .canOpenWorkspace(projectStatus == ProjectStatus.ACTIVE)
-                .canViewPaymentStatus(isClientProject)
-                .canViewDetails(true)
-                .canViewSummary(projectStatus == ProjectStatus.COMPLETED)
-                .canDownloadReceipt(isClientProject && projectStatus == ProjectStatus.COMPLETED)
-                .steps(buildSteps(projectStatus, milestone))
-                .startAt(project.getStartAt())
-                .completedAt(project.getCompletedAt())
-                .createAt(project.getCreateAt())
-                .updateAt(project.getUpdateAt())
-                .build();
-    }
+    @Mapping(target = "projectId", ignore = true)
+    @Mapping(target = "invitationId", source = "invitation.invitationId")
+    @Mapping(target = "applicationId", source = "invitation.expertApplication.applicationId")
+    @Mapping(target = "jobPostId", source = "invitation.expertApplication.jobpost.jobPostId")
+    @Mapping(target = "currentUserRole", expression = "java(isClientProject ? \"CLIENT\" : \"EXPERT\")")
+    @Mapping(target = "sourceType", constant = "INVITATION")
+    @Mapping(target = "workflowStatus", expression = "java(getWorkflowStatus(invitation.getInvitationStatus()))")
+    @Mapping(target = "title", source = "invitation.projectTitle")
+    @Mapping(target = "description", source = "invitation.finalRequirement")
+    @Mapping(target = "expectedOutput", source = "invitation.expectedOutput")
+    @Mapping(target = "acceptanceCriteria", source = "invitation.acceptanceCriteria")
+    @Mapping(target = "projectStatus", expression = "java(invitation.getInvitationStatus() == InvitationStatus.ACCEPTED ? ProjectStatus.WAITING_ESCROW : null)")
+    @Mapping(target = "invitationStatus", source = "invitation.invitationStatus")
+    @Mapping(target = "escrowStatus", expression = "java(getEscrowStatus(invitation.getInvitationStatus()))")
+    @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(invitation.getInvitationStatus()))")
+    @Mapping(target = "clientName", source = "invitation.expertApplication.jobpost.clientProfile.contactName")
+    @Mapping(target = "companyName", source = "invitation.expertApplication.jobpost.clientProfile.companyName")
+    @Mapping(target = "expertName", source = "invitation.expertApplication.expertProfile.user.fullName")
+    @Mapping(target = "budget", source = "invitation.finalOfferedPrice")
+    @Mapping(target = "timeline", source = "invitation.finalTimeline")
+    @Mapping(target = "deadlineAt", ignore = true)
+    @Mapping(target = "paymentDeadlineAt", expression = "java(invitation.getInvitationStatus() == InvitationStatus.ACCEPTED ? invitation.getExpiresAt() : null)")
+    @Mapping(target = "currentStepCode", expression = "java(getCurrentStepCode(invitation.getInvitationStatus()))")
+    @Mapping(target = "currentStepTitle", expression = "java(getCurrentStepTitle(invitation.getInvitationStatus()))")
+    @Mapping(target = "currentStepDescription", expression = "java(getCurrentStepDescription(invitation.getInvitationStatus()))")
+    @Mapping(target = "milestoneStatus", ignore = true)
+    @Mapping(target = "canPayWithSepay", expression = "java(isClientProject && invitation.getInvitationStatus() == InvitationStatus.ACCEPTED)")
+    @Mapping(target = "canOpenWorkspace", expression = "java(false)")
+    @Mapping(target = "canViewPaymentStatus", expression = "java(isClientProject && invitation.getInvitationStatus() == InvitationStatus.ACCEPTED)")
+    @Mapping(target = "canViewDetails", expression = "java(true)")
+    @Mapping(target = "canViewSummary", expression = "java(false)")
+    @Mapping(target = "canDownloadReceipt", expression = "java(false)")
+    @Mapping(target = "steps", expression = "java(buildInvitationSteps(invitation.getInvitationStatus()))")
+    @Mapping(target = "startAt", ignore = true)
+    @Mapping(target = "completedAt", ignore = true)
+    @Mapping(target = "createAt", source = "invitation.createAt")
+    @Mapping(target = "updateAt", source = "invitation.updateAt")
+    ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject);
 
-    public ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject) {
-        ExpertApplication application = invitation.getExpertApplication();
-        JobPost jobPost = application.getJobpost();
-        InvitationStatus invitationStatus = invitation.getInvitationStatus();
-
-        return ProjectCardResponse.builder()
-                .projectId(null)
-                .invitationId(invitation.getInvitationId())
-                .applicationId(application.getApplicationId())
-                .jobPostId(jobPost.getJobPostId())
-                .currentUserRole(isClientProject ? "CLIENT" : "EXPERT")
-                .sourceType("INVITATION")
-                .workflowStatus(getWorkflowStatus(invitationStatus))
-                .title(invitation.getProjectTitle())
-                .description(invitation.getFinalRequirement())
-                .expectedOutput(invitation.getExpectedOutput())
-                .acceptanceCriteria(invitation.getAcceptanceCriteria())
-                .projectStatus(invitationStatus == InvitationStatus.ACCEPTED ? ProjectStatus.WAITING_ESCROW : null)
-                .invitationStatus(invitationStatus)
-                .escrowStatus(getEscrowStatus(invitationStatus))
-                .paymentStatus(getPaymentStatus(invitationStatus))
-                .clientName(jobPost.getClientProfile().getContactName())
-                .companyName(jobPost.getClientProfile().getCompanyName())
-                .expertName(application.getExpertProfile().getUser().getFullName())
-                .budget(invitation.getFinalOfferedPrice())
-                .timeline(invitation.getFinalTimeline())
-                .deadlineAt(null)
-                .paymentDeadlineAt(invitationStatus == InvitationStatus.ACCEPTED ? invitation.getExpiresAt() : null)
-                .currentStepCode(getCurrentStepCode(invitationStatus))
-                .currentStepTitle(getCurrentStepTitle(invitationStatus))
-                .currentStepDescription(getCurrentStepDescription(invitationStatus))
-                .milestoneStatus(null)
-                .canPayWithSepay(isClientProject && invitationStatus == InvitationStatus.ACCEPTED)
-                .canOpenWorkspace(false)
-                .canViewPaymentStatus(isClientProject && invitationStatus == InvitationStatus.ACCEPTED)
-                .canViewDetails(true)
-                .canViewSummary(false)
-                .canDownloadReceipt(false)
-                .steps(buildInvitationSteps(invitationStatus))
-                .startAt(null)
-                .completedAt(null)
-                .createAt(invitation.getCreateAt())
-                .updateAt(invitation.getUpdateAt())
-                .build();
-    }
-
-    private String getWorkflowStatus(InvitationStatus status) {
+    default String getWorkflowStatus(InvitationStatus status) {
         return switch (status) {
             case PENDING -> "WAITING_EXPERT_ACCEPT";
             case ACCEPTED -> "WAITING_ESCROW";
@@ -125,7 +114,7 @@ public class ProjectMapper {
         };
     }
 
-    private String getEscrowStatus(InvitationStatus status) {
+    default String getEscrowStatus(InvitationStatus status) {
         return switch (status) {
             case ACCEPTED -> "UNPAID";
             case PAYMENT_EXPIRED -> "EXPIRED";
@@ -135,7 +124,7 @@ public class ProjectMapper {
         };
     }
 
-    private String getPaymentStatus(InvitationStatus status) {
+    default String getPaymentStatus(InvitationStatus status) {
         return switch (status) {
             case ACCEPTED -> "UNPAID";
             case PAYMENT_EXPIRED -> "EXPIRED";
@@ -145,7 +134,7 @@ public class ProjectMapper {
         };
     }
 
-    private String getCurrentStepCode(InvitationStatus status) {
+    default String getCurrentStepCode(InvitationStatus status) {
         return switch (status) {
             case PENDING -> "WAITING_EXPERT_ACCEPT";
             case ACCEPTED -> "WAITING_ESCROW";
@@ -155,7 +144,7 @@ public class ProjectMapper {
         };
     }
 
-    private String getCurrentStepTitle(InvitationStatus status) {
+    default String getCurrentStepTitle(InvitationStatus status) {
         return switch (status) {
             case PENDING -> "Waiting for expert acceptance";
             case ACCEPTED -> "Waiting for escrow payment";
@@ -165,7 +154,7 @@ public class ProjectMapper {
         };
     }
 
-    private String getCurrentStepDescription(InvitationStatus status) {
+    default String getCurrentStepDescription(InvitationStatus status) {
         return switch (status) {
             case PENDING -> "The invitation has been sent and is waiting for the expert to accept.";
             case ACCEPTED -> "The expert accepted. Client payment is required before the project starts.";
@@ -175,7 +164,7 @@ public class ProjectMapper {
         };
     }
 
-    private List<ProjectStepResponse> buildInvitationSteps(InvitationStatus status) {
+    default List<ProjectStepResponse> buildInvitationSteps(InvitationStatus status) {
         if (status == InvitationStatus.ACCEPTED) {
             return List.of(
                     step("EXPERT_ACCEPT", "Expert Accept", "DONE"),
@@ -199,7 +188,7 @@ public class ProjectMapper {
         );
     }
 
-    private String getEscrowStatus(ProjectStatus status) {
+    default String getEscrowStatus(ProjectStatus status) {
         return switch (status) {
             case WAITING_ESCROW -> "UNPAID";
             case ACTIVE -> "HELD";
@@ -208,11 +197,11 @@ public class ProjectMapper {
         };
     }
 
-    private String getPaymentStatus(ProjectStatus status) {
+    default String getPaymentStatus(ProjectStatus status) {
         return getEscrowStatus(status);
     }
 
-    private String getCurrentStepCode(ProjectStatus projectStatus, ProjectMilestone milestone) {
+    default String getCurrentStepCode(ProjectStatus projectStatus, ProjectMilestone milestone) {
         if (projectStatus == ProjectStatus.WAITING_ESCROW) {
             return "WAITING_ESCROW";
         }
@@ -228,7 +217,7 @@ public class ProjectMapper {
         return milestone.getCurrentStep().name();
     }
 
-    private String getCurrentStepTitle(ProjectStatus projectStatus, ProjectMilestone milestone) {
+    default String getCurrentStepTitle(ProjectStatus projectStatus, ProjectMilestone milestone) {
         if (projectStatus == ProjectStatus.WAITING_ESCROW) {
             return "Waiting for escrow payment";
         }
@@ -244,7 +233,7 @@ public class ProjectMapper {
         return milestone.getCurrentStep().getTitle();
     }
 
-    private String getCurrentStepDescription(ProjectStatus projectStatus, ProjectMilestone milestone) {
+    default String getCurrentStepDescription(ProjectStatus projectStatus, ProjectMilestone milestone) {
         if (projectStatus == ProjectStatus.WAITING_ESCROW) {
             return "Client payment is required before the project starts.";
         }
@@ -266,7 +255,7 @@ public class ProjectMapper {
         };
     }
 
-    private List<ProjectStepResponse> buildSteps(ProjectStatus projectStatus, ProjectMilestone milestone) {
+    default List<ProjectStepResponse> buildSteps(ProjectStatus projectStatus, ProjectMilestone milestone) {
         if (projectStatus == ProjectStatus.CANCELED) {
             return List.of(
                     step(MilestoneStep.DOCUMENT, "LOCKED"),
@@ -300,7 +289,7 @@ public class ProjectMapper {
         );
     }
 
-    private String getStepStatus(
+    default String getStepStatus(
             MilestoneStep step,
             MilestoneStep currentStep,
             ProjectMilestone milestone
@@ -320,11 +309,11 @@ public class ProjectMapper {
         return "LOCKED";
     }
 
-    private ProjectStepResponse step(MilestoneStep step, String status) {
+    default ProjectStepResponse step(MilestoneStep step, String status) {
         return step(step.name(), step.getTitle(), status);
     }
 
-    private ProjectStepResponse step(String code, String label, String status) {
+    default ProjectStepResponse step(String code, String label, String status) {
         return ProjectStepResponse.builder()
                 .code(code)
                 .label(label)
