@@ -7,13 +7,9 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import io.github.cdimascio.dotenv.Dotenv;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 // cho phép swagger nhận accessToken
@@ -25,6 +21,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 )
 @OpenAPIDefinition(info = @Info(title = "AITasker SWAGGER", version = "1.0"))
 @EnableConfigurationProperties(QdrantProperties.class)
+@EnableScheduling
 public class Application {
 
 	public static void main(String[] args) {

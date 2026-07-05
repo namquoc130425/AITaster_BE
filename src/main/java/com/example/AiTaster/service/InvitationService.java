@@ -120,6 +120,7 @@ public class InvitationService implements Iinvitation {
     @Override
     public InvitationResponse getInvitationDetail(Long invitationId) {
         Invitation invitation = getInvitationWithDetail(invitationId);
+        refreshInvitationTimeoutStatus(invitation);
         expireIfNeeded(invitation);
         if(isCurrentInvitedExpert(invitation)) {
             return invitationMapper.toResponseInvitation(invitation);
@@ -364,9 +365,25 @@ public class InvitationService implements Iinvitation {
         return invitationRepo.findWithDetailByInvitationId(invitationId)
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
     }
-//
-//
-//
-//
+
+    private void refreshInvitationTimeoutStatus(Invitation invitation) {
+        LocalDateTime now = LocalDateTime.now();
+
+        if (InvitationStatus.PENDING.equals(invitation.getInvitationStatus())
+                && invitation.getExpiresAt().isBefore(now)) {
+            invitation.setInvitationStatus(InvitationStatus.EXPIRED);
+            invitation.setRespondedAt(null);
+            invitationRepo.save(invitation);
+            return;
+        }
+
+        if (InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())
+                && invitation.getRespondedAt() != null
+                && invitation.getRespondedAt().plusHours(24).isBefore(now)
+                && !projectRepo.existsByInvitation(invitation)) {
+            invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
+            invitationRepo.save(invitation);
+        }
+    }
 
 }
