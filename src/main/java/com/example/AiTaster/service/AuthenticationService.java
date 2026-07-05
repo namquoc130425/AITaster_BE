@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.controller.AuthController;
@@ -12,6 +13,7 @@ import com.example.AiTaster.dto.response.AuthResponse;
 import com.example.AiTaster.dto.response.AuthenticationResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.ExpertProfile;
+import com.example.AiTaster.entity.ExpertVerification;
 import com.example.AiTaster.entity.RefreshToken;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
@@ -125,12 +127,20 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         ExpertProfile expertProfile = ExpertProfile.builder()
                 .user(user)
                 .bio(request.getBio())
+                .category(request.getCategory())
+                .skills(request.getSkills())
                 .yearOfExperience(request.getYearOfExperience())
                 .rating(BigDecimal.ZERO)
                 .completedProjects(0)
                 .portfolioUrl(request.getPortfolioUrl())
-
                 .build();
+        ExpertVerification verification = ExpertVerification.builder()
+                .expertProfile(expertProfile)
+                .certificateUrl(request.getCertificateUrl())
+                .verificationStatus(ExpertVerificationStatus.SUBMITTED)
+                .build();
+
+        expertProfile.setVerification(verification);
         // Lưu xuống DB.
         user.setExpertProfile(expertProfile);
         userRepo.save(user);

@@ -6,7 +6,7 @@ import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.entity.ExpertProfile;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = UserMapper.class)
+@Mapper(componentModel = "spring", uses = {UserMapper.class, ExpertVerificationMapper.class})
 public interface ExpertProfileMapper {
 
     ExpertProfile registertoEntity(ExpertRegisterRequest request);

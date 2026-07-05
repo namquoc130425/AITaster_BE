@@ -1,17 +1,23 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
+import com.example.AiTaster.dto.request.ResubmitExpertCertificateRequest;
 import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.dto.response.ExpertVerificationResponse;
 import com.example.AiTaster.entity.ExpertProfile;
+import com.example.AiTaster.entity.ExpertVerification;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
+import com.example.AiTaster.mapper.ExpertVerificationMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ExpertProfileRepo;
+import com.example.AiTaster.repository.ExpertVerificationRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IExpertProfile;
 import jakarta.transaction.Transactional;
@@ -35,6 +41,12 @@ public class ExpertProfileService implements IExpertProfile {
 
 @Autowired
     UserMapper userMapper;
+@Autowired
+    CurrentUserService currentUserService;
+@Autowired
+    ExpertVerificationRepo expertVerificationRepo;
+@Autowired
+    ExpertVerificationMapper expertVerificationMapper;
 
 
     @Override
@@ -90,6 +102,26 @@ public class ExpertProfileService implements IExpertProfile {
         return currentUserResponseMapper.toResponse(updateProfile.getUser());
     }
 
+    // Hàm nộp lại chứng chỉ Expert khi hồ sơ bị admin từ chối.
+    @Transactional
+    public ExpertVerificationResponse resubmitCertificate(ResubmitExpertCertificateRequest request) {
+        ExpertProfile expertProfile = getCurrentExpertProfile();
+        ExpertVerification verification = expertVerificationRepo.findByExpertProfile(expertProfile)
+                .orElseThrow(() -> new GlobalException(404, "Verification not found"));
+
+        if (verification.getVerificationStatus() == ExpertVerificationStatus.VERIFIED) {
+            throw new GlobalException(400, "Verified expert does not need to resubmit certificate");
+        }
+
+        verification.setCertificateUrl(request.getCertificateUrl());
+        verification.setVerificationStatus(ExpertVerificationStatus.SUBMITTED);
+        verification.setRejectReason(null);
+        verification.setVerifiedAt(null);
+        verification.setVerifiedByAdminId(null);
+
+        return expertVerificationMapper.toResponse(expertVerificationRepo.save(verification));
+    }
+
 
     @Transactional
     @Override
@@ -105,5 +137,11 @@ public class ExpertProfileService implements IExpertProfile {
         }
             profile.setUser(null);
         expertProfileRepo.delete(profile);
+    }
+
+    private ExpertProfile getCurrentExpertProfile() {
+        User user = currentUserService.getCurrentUser();
+        return expertProfileRepo.findByUser(user)
+                .orElseThrow(() -> new GlobalException(403, "Only expert can use this API"));
     }
 }

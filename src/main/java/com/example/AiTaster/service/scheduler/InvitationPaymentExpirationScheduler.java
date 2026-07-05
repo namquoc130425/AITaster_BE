@@ -1,4 +1,4 @@
-package com.example.AiTaster.service;
+package com.example.AiTaster.service.scheduler;
 
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.entity.Invitation;
@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j

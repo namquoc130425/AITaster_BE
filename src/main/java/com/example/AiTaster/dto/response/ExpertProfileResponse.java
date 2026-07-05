@@ -27,4 +27,5 @@ public class ExpertProfileResponse {
     Integer completedProjects;
     LocalDateTime createAt;
     LocalDateTime updateAt;
+    ExpertVerificationResponse verification;
 }

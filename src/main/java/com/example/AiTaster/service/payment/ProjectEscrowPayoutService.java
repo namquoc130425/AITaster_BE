@@ -4,6 +4,7 @@ import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
+import com.example.AiTaster.service.InvoiceService;
 import com.example.AiTaster.service.MoneyMovementService;
 import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class ProjectEscrowPayoutService {
     private final MoneyMovementService moneyMovementService;
     private final ProjectRepo projectRepo;
     private final RealtimeService realtimeService;
-
+    private final InvoiceService invoiceService;
 
 
     @Transactional
@@ -70,8 +71,9 @@ public class ProjectEscrowPayoutService {
         project.setIsActive(false);
 
         projectRepo.save(project);
-
+        //tạo hóa đơn
         ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
+        invoiceService.createForCompletedProject(project.getProjectId());
         realtimeService.pushUserWalletEvent(
                 expertUser,
                 "PROJECT_ESCROW_RELEASED",

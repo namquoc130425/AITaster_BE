@@ -62,5 +62,7 @@ public class ExpertRegisterRequest {
 
      String portfolioUrl;
 
+     @NotBlank(message = "certificateUrl is required")
+     String certificateUrl;
 
 }

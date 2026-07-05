@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.EscrowStatus;
+import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.InvitationStatus;
 import com.example.AiTaster.constant.JobpostStatus;
 import com.example.AiTaster.constant.ProjectStatus;
@@ -138,6 +139,7 @@ public class InvitationService implements Iinvitation {
 
         ExpertProfile expertProfile = getCurrentExpertProfile();
 
+        ensureExpertVerified(expertProfile);
         checkInvitedExpert(invitation,expertProfile);
         ensurePendingAndNotExpired(invitation);
 
@@ -371,6 +373,14 @@ public class InvitationService implements Iinvitation {
                 && !projectRepo.existsByInvitation(invitation)) {
             invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED); // Client không thanh toán đúng hạn.
             invitationRepo.save(invitation); // Lưu status mới vào DB.
+        }
+    }
+
+    // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho nhận dự án từ Client.
+    private void ensureExpertVerified(ExpertProfile expertProfile) {
+        if (expertProfile.getVerification() == null
+                || expertProfile.getVerification().getVerificationStatus() != ExpertVerificationStatus.VERIFIED) {
+            throw new GlobalException(403, "Expert must be verified by admin before using this feature");
         }
     }
 

@@ -9,6 +9,7 @@ import com.example.AiTaster.entity.Invitation;
 import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
+import com.example.AiTaster.service.scheduler.InvitationPaymentExpirationScheduler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
