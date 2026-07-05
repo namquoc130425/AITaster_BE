@@ -154,6 +154,24 @@ public class JobPostService implements IJobPost {
     }
 
 
+    public JobPostResponse changeJobPostStatus(Long id, JobpostStatus jobPostStatus) {
+        if (jobPostStatus == null) {
+            throw new GlobalException(400, "Job post status is required");
+        }
+
+        ClientProfile clientProfile = getCurrentClientProfile();
+
+        JobPost jobPost = findJobPostById(id);
+
+        checkJobPostByClientId(jobPost, clientProfile);
+
+        jobPost.setJobPostStatus(jobPostStatus);
+
+        JobPost savedJobPost = jobPostRepo.save(jobPost);
+
+        return toMyJobPostResponse(savedJobPost);
+    }
+
     public JobPost findJobPostById(Long jobPostId) {
         return jobPostRepo.findJobPostByjobPostId(jobPostId).orElseThrow(() -> new GlobalException("Không tìm thấy job post với id: " + jobPostId));
     }

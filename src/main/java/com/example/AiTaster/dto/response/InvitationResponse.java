@@ -60,6 +60,8 @@ public class InvitationResponse {
 
     LocalDateTime respondedAt;
 
+    LocalDateTime paymentDeadline;
+
     LocalDateTime createAt;
 
     LocalDateTime updateAt;

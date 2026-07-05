@@ -46,6 +46,9 @@ public class ProjectPaymentService implements IProjectPayment {
         ClientProfile clientProfile = findClientProfileByCurrentUser(currentUser);
         Invitation invitation = findInvitation(invitationId);
         checkInvitationOwnerClient(invitation, clientProfile);
+        if (projectRepo.existsByInvitation(invitation)) {
+            throw new GlobalException(400, "Project already exists for this invitation");
+        }
         ensureInvitationCanBePaid(invitation);
 
 
@@ -115,15 +118,22 @@ public class ProjectPaymentService implements IProjectPayment {
         invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
         invitationRepo.save(invitation);
 
-        paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
-                PaymentReferenceType.INVITATION,
-                invitation.getInvitationId(),
-                TransactionType.PROJECT_ESCROW_DEPOSIT,
+        expirePendingInvitationSepayPayment(
+                invitation,
                 invitation.getExpertApplication()
                         .getJobpost()
                         .getClientProfile()
                         .getUser()
-                        .getUserId(),
+                        .getUserId()
+        );
+    }
+
+    private void expirePendingInvitationSepayPayment(Invitation invitation, Long senderId) {
+        paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
+                PaymentReferenceType.INVITATION,
+                invitation.getInvitationId(),
+                TransactionType.PROJECT_ESCROW_DEPOSIT,
+                senderId,
                 PaymentStatus.PENDING,
                 PaymentMethod.SEPAY
         ).ifPresent(payment -> {
@@ -193,6 +203,7 @@ public class ProjectPaymentService implements IProjectPayment {
 
         projectRepo.save(project);
         projectEscrowRepo.save(escrow);
+        expirePendingInvitationSepayPayment(invitation, currentUser.getUserId());
         realtimeService.pushUserWalletEvent(
                 currentUser,
                 "PROJECT_ESCROW_PAID_BY_WALLET",

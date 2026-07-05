@@ -12,6 +12,7 @@ import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.service.JobPostAiService;
 import com.example.AiTaster.service.JobPostService;
+import com.example.AiTaster.constant.JobpostStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -88,6 +89,15 @@ public class JobPostController {
     public ResponseEntity<APIResponse<JobPostResponse>> hiddenJobPost(@PathVariable @Valid Long id) {
         JobPostResponse jobPostResponse = jobPostService.hideJobPost(id);
         return ResponseEntity.ok(APIResponse.response(200, "Hide Job Post successfully", jobPostResponse));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<APIResponse<JobPostResponse>> changeJobPostStatus(
+            @PathVariable Long id,
+            @RequestParam JobpostStatus jobPostStatus
+    ) {
+        JobPostResponse jobPostResponse = jobPostService.changeJobPostStatus(id, jobPostStatus);
+        return ResponseEntity.ok(APIResponse.response(200, "Change job post status successfully", jobPostResponse));
     }
 
 }
