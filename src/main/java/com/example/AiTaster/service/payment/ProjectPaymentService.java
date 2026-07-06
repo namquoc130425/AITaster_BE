@@ -51,7 +51,6 @@ public class ProjectPaymentService implements IProjectPayment {
         }
         ensureInvitationCanBePaid(invitation);
 
-
         // Nếu đã có pending SePay còn hạn thì dùng lại, nếu không thì tạo mới.
         PaymentTransaction paymentTransaction = pendingPaymentService.createPendingPaymentTransaction(
                 currentUser.getUserId(),
@@ -128,6 +127,8 @@ public class ProjectPaymentService implements IProjectPayment {
         );
     }
 
+  // khi projecr được tạo ,tiền đã được giữ
+  // pendding Sepay cũ của invitation phải được chuyển qua EXPIRED ( trường hợp người dùng tạo sepay nhưng hong thanh toán và thanh toán bằng ví )
     private void expirePendingInvitationSepayPayment(Invitation invitation, Long senderId) {
         paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
                 PaymentReferenceType.INVITATION,
@@ -155,11 +156,10 @@ public class ProjectPaymentService implements IProjectPayment {
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
 
         checkInvitationOwnerClient(invitation, clientProfile);
-        ensureInvitationCanBePaid(invitation);
-
         if (projectRepo.existsByInvitation(invitation)) {
             throw new GlobalException(400, "Project already exists for this invitation");
         }
+        ensureInvitationCanBePaid(invitation);
 
         Project project = createProjectByInvitation(invitation);
         ProjectEscrow escrow = createProjectEscrow(project);

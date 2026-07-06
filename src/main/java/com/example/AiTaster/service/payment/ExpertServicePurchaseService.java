@@ -29,6 +29,7 @@ public class ExpertServicePurchaseService {
     private final PendingPaymentService pendingPaymentService;
     private final SepayGateway sepayGateway;
     private final PaymentTransactionMapper paymentTransactionMapper;
+    private final InvoiceService invoiceService;
 
     // Client mua expert service bằng ví nội bộ.
     // Luồng: ví client -> ví expert; phí sàn được cộng vào ví admin.
@@ -49,10 +50,9 @@ public class ExpertServicePurchaseService {
 
         BigDecimal amount = expertService.getServiceFee();
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
-
         // Chuyển tiền nội bộ: ví client -> ví expert.
-        // MoneyMovementService tự throw lỗi nếu ví client không đủ tiền.
-        return moneyMovementService.moneyTransactionManagement(
+        // MoneyMovementService tự throw lỗi nếu ví client không đủ tiền
+        PaymentTransaction paymentTransaction = moneyMovementService.moneyTransactionManagement(
                 clientUserId,
                 expertUserId,
                 TransactionType.EXPERT_SERVICE_PURCHASE,
@@ -64,6 +64,9 @@ public class ExpertServicePurchaseService {
                 null
 
         );
+         // tạo hóa đơn khi transaction thành công
+          invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
+        return paymentTransaction;
     }
 
     @Transactional

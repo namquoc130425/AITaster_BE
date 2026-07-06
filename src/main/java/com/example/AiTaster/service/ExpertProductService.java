@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.Util.PageUtil;
+import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.PaymentReferenceType;
 import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.ProductType;
@@ -63,6 +64,7 @@ public class ExpertProductService implements IExpertService {
 
         ExpertProfile expertProfile =
                 getCurrentExpertProfile();
+        ensureExpertVerified(expertProfile);
 
         Category category =
                 getCategoryByCategoryId(
@@ -461,6 +463,13 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
 
     }
 
+    // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho đăng bán dịch vụ.
+    private void ensureExpertVerified(ExpertProfile expertProfile) {
+        if (expertProfile.getVerification() == null
+                || expertProfile.getVerification().getVerificationStatus() != ExpertVerificationStatus.VERIFIED) {
+            throw new GlobalException(403, "Expert must be verified by admin before using this feature");
+        }
+    }
 
 
 }
