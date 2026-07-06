@@ -15,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +40,9 @@ public class Category {
     // cascade all là xóa tk cha thì tk con sẽ xóa theo
     @OneToMany(mappedBy = "category" ,cascade = CascadeType.ALL)
     List<ExpertService> expertServices;
+
+    @OneToMany(mappedBy = "category")
+    List<ExpertProfile> expertProfiles;
 }
 
 

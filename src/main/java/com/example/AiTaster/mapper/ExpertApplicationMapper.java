@@ -25,6 +25,7 @@ public interface ExpertApplicationMapper {
     @Mapping(target = "jobPostId", source = "expertApplication.jobpost.jobPostId")
     @Mapping(target = "expertProfileId", source = "expertApplication.expertProfile.expertProfileId")
     @Mapping(target = "expertName", source = "expertApplication.expertProfile.user.fullName")
+    @Mapping(target = "expertAvatarUrl", source = "expertApplication.expertProfile.user.avatarUrl")
     @Mapping(target = "proposal", source = "expertProposal")
     @Mapping(target = "createAt", source = "expertApplication.createAt")
     @Mapping(target = "updateAt", source = "expertApplication.updateAt")

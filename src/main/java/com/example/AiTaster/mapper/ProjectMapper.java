@@ -11,14 +11,14 @@ import com.example.AiTaster.entity.Invitation;
 import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.ProjectMilestone;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
 
 import java.util.List;
 
-@Component
-public class ProjectMapper {
+@Mapper(componentModel = "spring")
+public interface ProjectMapper {
 
-    public ProjectCardResponse toCardResponse(
+    default ProjectCardResponse toCardResponse(
             Project project,
             ProjectMilestone milestone,
             boolean isClientProject
@@ -45,8 +45,10 @@ public class ProjectMapper {
                 .escrowStatus(getEscrowStatus(projectStatus))
                 .paymentStatus(getPaymentStatus(projectStatus))
                 .clientName(jobPost.getClientProfile().getContactName())
+                .clientAvatarUrl(jobPost.getClientProfile().getUser().getAvatarUrl())
                 .companyName(jobPost.getClientProfile().getCompanyName())
                 .expertName(application.getExpertProfile().getUser().getFullName())
+                .expertAvatarUrl(application.getExpertProfile().getUser().getAvatarUrl())
                 .budget(project.getAgreedPrice())
                 .timeline(project.getTimeline())
                 .deadlineAt(project.getDeadlineAt())
@@ -69,7 +71,7 @@ public class ProjectMapper {
                 .build();
     }
 
-    public ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject) {
+    default ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject) {
         ExpertApplication application = invitation.getExpertApplication();
         JobPost jobPost = application.getJobpost();
         InvitationStatus invitationStatus = invitation.getInvitationStatus();
@@ -91,8 +93,10 @@ public class ProjectMapper {
                 .escrowStatus(getEscrowStatus(invitationStatus))
                 .paymentStatus(getPaymentStatus(invitationStatus))
                 .clientName(jobPost.getClientProfile().getContactName())
+                .clientAvatarUrl(jobPost.getClientProfile().getUser().getAvatarUrl())
                 .companyName(jobPost.getClientProfile().getCompanyName())
                 .expertName(application.getExpertProfile().getUser().getFullName())
+                .expertAvatarUrl(application.getExpertProfile().getUser().getAvatarUrl())
                 .budget(invitation.getFinalOfferedPrice())
                 .timeline(invitation.getFinalTimeline())
                 .deadlineAt(null)

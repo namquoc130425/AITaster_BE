@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,12 +20,13 @@ import java.time.LocalDateTime;
 public class ExpertProfileResponse {
     Long expertProfileId;
     String bio;
-    String category;
-    String skills;
+    CategoryResponse category;
+    List<SkillResponse> skills;
     Integer yearOfExperience;
     String portfolioUrl;
     BigDecimal rating;
     Integer completedProjects;
     LocalDateTime createAt;
     LocalDateTime updateAt;
+    ExpertVerificationResponse verification;
 }

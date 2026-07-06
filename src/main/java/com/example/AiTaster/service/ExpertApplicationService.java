@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.JobpostStatus;
+import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.dto.request.ExpertApplicationRequest;
 import com.example.AiTaster.dto.request.ExpertProposalRequest;
 import com.example.AiTaster.dto.response.ExpertApplicationResponse;
@@ -40,6 +41,7 @@ private final NotificationService notificationService;
     public ExpertApplicationResponse applyJobPost(Long jobPostId, ExpertApplicationRequest request) {
         validateApplicationInput(request);
         ExpertProfile expertProfile = getCurrentExpertProfile();
+        ensureExpertVerified(expertProfile);
         JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId)
                 .orElseThrow(() -> new GlobalException("JobPost not found"));
 
@@ -229,5 +231,12 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
         contentManagerService.validateKeywordInput(request.getDetailContent());
     }
 
+    // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho dùng nghiệp vụ kinh doanh.
+    private void ensureExpertVerified(ExpertProfile expertProfile) {
+        if (expertProfile.getVerification() == null
+                || expertProfile.getVerification().getVerificationStatus() != ExpertVerificationStatus.VERIFIED) {
+            throw new GlobalException(403, "Expert must be verified by admin before using this feature");
+        }
+    }
 
 }

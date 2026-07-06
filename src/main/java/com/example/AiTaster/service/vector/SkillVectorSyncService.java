@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-// Đẩy toàn bộ skill đang có trong DB lên Qdrant.
+// lấy skill từ DB → biến thành text → tạo embedding vector → đẩy lên Qdrant.
 public class SkillVectorSyncService {
     private final SkillRepo skillRepo;
     private final EmbeddingService embeddingService;
@@ -22,7 +22,8 @@ public class SkillVectorSyncService {
     private final RestClient qdrantRestClient;
     private final QdrantProperties qdrantProperties;
 
-
+// tạo skill thành text -> từ text mới embeddingService thành vector -> build point : bao gồm id ,vector ,payloads
+    //-> up tất cả point lên Qdran -> Qdran trả về số lượng (size) point đã upsert thành công.
 // Hàm đẩy toàn bộ skill trong DB qua Qdrant.
 // Duyệt danh sách skill, build point rồi trả về số point đã đẩy.
 @Transactional(readOnly = true)
@@ -55,7 +56,7 @@ public class SkillVectorSyncService {
          upsertPointsToQdranr(skills);
 
     }
-
+   // đóng gói thành Qdrant point
    // Chuyển skill thành Qdrant point.
    // Map là kiểu dữ liệu key-value giống JSON.
    // Một skill sau khi biến thành vector sẽ là một point.
@@ -100,7 +101,7 @@ public class SkillVectorSyncService {
 
 
 
-// Hàm này gom thông tin thành đoạn text rồi mới chuyển thành vector.
+// Hàm này gom thông tin thành đoạn text
     private String buildSkillText(Skill skill) {
     String skillname = skill.getSkillName() == null ? "" : skill.getSkillName();
     String description = skill.getDescription() == null ? "" : skill.getDescription();
