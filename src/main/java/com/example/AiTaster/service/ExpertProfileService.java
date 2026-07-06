@@ -2,6 +2,9 @@ package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.ExpertVerificationStatus;
+import com.example.AiTaster.constant.NotificationType;
+import com.example.AiTaster.constant.ReferenceType;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.request.ResubmitExpertCertificateRequest;
@@ -47,6 +50,8 @@ public class ExpertProfileService implements IExpertProfile {
     ExpertVerificationRepo expertVerificationRepo;
 @Autowired
     ExpertVerificationMapper expertVerificationMapper;
+@Autowired
+    NotificationService notificationService;
 
 
     @Override
@@ -119,7 +124,20 @@ public class ExpertProfileService implements IExpertProfile {
         verification.setVerifiedAt(null);
         verification.setVerifiedByAdminId(null);
 
-        return expertVerificationMapper.toResponse(expertVerificationRepo.save(verification));
+        ExpertVerification saved = expertVerificationRepo.save(verification);
+
+        userRepo.findByRole(Role.ADMIN).forEach(admin ->
+                notificationService.notify(
+                        admin,
+                        NotificationType.SYSTEM,
+                        ReferenceType.NONE,
+                        saved.getVerificationId(),
+                        "Expert certificate submitted",
+                        "An expert certificate is waiting for review."
+                )
+        );
+
+        return expertVerificationMapper.toResponse(saved);
     }
 
 

@@ -1,6 +1,8 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ExpertVerificationStatus;
+import com.example.AiTaster.constant.NotificationType;
+import com.example.AiTaster.constant.ReferenceType;
 import com.example.AiTaster.dto.response.ExpertVerificationResponse;
 import com.example.AiTaster.entity.ExpertVerification;
 import com.example.AiTaster.entity.User;
@@ -21,6 +23,7 @@ public class AdminExpertVerificationService {
     private final ExpertVerificationRepo expertVerificationRepo;
     private final ExpertVerificationMapper expertVerificationMapper;
     private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<ExpertVerificationResponse> getSubmittedVerifications() {
@@ -45,7 +48,15 @@ public class AdminExpertVerificationService {
         verification.setVerifiedAt(LocalDateTime.now());
         verification.setVerifiedByAdminId(admin.getUserId());
 
-        return expertVerificationMapper.toResponse(expertVerificationRepo.save(verification));
+        ExpertVerification saved = expertVerificationRepo.save(verification);
+
+        notifyExpert(
+                saved,
+                "Certificate approved",
+                "Your expert certificate has been approved."
+        );
+
+        return expertVerificationMapper.toResponse(saved);
     }
 
     // Hàm từ chối chứng chỉ Expert và lưu lý do để Expert biết cần nộp lại gì.
@@ -66,11 +77,40 @@ public class AdminExpertVerificationService {
         verification.setVerifiedAt(null);
         verification.setVerifiedByAdminId(null);
 
-        return expertVerificationMapper.toResponse(expertVerificationRepo.save(verification));
+        ExpertVerification saved = expertVerificationRepo.save(verification);
+
+        notifyExpert(
+                saved,
+                "Certificate rejected",
+                "Your expert certificate was rejected. Reason: " + reason
+        );
+
+        return expertVerificationMapper.toResponse(saved);
     }
 
     private ExpertVerification getVerification(Long verificationId) {
         return expertVerificationRepo.findById(verificationId)
                 .orElseThrow(() -> new GlobalException(404, "Verification not found"));
+    }
+
+    private void notifyExpert(
+            ExpertVerification verification,
+            String title,
+            String content
+    ) {
+        if (verification == null
+                || verification.getExpertProfile() == null
+                || verification.getExpertProfile().getUser() == null) {
+            return;
+        }
+
+        notificationService.notify(
+                verification.getExpertProfile().getUser(),
+                NotificationType.SYSTEM,
+                ReferenceType.NONE,
+                verification.getVerificationId(),
+                title,
+                content
+        );
     }
 }

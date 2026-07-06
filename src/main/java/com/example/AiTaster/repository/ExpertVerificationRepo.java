@@ -12,6 +12,11 @@ import java.util.Optional;
 public interface ExpertVerificationRepo extends JpaRepository<ExpertVerification, Long> {
     Optional<ExpertVerification> findByExpertProfile(ExpertProfile expertProfile);
 
+    boolean existsByExpertProfile_ExpertProfileIdAndVerificationStatus(
+            Long expertProfileId,
+            ExpertVerificationStatus verificationStatus
+    );
+
     @EntityGraph(attributePaths = {
             "expertProfile",
             "expertProfile.user"

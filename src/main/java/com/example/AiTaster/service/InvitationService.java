@@ -1,7 +1,6 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.EscrowStatus;
-import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.InvitationStatus;
 import com.example.AiTaster.constant.JobpostStatus;
 import com.example.AiTaster.constant.ProjectStatus;
@@ -39,6 +38,7 @@ public class InvitationService implements Iinvitation {
     private final NotificationService notificationService;
     private final RealtimeService realtimeService;
     private final ProjectRepo projectRepo;
+    private final ExpertVerificationGuardService expertVerificationGuardService;
 
 
   // đẩy dữ liệu lên form cho client xem
@@ -378,10 +378,7 @@ public class InvitationService implements Iinvitation {
 
     // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho nhận dự án từ Client.
     private void ensureExpertVerified(ExpertProfile expertProfile) {
-        if (expertProfile.getVerification() == null
-                || expertProfile.getVerification().getVerificationStatus() != ExpertVerificationStatus.VERIFIED) {
-            throw new GlobalException(403, "Expert must be verified by admin before using this feature");
-        }
+        expertVerificationGuardService.ensureVerified(expertProfile);
     }
 
 }

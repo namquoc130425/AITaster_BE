@@ -22,6 +22,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final MoneyMovementService moneyMovementService;
     private final InvoiceService invoiceService;
+    private final ExpertServicePurchaseEventService purchaseEventService;
 
 
     @Override
@@ -67,6 +68,15 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
 
         paymentTransactionRepo.save(successTransaction);
         invoiceService.createForPaidAiService(successTransaction.getPaymentTransactionId());
+        purchaseEventService.publishAfterPaymentSuccess(
+                payment.getSenderId(),
+                expertUserId,
+                expertService.getServiceId(),
+                expertService.getServiceName(),
+                successTransaction.getSourceWalletId(),
+                successTransaction.getTargetWalletId(),
+                balanceAmount
+        );
     }
 
 

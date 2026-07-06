@@ -30,6 +30,7 @@ public class ExpertServicePurchaseService {
     private final SepayGateway sepayGateway;
     private final PaymentTransactionMapper paymentTransactionMapper;
     private final InvoiceService invoiceService;
+    private final ExpertServicePurchaseEventService purchaseEventService;
 
     // Client mua expert service bằng ví nội bộ.
     // Luồng: ví client -> ví expert; phí sàn được cộng vào ví admin.
@@ -66,6 +67,16 @@ public class ExpertServicePurchaseService {
         );
          // tạo hóa đơn khi transaction thành công
           invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
+        purchaseEventService.publishAfterPaymentSuccess(
+                clientUserId,
+                expertUserId,
+                expertService.getServiceId(),
+                expertService.getServiceName(),
+                paymentTransaction.getSourceWalletId(),
+                paymentTransaction.getTargetWalletId(),
+                balanceAmount
+        );
+
         return paymentTransaction;
     }
 
