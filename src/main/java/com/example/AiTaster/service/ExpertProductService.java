@@ -1,32 +1,50 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.Util.PageUtil;
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.PaymentReferenceType;
 import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.ProductType;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.dto.request.ExpertProduct.ExpertServiceFillerRequest;
+import com.example.AiTaster.dto.request.ExpertServiceRejectRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
 import com.example.AiTaster.dto.response.PageResponse;
-import com.example.AiTaster.entity.*;
+import com.example.AiTaster.entity.Category;
+import com.example.AiTaster.entity.ClientProfile;
+import com.example.AiTaster.entity.ExpertProfile;
+import com.example.AiTaster.entity.ExpertService;
+import com.example.AiTaster.entity.PaymentTransaction;
+import com.example.AiTaster.entity.ServiceFile;
+import com.example.AiTaster.entity.Skill;
+import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ExpertServiceMapper;
-import com.example.AiTaster.repository.*;
+import com.example.AiTaster.repository.CategoryRepo;
+import com.example.AiTaster.repository.ClientProfileRepo;
+import com.example.AiTaster.repository.ExpertProfileRepo;
+import com.example.AiTaster.repository.ExpertServiceRepo;
+import com.example.AiTaster.repository.PaymentTransactionRepo;
+import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.service.imp.IExpertService;
 import com.example.AiTaster.specification.ExpertServiceSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ExpertProductService implements IExpertService {
+
     private final ContentManagerService contentManagerService;
     private final ExpertServiceMapper expertServiceMapper;
     private final ExpertServiceRepo expertServiceRepo;
@@ -34,16 +52,16 @@ public class ExpertProductService implements IExpertService {
     private final CurrentUserService currentUserService;
     private final ExpertProfileRepo expertProfileRepo;
     private final CategoryRepo categoryRepo;
-    private final ServiceFileRepo serviceFileRepo;
     private final LocalFileStorageService localFileStorageService;
     private final ClientProfileRepo clientProfileRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
+    private final NotificationService notificationService;
 
     @Override
+    @Transactional
     public ExpertServiceResponse CreatService(
             ExpertServiceRequest request
     ) {
-
         validateInputContent(request);
 
         ExpertProfile expertProfile =
@@ -68,98 +86,291 @@ public class ExpertProductService implements IExpertService {
         expertService.setCategory(category);
         expertService.setSkills(skills);
 
-        String docUrl =
-                localFileStorageService.saveFile(
-                        request.getDocFile()
-                );
+        /*
+         * Service mới tạo chỉ ở DRAFT.
+         * Admin có thể accept/reject trực tiếp từ DRAFT.
+         */
+        expertService.setServiceStatus(ServiceStatus.DRAFT);
+        expertService.setRejectionReason(null);
+        expertService.setSubmittedAt(null);
+        expertService.setReviewedAt(null);
+        expertService.setReviewedBy(null);
+        expertService.setReviewCount(0);
 
-        String sourceUrl =
-                localFileStorageService.saveFile(
-                        request.getSourceFile()
-                );
-
-        ServiceFile serviceFile = //use mapper
-                ServiceFile.builder()
-                        .fileContent(docUrl)
-                        .productFile(sourceUrl)
-                        .productType(
-                                ProductType.SOURCE_CODE
-                        )
-                        .isActive(true)
-                        .expertService(expertService)
-                        .build();
-
-        expertService.setServiceFile(
-                serviceFile
+        attachOrUpdateServiceFile(
+                expertService,
+                request
         );
 
         ExpertService saved =
-                expertServiceRepo.save(
-                        expertService
-                );
+                expertServiceRepo.save(expertService);
 
-        return expertServiceMapper.toResponse(
-                saved
+        notificationService.notifyAdminAiServiceCreated(saved);
+
+        return expertServiceMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ExpertServiceResponse updateService(
+            Long serviceId,
+            ExpertServiceRequest request
+    ) {
+        ExpertProfile expertProfile =
+                getCurrentExpertProfile();
+
+        ExpertService expertService =
+                getExpertServiceById(serviceId);
+
+        checkAiservice(
+                expertService,
+                expertProfile
         );
-    }
 
-    @Override
-    public ExpertServiceResponse updateService(Long serviceId, ExpertServiceRequest expertServiceRequest) {
-
-        ExpertProfile expertProfile = getCurrentExpertProfile();
-        ExpertService expertService = getExpertServiceById(serviceId);
-        checkAiservice(expertService, expertProfile);
-        validateInputContent(expertServiceRequest);
-        Category category = getCategoryByCategoryId(expertServiceRequest.getSelectedCategoryId());
-        List<Skill> skills = getSkillBySkillId(expertServiceRequest.getSelectedSkillIds());
-        expertServiceMapper.toUpdateEntity(expertServiceRequest,expertService);
-        expertService.setSkills(skills);
-        expertService.setCategory(category);
-        ExpertService saveExpertService = expertServiceRepo.save(expertService);
-        return expertServiceMapper.toResponse(saveExpertService);
-    }
-
-
-    @Override
-    public Void deleteService(Long serviceId) {
-        ExpertProfile  expertProfile = getCurrentExpertProfile();
-        ExpertService expertService = getExpertServiceById(serviceId);
-        checkAiservice(expertService,expertProfile);
-        if (expertService.getServiceStatus() == ServiceStatus.DELETED) {
-            throw new GlobalException(400, "Service already deleted");
+        if (ServiceStatus.DELETED.equals(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_ALREADY_DELETED);
         }
 
-        // 5. Xóa mềm: đổi status sang DELETED
+        if (ServiceStatus.PENDING_REVIEW.equals(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_PENDING_REVIEW);
+        }
+
+        validateInputContent(request);
+
+        Category category =
+                getCategoryByCategoryId(
+                        request.getSelectedCategoryId()
+                );
+
+        List<Skill> skills =
+                getSkillBySkillId(
+                        request.getSelectedSkillIds()
+                );
+
+        expertServiceMapper.toUpdateEntity(
+                request,
+                expertService
+        );
+
+        expertService.setSkills(skills);
+        expertService.setCategory(category);
+
+        /*
+         * Nếu service đang OPEN mà Expert sửa nội dung,
+         * service phải quay về DRAFT để admin duyệt lại.
+         */
+        if (ServiceStatus.OPEN.equals(expertService.getServiceStatus())) {
+            expertService.setServiceStatus(ServiceStatus.DRAFT);
+            expertService.setRejectionReason(null);
+            expertService.setReviewedAt(null);
+            expertService.setReviewedBy(null);
+        }
+
+        /*
+         * Nếu service đang REJECTED:
+         * giữ nguyên REJECTED.
+         * Expert sửa xong phải gọi /resubmit để chuyển sang PENDING_REVIEW.
+         */
+
+        attachOrUpdateServiceFile(
+                expertService,
+                request
+        );
+
+        ExpertService saved =
+                expertServiceRepo.save(expertService);
+
+        notificationService.notifyAdminAiServiceUpdated(saved);
+
+        return expertServiceMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ExpertServiceResponse resubmitRejectedService(Long serviceId) {
+        ExpertProfile expertProfile =
+                getCurrentExpertProfile();
+
+        ExpertService expertService =
+                getExpertServiceById(serviceId);
+
+        checkAiservice(
+                expertService,
+                expertProfile
+        );
+
+        if (!ServiceStatus.REJECTED.equals(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_NOT_REJECTED);
+        }
+
+        validateServiceReadyForReview(expertService);
+
+        expertService.setServiceStatus(ServiceStatus.PENDING_REVIEW);
+        expertService.setSubmittedAt(LocalDateTime.now());
+        expertService.setReviewedAt(null);
+        expertService.setReviewedBy(null);
+        expertService.setRejectionReason(null);
+        expertService.setReviewCount(
+                expertService.getReviewCount() == null
+                        ? 1
+                        : expertService.getReviewCount() + 1
+        );
+
+        ExpertService saved =
+                expertServiceRepo.save(expertService);
+
+        notificationService.notifyAdminAiServiceSubmitted(saved);
+
+        return expertServiceMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ExpertServiceResponse acceptService(Long serviceId) {
+        User admin =
+                currentUserService.getCurrentUser();
+
+        checkAdmin(admin);
+
+        ExpertService expertService =
+                getExpertServiceById(serviceId);
+
+        if (!isReviewableStatus(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_NOT_REVIEWABLE);
+        }
+
+        validateServiceReadyForReview(expertService);
+
+        expertService.setServiceStatus(ServiceStatus.OPEN);
+        expertService.setRejectionReason(null);
+        expertService.setReviewedAt(LocalDateTime.now());
+        expertService.setReviewedBy(admin);
+
+        ExpertService saved =
+                expertServiceRepo.save(expertService);
+
+        notificationService.notifyExpertAiServiceAccepted(saved);
+
+        return expertServiceMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ExpertServiceResponse rejectService(
+            Long serviceId,
+            ExpertServiceRejectRequest request
+    ) {
+        User admin =
+                currentUserService.getCurrentUser();
+
+        checkAdmin(admin);
+
+        if (request == null
+                || request.getRejectionReason() == null
+                || request.getRejectionReason().isBlank()) {
+            throw new GlobalException(ErrorCode.REJECTION_REASON_REQUIRED);
+        }
+
+        contentManagerService.validateKeywordInput(
+                request.getRejectionReason()
+        );
+
+        ExpertService expertService =
+                getExpertServiceById(serviceId);
+
+        if (!isReviewableStatus(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_NOT_REVIEWABLE);
+        }
+
+        expertService.setServiceStatus(ServiceStatus.REJECTED);
+        expertService.setRejectionReason(
+                request.getRejectionReason().trim()
+        );
+        expertService.setReviewedAt(LocalDateTime.now());
+        expertService.setReviewedBy(admin);
+
+        ExpertService saved =
+                expertServiceRepo.save(expertService);
+
+        notificationService.notifyExpertAiServiceRejected(saved);
+
+        return expertServiceMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public Void deleteService(Long serviceId) {
+        ExpertProfile expertProfile =
+                getCurrentExpertProfile();
+
+        ExpertService expertService =
+                getExpertServiceById(serviceId);
+
+        checkAiservice(
+                expertService,
+                expertProfile
+        );
+
+        if (ServiceStatus.DELETED.equals(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_ALREADY_DELETED);
+        }
+
         expertService.setServiceStatus(ServiceStatus.DELETED);
         expertServiceRepo.save(expertService);
 
         return null;
     }
 
-    //tất cả bài đăng của của 1 expert
     @Override
+    @Transactional(readOnly = true)
     public List<ExpertServiceResponse> getAllMyServiceByOpend() {
-ExpertProfile expertProfile = getCurrentExpertProfile();
-        return expertServiceRepo .findByExpertProfileAndServiceStatusNot(expertProfile, ServiceStatus.DELETED).stream().map(expertServiceMapper :: toResponse).toList();
+        ExpertProfile expertProfile =
+                getCurrentExpertProfile();
+
+        return expertServiceRepo
+                .findByExpertProfileAndServiceStatusNot(
+                        expertProfile,
+                        ServiceStatus.DELETED
+                )
+                .stream()
+                .map(expertServiceMapper::toResponse)
+                .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ExpertServiceResponse getMyServiceDetail(Long serviceId) {
+        ExpertProfile expertProfile =
+                getCurrentExpertProfile();
 
-        ExpertProfile expertProfile = getCurrentExpertProfile();
-        ExpertService expertService = getExpertServiceById(serviceId);
-        checkAiservice(expertService, expertProfile);
-        if (expertService.getServiceStatus() == ServiceStatus.DELETED) {
-            throw new GlobalException(400, "Service already deleted");
+        ExpertService expertService =
+                getExpertServiceById(serviceId);
+
+        checkAiservice(
+                expertService,
+                expertProfile
+        );
+
+        if (ServiceStatus.DELETED.equals(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_ALREADY_DELETED);
         }
 
         return expertServiceMapper.toResponse(expertService);
     }
 
+    @Transactional(readOnly = true)
     public List<ExpertServiceResponse> getMyPurchasedServices() {
-        User currentUser = currentUserService.getCurrentUser();
-        ClientProfile clientProfile = clientProfileRepo.findByUser(currentUser)
-                .orElseThrow(() -> new GlobalException(403, "Only client can view purchased services"));
+        User currentUser =
+                currentUserService.getCurrentUser();
+
+        ClientProfile clientProfile =
+                clientProfileRepo.findByUser(currentUser)
+                        .orElseThrow(() ->
+                                new GlobalException(
+                                        403,
+                                        "Only client can view purchased services"
+                                )
+                        );
 
         return paymentTransactionRepo
                 .findBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusOrderByCreateAtDesc(
@@ -177,95 +388,217 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
                 .toList();
     }
 
-
-
-
-    // Lấy tất cả bài đăng public của hệ thống.
     @Override
+    @Transactional(readOnly = true)
     public List<ExpertServiceResponse> getAllPublicServices() {
-        return expertServiceRepo.findByServiceStatus(ServiceStatus.OPEN).stream().map(expertServiceMapper ::toResponse).toList();
+        return expertServiceRepo
+                .findByServiceStatus(ServiceStatus.OPEN)
+                .stream()
+                .map(expertServiceMapper::toResponse)
+                .toList();
     }
 
-    // Lấy tất cả bài đăng public của hệ thống kèm bộ lọc.
-    public PageResponse<ExpertServiceResponse> getAllPublicServicesPage(ExpertServiceFillerRequest expertServiceFillerRequest) {
-        // Kiểm tra dữ liệu từ FE, field nào null thì dùng mặc định từ pageRequest thông qua PageUtil.
-        Pageable pageable = PageUtil.createPageable(expertServiceFillerRequest);
+    @Transactional(readOnly = true)
+    public PageResponse<ExpertServiceResponse> getAllPublicServicesPage(
+            ExpertServiceFillerRequest request
+    ) {
+        Pageable pageable =
+                PageUtil.createPageable(request);
 
-        // Gọi DB lấy danh sách.
-        // ExpertServiceSpecification.filter(...) dùng để tạo điều kiện tìm kiếm và lọc.
-        // pageable dùng để phân trang và sắp xếp dữ liệu.
-        Page<ExpertService> expertServicesPages =expertServiceRepo.findAll(ExpertServiceSpecification.filter(expertServiceFillerRequest),pageable)
-                ;
-        // Map ExpertService sang ExpertServiceResponse trong Page.
-        Page<ExpertServiceResponse> responsePage = expertServicesPages.map(expertServiceMapper::toResponse);
+        Page<ExpertService> expertServicesPages =
+                expertServiceRepo.findAll(
+                        ExpertServiceSpecification.filter(request),
+                        pageable
+                );
 
-        // Dùng PageResponse.fromPage để tự bọc content + metaData\
-        // Nó lấy content trong responsePage đưa vào content.
-        // Nó lấy thông tin phân trang trong responsePage đưa vào metaData.
-        // Kết quả trả về là PageResponse<ExpertServiceResponse>.
+        Page<ExpertServiceResponse> responsePage =
+                expertServicesPages.map(
+                        expertServiceMapper::toResponse
+                );
+
         return PageResponse.fromPage(responsePage);
-
     }
 
-
-
-// Chi tiết một bài đăng của hệ thống.
     @Override
+    @Transactional(readOnly = true)
     public ExpertServiceResponse getPublicServiceDetail(long serviceId) {
-         ExpertService expertService = getExpertServiceById(serviceId);
+        ExpertService expertService =
+                getExpertServiceById(serviceId);
 
-        if (expertService.getServiceStatus() != ServiceStatus.OPEN) {
-            throw new GlobalException(400, "Service is not public");
+        if (!ServiceStatus.OPEN.equals(expertService.getServiceStatus())) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_NOT_PUBLIC);
         }
+
         return expertServiceMapper.toResponse(expertService);
     }
 
     @Override
-    public ExpertServiceResponse changeServiceStatus(Long serviceId, ServiceStatus serviceStatus) {
-        ExpertProfile expertProfile = getCurrentExpertProfile();
-        ExpertService expertService = getExpertServiceById(serviceId);
-        checkAiservice(expertService, expertProfile);
-        expertService.setServiceStatus(serviceStatus);
+    @Transactional(readOnly = true)
+    public List<ExpertServiceResponse> getDraftServices() {
+        User admin =
+                currentUserService.getCurrentUser();
 
-        ExpertService savedService = expertServiceRepo.save(expertService);
-        return expertServiceMapper.toResponse(savedService);
+        checkAdmin(admin);
+
+        return expertServiceRepo
+                .findByServiceStatus(ServiceStatus.DRAFT)
+                .stream()
+                .map(expertServiceMapper::toResponse)
+                .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExpertServiceResponse> getReviewQueueServices() {
+        User admin =
+                currentUserService.getCurrentUser();
+
+        checkAdmin(admin);
+
+        return expertServiceRepo
+                .findByServiceStatusInOrderByUpdateAtAsc(
+                        List.of(
+                                ServiceStatus.DRAFT,
+                                ServiceStatus.PENDING_REVIEW
+                        )
+                )
+                .stream()
+                .map(expertServiceMapper::toResponse)
+                .toList();
+    }
 
     private void validateInputContent(ExpertServiceRequest request) {
         if (request == null) {
-            throw new GlobalException(400, "request is required");
+            throw new GlobalException(
+                    400,
+                    "request is required"
+            );
         }
-        contentManagerService.validateKeywordInput(request.getServiceName());
-        contentManagerService.validateKeywordInput(request.getServiceDescription());
 
+        contentManagerService.validateKeywordInput(
+                request.getServiceName()
+        );
+
+        contentManagerService.validateKeywordInput(
+                request.getServiceDescription()
+        );
+
+        if (request.getServiceFee() == null
+                || request.getServiceFee().signum() <= 0) {
+            throw new GlobalException(ErrorCode.SERVICE_FEE_INVALID);
+        }
     }
 
-    private List<Skill> getSkillBySkillId(List<Long> selectedSkillIds) {
-
-        if (selectedSkillIds == null || selectedSkillIds.isEmpty()) {
-           throw new GlobalException(400, "selectedSkillIds is required");
+    private void validateServiceReadyForReview(
+            ExpertService expertService
+    ) {
+        if (expertService.getServiceName() == null
+                || expertService.getServiceName().isBlank()
+                || expertService.getServiceDescription() == null
+                || expertService.getServiceDescription().isBlank()) {
+            throw new GlobalException(ErrorCode.AI_SERVICE_NOT_READY_FOR_REVIEW);
         }
-        List<Long> checkSkillIds = new ArrayList<>();
+
+        if (expertService.getServiceFee() == null
+                || expertService.getServiceFee().signum() <= 0) {
+            throw new GlobalException(ErrorCode.SERVICE_FEE_INVALID);
+        }
+
+        if (expertService.getCategory() == null) {
+            throw new GlobalException(ErrorCode.SERVICE_CATEGORY_REQUIRED);
+        }
+
+        if (expertService.getSkills() == null
+                || expertService.getSkills().isEmpty()) {
+            throw new GlobalException(ErrorCode.SERVICE_SKILL_REQUIRED);
+        }
+
+        if (expertService.getServiceFile() == null
+                || expertService.getServiceFile().getFileContent() == null
+                || expertService.getServiceFile().getFileContent().isBlank()
+                || expertService.getServiceFile().getProductFile() == null
+                || expertService.getServiceFile().getProductFile().isBlank()) {
+            throw new GlobalException(ErrorCode.SERVICE_FILE_REQUIRED);
+        }
+    }
+
+    private void attachOrUpdateServiceFile(
+            ExpertService expertService,
+            ExpertServiceRequest request
+    ) {
+        String docUrl =
+                localFileStorageService.saveFile(
+                        request.getDocFile()
+                );
+
+        String sourceUrl =
+                localFileStorageService.saveFile(
+                        request.getSourceFile()
+                );
+
+        ServiceFile serviceFile =
+                expertService.getServiceFile();
+
+        if (serviceFile == null) {
+            serviceFile =
+                    ServiceFile.builder()
+                            .productType(ProductType.SOURCE_CODE)
+                            .isActive(true)
+                            .expertService(expertService)
+                            .build();
+        }
+
+        if (docUrl != null && !docUrl.isBlank()) {
+            serviceFile.setFileContent(docUrl);
+        }
+
+        if (sourceUrl != null && !sourceUrl.isBlank()) {
+            serviceFile.setProductFile(sourceUrl);
+        }
+
+        serviceFile.setExpertService(expertService);
+        serviceFile.setIsActive(true);
+
+        expertService.setServiceFile(serviceFile);
+    }
+
+    private List<Skill> getSkillBySkillId(
+            List<Long> selectedSkillIds
+    ) {
+        if (selectedSkillIds == null
+                || selectedSkillIds.isEmpty()) {
+            throw new GlobalException(ErrorCode.SERVICE_SKILL_REQUIRED);
+        }
+
+        List<Long> checkSkillIds =
+                new ArrayList<>();
 
         for (Long skillId : selectedSkillIds) {
-            if (skillId == null) continue;
+            if (skillId == null) {
+                continue;
+            }
 
             if (skillId <= 0) {
                 continue;
             }
+
             if (!checkSkillIds.contains(skillId)) {
                 checkSkillIds.add(skillId);
             }
         }
+
         if (checkSkillIds.isEmpty()) {
-            throw new GlobalException(400, "Skill is required");
+            throw new GlobalException(ErrorCode.SERVICE_SKILL_REQUIRED);
         }
 
-        List<Skill> skills = skillRepo.findAllById(checkSkillIds);
+        List<Skill> skills =
+                skillRepo.findAllById(checkSkillIds);
 
         if (skills.size() != checkSkillIds.size()) {
-            throw new GlobalException(400, "Some skills not found");
+            throw new GlobalException(
+                    400,
+                    "Some skills not found"
+            );
         }
 
         return skills;
@@ -273,28 +606,64 @@ ExpertProfile expertProfile = getCurrentExpertProfile();
 
     private Category getCategoryByCategoryId(Long categoryId) {
         if (categoryId == null || categoryId <= 0) {
-            throw new GlobalException(400, "Category is required");
+            throw new GlobalException(ErrorCode.SERVICE_CATEGORY_REQUIRED);
         }
-        Category category = categoryRepo.getCategoriesByCategoryId(categoryId).orElseThrow(() -> new GlobalException(400, "Category Not Found"));
-        return category;
+
+        return categoryRepo
+                .getCategoriesByCategoryId(categoryId)
+                .orElseThrow(() ->
+                        new GlobalException(
+                                400,
+                                "Category Not Found"
+                        )
+                );
     }
 
-    private void checkAiservice(ExpertService expertService, ExpertProfile expertProfile) {
-        if (!expertService.getExpertProfile().getExpertProfileId().equals(expertProfile.getExpertProfileId())) {
-            throw new GlobalException(400, "expertProfileId not match");
+    private void checkAiservice(
+            ExpertService expertService,
+            ExpertProfile expertProfile
+    ) {
+        if (!expertService
+                .getExpertProfile()
+                .getExpertProfileId()
+                .equals(expertProfile.getExpertProfileId())) {
+            throw new GlobalException(
+                    403,
+                    "You are not owner of this AI service"
+            );
+        }
+    }
+
+    private boolean isReviewableStatus(ServiceStatus serviceStatus) {
+        return ServiceStatus.DRAFT.equals(serviceStatus)
+                || ServiceStatus.PENDING_REVIEW.equals(serviceStatus);
+    }
+
+    private void checkAdmin(User user) {
+        if (!Role.ADMIN.equals(user.getRole())) {
+            throw new GlobalException(ErrorCode.ONLY_ADMIN_CAN_REVIEW_AI_SERVICE);
         }
     }
 
     public ExpertProfile getCurrentExpertProfile() {
-        User currentUser = currentUserService.getCurrentUser();
-        return expertProfileRepo.findByUser(currentUser).orElseThrow(() -> new GlobalException(400, "User  Not Found"));
+        User currentUser =
+                currentUserService.getCurrentUser();
+
+        return expertProfileRepo
+                .findByUser(currentUser)
+                .orElseThrow(() ->
+                        new GlobalException(
+                                400,
+                                "User Not Found"
+                        )
+                );
     }
 
     public ExpertService getExpertServiceById(Long serviceId) {
-        return expertServiceRepo.findById(serviceId).orElseThrow(() -> new GlobalException(400, "expertService not found"));
-
+        return expertServiceRepo
+                .findById(serviceId)
+                .orElseThrow(() ->
+                        new GlobalException(ErrorCode.AI_SERVICE_NOT_FOUND)
+                );
     }
-
-
-
 }

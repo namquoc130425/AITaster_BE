@@ -1,19 +1,19 @@
 package com.example.AiTaster.service.imp;
 
-import com.example.AiTaster.constant.ServiceStatus;
+import com.example.AiTaster.dto.request.ExpertServiceRejectRequest;
 import com.example.AiTaster.dto.request.ExpertServiceRequest;
 import com.example.AiTaster.dto.response.ExpertServiceResponse;
-import com.example.AiTaster.entity.ExpertService;
-import com.example.AiTaster.entity.ServiceFile;
 
 import java.util.List;
 
 public interface IExpertService {
-     ExpertServiceResponse CreatService(ExpertServiceRequest expertServiceRequest);
 
+    ExpertServiceResponse CreatService(ExpertServiceRequest expertServiceRequest);
 
-    ExpertServiceResponse updateService(Long serviceId, ExpertServiceRequest expertServiceRequest);
-
+    ExpertServiceResponse updateService(
+            Long serviceId,
+            ExpertServiceRequest expertServiceRequest
+    );
 
     Void deleteService(Long serviceId);
 
@@ -21,13 +21,20 @@ public interface IExpertService {
 
     List<ExpertServiceResponse> getAllPublicServices();
 
-    ExpertServiceResponse  getPublicServiceDetail(long serviceId);
+    ExpertServiceResponse getPublicServiceDetail(long serviceId);
 
-    // Đổi trạng thái service.
-    ExpertServiceResponse changeServiceStatus(Long serviceId, ServiceStatus serviceStatus);
     ExpertServiceResponse getMyServiceDetail(Long serviceId);
 
+    ExpertServiceResponse resubmitRejectedService(Long serviceId);
 
+    ExpertServiceResponse acceptService(Long serviceId);
 
+    ExpertServiceResponse rejectService(
+            Long serviceId,
+            ExpertServiceRejectRequest request
+    );
 
+    List<ExpertServiceResponse> getReviewQueueServices();
+
+    List<ExpertServiceResponse> getDraftServices();
 }

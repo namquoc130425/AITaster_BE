@@ -12,5 +12,6 @@ public enum ReferenceType {
     DISPUTE,
     CONVERSATION,
     REPORT,
+    EXPERT_SERVICE,
     NONE
 }

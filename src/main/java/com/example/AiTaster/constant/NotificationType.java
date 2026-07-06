@@ -11,5 +11,6 @@ public enum NotificationType {
     WITHDRAW,
     DISPUTE,
     REPORT,
-    SYSTEM
+    SYSTEM,
+    EXPERT_SERVICE
 }

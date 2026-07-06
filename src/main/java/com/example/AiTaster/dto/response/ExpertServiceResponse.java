@@ -1,24 +1,20 @@
 package com.example.AiTaster.dto.response;
 
 import com.example.AiTaster.constant.ServiceStatus;
-import com.example.AiTaster.entity.Category;
-import com.example.AiTaster.entity.ServiceFile;
-import com.example.AiTaster.entity.Skill;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Data
 public class ExpertServiceResponse {
 
     Long serviceId;
@@ -36,6 +32,18 @@ public class ExpertServiceResponse {
     String videoDemo;
 
     ServiceStatus serviceStatus;
+
+    String rejectionReason;
+
+    LocalDateTime submittedAt;
+
+    LocalDateTime reviewedAt;
+
+    Long reviewedById;
+
+    String reviewedByName;
+
+    Integer reviewCount;
 
     CategoryResponse category;
 
