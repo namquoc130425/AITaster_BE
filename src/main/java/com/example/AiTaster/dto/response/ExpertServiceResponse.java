@@ -50,4 +50,9 @@ public class ExpertServiceResponse {
     List<SkillResponse> skills;
 
     ServiceFileResponse serviceFileResponse;
+    Long paymentTransactionId;
+
+    LocalDateTime receivedAt;
+
+    InvoiceResponse invoice;
 }

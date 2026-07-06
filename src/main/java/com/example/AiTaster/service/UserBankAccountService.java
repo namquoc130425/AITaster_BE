@@ -22,7 +22,6 @@ public class UserBankAccountService {
 
     private final CurrentUserService currentUserService;
     private final UserBankAccountRepo userBankAccountRepo;
-    private final SepayBankGateway sepayBankGateway;
     private final EmailService emailService;
 
     @Transactional(readOnly = true)
@@ -39,17 +38,6 @@ public class UserBankAccountService {
         User user = currentUserService.getCurrentUser();
         validateRequest(request);
 
-        SepayBankGateway.SepayBankAccountVerification verification =
-                sepayBankGateway.verifyBankAccount(
-                        request.getBankCode().trim(),
-                        request.getAccountNumber().trim(),
-                        request.getAccountHolderName().trim()
-                );
-
-        if (!verification.isValid()) {
-            throw new GlobalException(400, "Bank account was not found by SePay");
-        }
-
         String otp = generateOtp();
         UserBankAccount account = userBankAccountRepo.findByUser(user)
                 .orElseGet(() -> UserBankAccount.builder()
@@ -58,7 +46,7 @@ public class UserBankAccountService {
 
         account.setBankCode(request.getBankCode().trim().toUpperCase());
         account.setAccountNumber(request.getAccountNumber().trim());
-        account.setAccountHolderName(resolveAccountHolderName(request, verification));
+        account.setAccountHolderName(request.getAccountHolderName().trim().toUpperCase());
         account.setVerified(false);
         account.setIsDefault(true);
         account.setOtpCode(otp);
@@ -130,18 +118,6 @@ public class UserBankAccountService {
                 || isBlank(request.getAccountHolderName())) {
             throw new GlobalException(400, "Bank account information is required");
         }
-    }
-
-    private String resolveAccountHolderName(
-            UserBankAccountRequest request,
-            SepayBankGateway.SepayBankAccountVerification verification
-    ) {
-        String holderName = verification.getAccountHolderName();
-        if (!isBlank(holderName)) {
-            return holderName.trim().toUpperCase();
-        }
-
-        return request.getAccountHolderName().trim().toUpperCase();
     }
 
     private String generateOtp() {

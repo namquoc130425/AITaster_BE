@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ReferenceType;
 import com.example.AiTaster.dto.request.MessageRequest;
 import com.example.AiTaster.dto.response.MessageResponse;
@@ -40,6 +41,7 @@ public class MessageService implements IMessageService {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final RealtimeService realtimeService;
+    private final NotificationService notificationService;
 
     /*
      * Gửi tin nhắn bằng REST.
@@ -184,6 +186,14 @@ public class MessageService implements IMessageService {
                 "Message sent"
         );
         realtimeService.pushUserMessage(receiver, response);
+        notificationService.notify(
+                receiver,
+                NotificationType.SYSTEM,
+                ReferenceType.CONVERSATION,
+                conversation.getConversationId(),
+                "New message",
+                buildMessageNotificationContent(sender, response.getContent())
+        );
 
         return response;
     }
@@ -452,5 +462,35 @@ public class MessageService implements IMessageService {
         throw new GlobalException(
                 ErrorCode.NOT_CONVERSATION_MEMBER
         );
+    }
+
+    private String buildMessageNotificationContent(
+            User sender,
+            String content
+    ) {
+        String senderName = safeName(sender);
+        String preview = content == null ? "" : content.trim();
+
+        if (preview.length() > 120) {
+            preview = preview.substring(0, 117) + "...";
+        }
+
+        return senderName + ": " + preview;
+    }
+
+    private String safeName(User user) {
+        if (user == null) {
+            return "User";
+        }
+
+        if (user.getFullName() != null && !user.getFullName().isBlank()) {
+            return user.getFullName();
+        }
+
+        if (user.getUsername() != null && !user.getUsername().isBlank()) {
+            return user.getUsername();
+        }
+
+        return "User";
     }
 }

@@ -7,6 +7,7 @@ import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
+import com.example.AiTaster.service.InvoiceService;
 import com.example.AiTaster.service.MoneyMovementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
     private final ExpertServiceRepo expertServiceRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final MoneyMovementService moneyMovementService;
+    private final InvoiceService invoiceService;
 
 
     @Override
@@ -38,8 +40,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
 
         BigDecimal amount = payment.getGrossAmount();
 
-        // calculateFee() tự tạo transaction PLATFORM_FEE cho admin
-        // và trả về số tiền net expert nhận.
+
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
 
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
@@ -48,7 +49,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
         // Số tiền cần trừ ví = 0.
         // Số tiền nhận = số tiền net expert nhận sau phí sàn.
         PaymentTransaction successTransaction = moneyMovementService.moneyTransactionManagement(
-                null,
+                payment.getSenderId(),          // sepay thu tiền ben ngoài hệ thống , nên deductibleAmount = 0, và Van truyen senderId de giu lai client mua service,
                 expertUserId,
                 TransactionType.EXPERT_SERVICE_PURCHASE,
                 expertService.getServiceId(),
@@ -59,11 +60,13 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
                 payment.getPaymentTransactionId()
         );
 
+
         successTransaction.setProviderTransactionCode(providerTransactionCode);
         successTransaction.setProviderContent(providerContent);
         successTransaction.setPaidAt(paidAt);
 
         paymentTransactionRepo.save(successTransaction);
+        invoiceService.createForPaidAiService(successTransaction.getPaymentTransactionId());
     }
 
 

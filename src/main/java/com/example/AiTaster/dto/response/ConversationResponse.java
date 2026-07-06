@@ -24,11 +24,15 @@ public class ConversationResponse {
 
     Long clientId;
     String clientName;
+    String clientAvatarUrl;
 
     Long expertId;
     String expertName;
+    String expertAvatarUrl;
 
     ConversationType conversationType;
+
+    Long unreadCount;
 
     LocalDateTime convertedToProjectAt;
 
