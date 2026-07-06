@@ -1,8 +1,6 @@
 package com.example.AiTaster.dto.response;
 
 import com.example.AiTaster.dto.UserResponse;
-import com.example.AiTaster.entity.Category;
-import com.example.AiTaster.entity.Skill;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,8 +20,8 @@ import java.util.List;
 public class ExpertProfileResponse {
     Long expertProfileId;
     String bio;
-    Category category;
-    List<Skill> skills;
+    CategoryResponse category;
+    List<SkillResponse> skills;
     Integer yearOfExperience;
     String portfolioUrl;
     BigDecimal rating;
