@@ -91,6 +91,7 @@ public class JobPostService implements IJobPost {
         );
         return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile)
                 .stream()
+                .filter(jobPost -> jobPost.getJobPostStatus() != JobpostStatus.CANCELED)
                 .map(this::toMyJobPostResponse)
                 .toList();
     }
@@ -131,7 +132,8 @@ public class JobPostService implements IJobPost {
 
         checkJobPostByClientId(jobPost, clientProfile);
 
-        jobPostRepo.delete(jobPost);
+        jobPost.setJobPostStatus(JobpostStatus.CANCELED);
+        jobPostRepo.save(jobPost);
 
 
     }

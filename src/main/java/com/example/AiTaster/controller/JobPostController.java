@@ -100,4 +100,10 @@ public class JobPostController {
         return ResponseEntity.ok(APIResponse.response(200, "Change job post status successfully", jobPostResponse));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<APIResponse<Void>> deleteJobPost(@PathVariable @Valid Long id) {
+        jobPostService.DeleteJobPost(id);
+        return ResponseEntity.ok(APIResponse.response(200, "Delete job post successfully", null));
+    }
+
 }
