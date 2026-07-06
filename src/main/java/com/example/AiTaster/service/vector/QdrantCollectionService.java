@@ -12,6 +12,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 // Hàm kiểm tra và tạo collection nếu chưa có.
+//Collection trong qdran là đơn vị logic chưa vectors + Payloads. Mỗi collection có thể có nhiều point, mỗi point có vector + payload.
+//Collection tương đương với table trong SQL . đảm bảo có nơi để lưu dữ liệu slill vector dã tồn tại trước khi mình insert dữ liệu vào
 // Có thể thêm service tự lấy dữ liệu mới nhất từ DB để tạo collection, ví dụ SkillVectorSyncService.
 public class QdrantCollectionService {
     private final RestClient qdrantRestClient;

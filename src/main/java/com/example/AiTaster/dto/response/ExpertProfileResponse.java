@@ -1,6 +1,8 @@
 package com.example.AiTaster.dto.response;
 
 import com.example.AiTaster.dto.UserResponse;
+import com.example.AiTaster.entity.Category;
+import com.example.AiTaster.entity.Skill;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,6 +12,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,12 +22,13 @@ import java.time.LocalDateTime;
 public class ExpertProfileResponse {
     Long expertProfileId;
     String bio;
-    String category;
-    String skills;
+    Category category;
+    List<Skill> skills;
     Integer yearOfExperience;
     String portfolioUrl;
     BigDecimal rating;
     Integer completedProjects;
     LocalDateTime createAt;
     LocalDateTime updateAt;
+    ExpertVerificationResponse verification;
 }

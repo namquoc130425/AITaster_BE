@@ -138,4 +138,6 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
             @Param("status") InvitationStatus status,
             @Param("deadline") LocalDateTime deadline
     );
+    // tìm Invitation Acception , đã hóa hạn thạnh toán , nhưng chưa tạo project . Nếu đã có project thì nghĩa là đã thanh toán rồi ,
+
 }
