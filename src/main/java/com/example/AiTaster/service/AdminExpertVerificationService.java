@@ -22,6 +22,7 @@ public class AdminExpertVerificationService {
     private final ExpertVerificationMapper expertVerificationMapper;
     private final CurrentUserService currentUserService;
 
+    @Transactional(readOnly = true)
     public List<ExpertVerificationResponse> getSubmittedVerifications() {
         return expertVerificationRepo.findByVerificationStatus(ExpertVerificationStatus.SUBMITTED)
                 .stream()

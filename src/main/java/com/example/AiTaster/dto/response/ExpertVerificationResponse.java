@@ -15,6 +15,10 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExpertVerificationResponse {
     Long verificationId;
+    Long expertProfileId;
+    Long expertUserId;
+    String expertName;
+    String expertEmail;
     String certificateUrl;
     ExpertVerificationStatus verificationStatus;
     String rejectReason;
