@@ -38,4 +38,9 @@ public class Skill {
 
     @ManyToMany(mappedBy = "skills")
     List<ExpertService>  expertServices;
+
+    @ManyToMany(mappedBy = "skills")
+    List<ExpertProfile> expertProfiles;
+
+
 }

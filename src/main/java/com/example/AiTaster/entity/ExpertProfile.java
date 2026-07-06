@@ -32,9 +32,17 @@ public class ExpertProfile {
     @Column(columnDefinition = "TEXT")
     String bio;
 
-    String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    Category category;
 
-    String skills;
+    @ManyToMany
+    @JoinTable(
+            name = "expert_profile_skill",
+            joinColumns = @JoinColumn(name = "expert_profile_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    List<Skill> skills;
 
     Integer yearOfExperience;
 

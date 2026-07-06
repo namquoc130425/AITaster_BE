@@ -5,12 +5,16 @@ import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.entity.Category;
 import com.example.AiTaster.entity.ExpertProfile;
+import com.example.AiTaster.entity.Skill;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.mapper.ClientProfileMapper;
 import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
+import com.example.AiTaster.repository.CategoryRepo;
+import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.repository.UserRepo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +24,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -48,30 +55,48 @@ class AuthenticationServiceExpertVerificationTest {
     private CurrentUserResponseMapper currentUserResponseMapper;
     @Mock
     private UserWalletService userWalletService;
+    @Mock
+    private SkillRepo skillRepo;
+    @Mock
+    private CategoryRepo categoryRepo;
 
     @InjectMocks
     private AuthenticationService authenticationService;
 
     @Test
-    void registerExpert_createsSubmittedVerificationFromCertificateUrl() {
+    void registerExpert_loadsCategoryAndSkillsByIdsThenCreatesSubmittedVerification() {
         ExpertRegisterRequest request = new ExpertRegisterRequest();
         request.setEmail("expert@example.com");
         request.setPhone("0987654321");
         request.setPassword("12345678");
         request.setBio("AI automation expert");
-        request.setCategory("AI Automation");
-        request.setSkills("Chatbot, RPA");
+        request.setCategoryId(1L);
+        request.setSkillIds(List.of(2L, 3L));
         request.setYearOfExperience(2);
         request.setPortfolioUrl("https://github.com/expert");
         request.setCertificateUrl("https://supabase.example/cert.pdf");
 
         User mappedUser = User.builder().build();
+        Category category = Category.builder()
+                .categoryId(1L)
+                .categoryName("AI Automation")
+                .build();
+        Skill chatbot = Skill.builder()
+                .skillId(2L)
+                .skillName("Chatbot")
+                .build();
+        Skill rpa = Skill.builder()
+                .skillId(3L)
+                .skillName("RPA")
+                .build();
         ExpertProfileResponse response = new ExpertProfileResponse();
 
         when(userRepo.existsByPhone("0987654321")).thenReturn(false);
         when(userRepo.existsByEmail("expert@example.com")).thenReturn(false);
         when(userMapper.expertRegisterToUser(request)).thenReturn(mappedUser);
         when(passwordEncoder.encode("12345678")).thenReturn("encoded-password");
+        when(categoryRepo.getCategoriesByCategoryId(1L)).thenReturn(Optional.of(category));
+        when(skillRepo.findAllById(List.of(2L, 3L))).thenReturn(List.of(chatbot, rpa));
         when(expertProfileMapper.toResponse(org.mockito.ArgumentMatchers.any(ExpertProfile.class))).thenReturn(response);
 
         authenticationService.registerExpert(request);
@@ -85,12 +110,14 @@ class AuthenticationServiceExpertVerificationTest {
         assertThat(savedUser.getRole()).isEqualTo(Role.EXPERT);
         assertThat(savedUser.getUserStatus()).isEqualTo(UserStatus.ACTIVE);
         assertThat(savedUser.getPasswordHash()).isEqualTo("encoded-password");
-        assertThat(expertProfile.getCategory()).isEqualTo("AI Automation");
-        assertThat(expertProfile.getSkills()).isEqualTo("Chatbot, RPA");
+        assertThat(expertProfile.getCategory()).isSameAs(category);
+        assertThat(expertProfile.getSkills()).containsExactly(chatbot, rpa);
         assertThat(expertProfile.getVerification()).isNotNull();
         assertThat(expertProfile.getVerification().getExpertProfile()).isSameAs(expertProfile);
         assertThat(expertProfile.getVerification().getCertificateUrl()).isEqualTo("https://supabase.example/cert.pdf");
         assertThat(expertProfile.getVerification().getVerificationStatus()).isEqualTo(ExpertVerificationStatus.SUBMITTED);
+        verify(categoryRepo).getCategoriesByCategoryId(1L);
+        verify(skillRepo).findAllById(List.of(2L, 3L));
         verify(userWalletService).createdUserWallet(mappedUser);
     }
 }
