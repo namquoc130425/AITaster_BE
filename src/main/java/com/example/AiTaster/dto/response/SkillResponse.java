@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.cglib.core.Local;
-
 import java.time.LocalDateTime;
 
 @Data
@@ -16,8 +14,8 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SkillResponse {
 
-    long SkillId;
-    String SkillName;
+    long skillId;
+    String skillName;
     String slug;
     String description;
     LocalDateTime createdAt;
