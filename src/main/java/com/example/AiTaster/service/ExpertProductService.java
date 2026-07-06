@@ -2,7 +2,6 @@ package com.example.AiTaster.service;
 
 import com.example.AiTaster.Util.PageUtil;
 import com.example.AiTaster.constant.ErrorCode;
-import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.PaymentReferenceType;
 import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.ProductType;
@@ -64,6 +63,7 @@ public class ExpertProductService implements IExpertService {
     private final ClientProfileRepo clientProfileRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final NotificationService notificationService;
+    private final ExpertVerificationGuardService expertVerificationGuardService;
 
     public record ServiceFileDownload(
             Resource resource,
@@ -101,12 +101,12 @@ public class ExpertProductService implements IExpertService {
 
         expertService.setCategory(category);
         expertService.setSkills(skills);
-        expertService.setServiceStatus(ServiceStatus.DRAFT);
+        expertService.setServiceStatus(ServiceStatus.PENDING_REVIEW);
         expertService.setRejectionReason(null);
-        expertService.setSubmittedAt(null);
+        expertService.setSubmittedAt(LocalDateTime.now());
         expertService.setReviewedAt(null);
         expertService.setReviewedBy(null);
-        expertService.setReviewCount(0);
+        expertService.setReviewCount(1);
 
         attachOrUpdateServiceFile(
                 expertService,
@@ -116,7 +116,7 @@ public class ExpertProductService implements IExpertService {
         ExpertService saved =
                 expertServiceRepo.save(expertService);
 
-        notificationService.notifyAdminAiServiceCreated(saved);
+        notificationService.notifyAdminAiServiceSubmitted(saved);
 
         return expertServiceMapper.toResponse(saved);
     }
@@ -166,11 +166,18 @@ public class ExpertProductService implements IExpertService {
         expertService.setSkills(skills);
         expertService.setCategory(category);
 
-        if (ServiceStatus.OPEN.equals(expertService.getServiceStatus())) {
-            expertService.setServiceStatus(ServiceStatus.DRAFT);
+        if (ServiceStatus.OPEN.equals(expertService.getServiceStatus())
+                || ServiceStatus.DRAFT.equals(expertService.getServiceStatus())) {
+            expertService.setServiceStatus(ServiceStatus.PENDING_REVIEW);
+            expertService.setSubmittedAt(LocalDateTime.now());
             expertService.setRejectionReason(null);
             expertService.setReviewedAt(null);
             expertService.setReviewedBy(null);
+            expertService.setReviewCount(
+                    expertService.getReviewCount() == null
+                            ? 1
+                            : expertService.getReviewCount() + 1
+            );
         }
 
         attachOrUpdateServiceFile(
@@ -329,8 +336,8 @@ public class ExpertProductService implements IExpertService {
                 getCurrentExpertProfile();
 
         return expertServiceRepo
-                .findByExpertProfileAndServiceStatusNot(
-                        expertProfile,
+                .findByExpertProfile_ExpertProfileIdAndServiceStatusNot(
+                        expertProfile.getExpertProfileId(),
                         ServiceStatus.DELETED
                 )
                 .stream()
@@ -578,6 +585,10 @@ public class ExpertProductService implements IExpertService {
     private void checkCanDownloadServiceFile(ExpertService expertService) {
         User currentUser =
                 currentUserService.getCurrentUser();
+        if (Role.ADMIN.equals(currentUser.getRole())) {
+            return;
+        }
+
         boolean isExpertOwner =
                 expertProfileRepo.findByUser(currentUser)
                         .map(expertProfile -> expertService.getExpertProfile() != null
@@ -831,9 +842,6 @@ public class ExpertProductService implements IExpertService {
     }
 
     private void ensureExpertVerified(ExpertProfile expertProfile) {
-        if (expertProfile.getVerification() == null
-                || expertProfile.getVerification().getVerificationStatus() != ExpertVerificationStatus.VERIFIED) {
-            throw new GlobalException(403, "Expert must be verified by admin before using this feature");
-        }
+        expertVerificationGuardService.ensureVerified(expertProfile);
     }
 }

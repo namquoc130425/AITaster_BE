@@ -96,7 +96,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         201,
-                        "Create service draft successfully",
+                        "Submit AI service for review successfully",
                         response
                 )
         );
@@ -169,6 +169,20 @@ public class ExpertServiceController {
                 APIResponse.response(
                         200,
                         "Reject AI service successfully",
+                        response
+                )
+        );
+    }
+
+    @GetMapping("/admin/review-queue")
+    public ResponseEntity<APIResponse<List<ExpertServiceResponse>>> getReviewQueueServices() {
+        List<ExpertServiceResponse> response =
+                expertProductService.getReviewQueueServices();
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get AI service review queue successfully",
                         response
                 )
         );

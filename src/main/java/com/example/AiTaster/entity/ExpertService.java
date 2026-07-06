@@ -36,7 +36,7 @@ public class ExpertService {
     String videoDemo;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 30, columnDefinition = "varchar(30)")
     ServiceStatus serviceStatus;
 
     @Column(columnDefinition = "TEXT")

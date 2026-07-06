@@ -17,6 +17,8 @@ public class AdminResponse {
 
     Long userId;
 
+    String username;
+
     String email;
 
     String fullName;
