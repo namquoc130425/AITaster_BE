@@ -22,7 +22,7 @@ public interface ExpertServiceMapper {
     @Mapping(target = "serviceFee",source = "request.serviceFee")
     @Mapping(target = "serviceImage",source = "request.serviceImage")
     @Mapping(target = "videoDemo",source = "request.videoDemo")
-    @Mapping(target = "serviceStatus",constant = "OPEN")
+    @Mapping(target = "serviceStatus",constant = "DRAFT")
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "skills", ignore = true)
     @Mapping(target = "createAt", ignore = true)

@@ -19,12 +19,14 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ExpertService {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long serviceId;
 
     String serviceName;
 
+    @Column(columnDefinition = "TEXT")
     String serviceDescription;
 
     BigDecimal serviceFee;
@@ -34,7 +36,21 @@ public class ExpertService {
     String videoDemo;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
     ServiceStatus serviceStatus;
+
+    @Column(columnDefinition = "TEXT")
+    String rejectionReason;
+
+    LocalDateTime submittedAt;
+
+    LocalDateTime reviewedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewed_by")
+    User reviewedBy;
+
+    Integer reviewCount;
 
     @CreationTimestamp
     LocalDateTime createAt;
@@ -42,22 +58,20 @@ public class ExpertService {
     @UpdateTimestamp
     LocalDateTime updateAt;
 
-    //lazy lấy sau , khi nào gọi tới quan hệ thì querry them
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="category_Id",nullable = false)
+    @JoinColumn(name = "category_Id", nullable = false)
     Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "expertProfile_Id",nullable = false)
+    @JoinColumn(name = "expertProfile_Id", nullable = false)
     ExpertProfile expertProfile;
 
-    @ManyToMany()
-            @JoinTable(
-                    name = "ExpertService_Skill",
-                    joinColumns = @JoinColumn(name = "service_Id"),
-                    inverseJoinColumns = @JoinColumn(name = "skill_Id")
-
-            )
+    @ManyToMany
+    @JoinTable(
+            name = "ExpertService_Skill",
+            joinColumns = @JoinColumn(name = "service_Id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_Id")
+    )
     List<Skill> skills;
 
     @OneToOne(
@@ -66,4 +80,15 @@ public class ExpertService {
             orphanRemoval = true
     )
     ServiceFile serviceFile;
+
+    @PrePersist
+    public void prePersist() {
+        if (serviceStatus == null) {
+            serviceStatus = ServiceStatus.DRAFT;
+        }
+
+        if (reviewCount == null) {
+            reviewCount = 0;
+        }
+    }
 }

@@ -509,6 +509,131 @@ public class NotificationService implements INotificationService {
         );
     }
 
+    @Override
+    public void notifyAdminAiServiceCreated(ExpertService expertService) {
+        if (expertService == null) {
+            return;
+        }
+
+        notifyAllAdmins(
+                NotificationType.EXPERT_SERVICE,
+                ReferenceType.EXPERT_SERVICE,
+                expertService.getServiceId(),
+                "AI Service mới được tạo",
+                "Expert vừa tạo AI Service '" + expertService.getServiceName()
+                        + "'. Trạng thái hiện tại là DRAFT."
+        );
+    }
+
+    @Override
+    public void notifyAdminAiServiceUpdated(ExpertService expertService) {
+        if (expertService == null) {
+            return;
+        }
+
+        notifyAllAdmins(
+                NotificationType.EXPERT_SERVICE,
+                ReferenceType.EXPERT_SERVICE,
+                expertService.getServiceId(),
+                "AI Service vừa được cập nhật",
+                "Expert vừa cập nhật AI Service '" + expertService.getServiceName()
+                        + "'. Service cần được kiểm tra nếu được submit lại."
+        );
+    }
+
+    @Override
+    public void notifyAdminAiServiceSubmitted(ExpertService expertService) {
+        if (expertService == null) {
+            return;
+        }
+
+        notifyAllAdmins(
+                NotificationType.EXPERT_SERVICE,
+                ReferenceType.EXPERT_SERVICE,
+                expertService.getServiceId(),
+                "AI Service chờ duyệt",
+                "Expert đã gửi AI Service '" + expertService.getServiceName()
+                        + "' để admin duyệt."
+        );
+    }
+
+    @Override
+    public void notifyExpertAiServiceAccepted(ExpertService expertService) {
+        User expertUser = getExpertOwner(expertService);
+
+        if (expertUser == null) {
+            return;
+        }
+
+        notify(
+                expertUser,
+                NotificationType.EXPERT_SERVICE,
+                ReferenceType.EXPERT_SERVICE,
+                expertService.getServiceId(),
+                "AI Service đã được duyệt",
+                "AI Service '" + expertService.getServiceName()
+                        + "' đã được admin duyệt và đang hiển thị công khai."
+        );
+    }
+
+    @Override
+    public void notifyExpertAiServiceRejected(ExpertService expertService) {
+        User expertUser = getExpertOwner(expertService);
+
+        if (expertUser == null) {
+            return;
+        }
+
+        String reason = expertService.getRejectionReason();
+
+        if (reason == null || reason.isBlank()) {
+            reason = "Admin đã từ chối AI Service của bạn. Vui lòng kiểm tra lại nội dung và resubmit.";
+        }
+
+        notify(
+                expertUser,
+                NotificationType.EXPERT_SERVICE,
+                ReferenceType.EXPERT_SERVICE,
+                expertService.getServiceId(),
+                "AI Service bị từ chối",
+                "AI Service '" + expertService.getServiceName()
+                        + "' bị từ chối. Lý do: " + reason
+        );
+    }
+
+    private void notifyAllAdmins(
+            NotificationType notificationType,
+            ReferenceType referenceType,
+            Long referenceId,
+            String title,
+            String content
+    ) {
+        List<User> admins = userRepo.findByRole(Role.ADMIN);
+
+        for (User admin : admins) {
+            notify(
+                    admin,
+                    notificationType,
+                    referenceType,
+                    referenceId,
+                    title,
+                    content
+            );
+        }
+    }
+
+    private User getExpertOwner(ExpertService expertService) {
+        if (expertService == null
+                || expertService.getExpertProfile() == null
+                || expertService.getExpertProfile().getUser() == null) {
+            return null;
+        }
+
+        return expertService
+                .getExpertProfile()
+                .getUser();
+    }
+
     private Notification getNotification(
             Long notificationId
     ) {
