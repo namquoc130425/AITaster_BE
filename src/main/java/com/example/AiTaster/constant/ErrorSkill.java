@@ -19,7 +19,7 @@ public enum ErrorSkill {
     final String message;
     final HttpStatus httpStatus;
 
-    int getCode() {
+    public int getCode() {
         return httpStatus.value();
     }
     }

@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.5.14</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/> <!-- Tìm parent từ repository -->
 	</parent>
 	<groupId>com.example.AiTaster</groupId>
 	<artifactId>.AiTaster</artifactId>
@@ -26,9 +26,31 @@
 		<tag/>
 		<url/>
 	</scm>
+
 	<properties>
 		<java.version>21</java.version>
 	</properties>
+	<!-- 	Kho milestone		-->
+	<repositories>
+		<repository>
+			<id>spring-milestones</id>
+			<name>Spring Milestones</name>
+			<url>https://repo.spring.io/milestone</url>
+		</repository>
+
+	</repositories>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.ai</groupId>
+				<artifactId>spring-ai-bom</artifactId>
+				<version>1.1.2</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -42,8 +64,8 @@
 		</dependency>
 
 
-		<!-- 	Connect MYSQL		-->
-		<!-- Source: https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
+		<!-- 	Kết nối MySQL		-->
+		<!-- Nguồn: https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
@@ -52,14 +74,14 @@
 		</dependency>
 
 		<!-- 	JPA		-->
-		<!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa -->
+		<!-- Nguồn: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
-		<!-- 	LomBok		-->
-		<!-- Source: https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+		<!-- 	Lombok		-->
+		<!-- Nguồn: https://mvnrepository.com/artifact/org.projectlombok/lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -69,26 +91,26 @@
 
 
 
-		<!-- 	MAPTRUCT core		-->
-		<!-- core , processor -->
-		<!-- Source: https://mvnrepository.com/artifact/org.mapstruct/mapstruct -->
+		<!-- 	Thư viện chính của MapStruct		-->
+		<!-- Bao gồm phần chính và processor -->
+		<!-- Nguồn: https://mvnrepository.com/artifact/org.mapstruct/mapstruct -->
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>1.5.5.Final</version>
 		</dependency>
 
-		<!-- 	MAPTRUCT processor		-->
-		<!-- core , processor -->
-		<!-- Source: https://mvnrepository.com/artifact/org.mapstruct/mapstruct-processor -->
+		<!-- 	Processor của MapStruct		-->
+		<!-- Bao gồm phần chính và processor -->
+		<!-- Nguồn: https://mvnrepository.com/artifact/org.mapstruct/mapstruct-processor -->
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct-processor</artifactId>
 			<version>1.5.5.Final</version>
 		</dependency>
 
-		<!-- Validations-->
-		<!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation -->
+		<!-- Kiểm tra dữ liệu đầu vào -->
+		<!-- Nguồn: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
@@ -96,24 +118,76 @@
 
 
 
-		<!--  Oauth 2 (Spring security) -->
-		<!--   Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-oauth2-resource-server -->
+		<!--  OAuth 2 (Spring Security) -->
+		<!--   Nguồn: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-oauth2-resource-server -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
 
-		<!-- Springdoc OpenAPI UI -->
-		<!-- Source: https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
+		<!-- Giao diện Springdoc OpenAPI -->
+		<!-- Nguồn: https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.9</version>
 		</dependency>
 
+		<!--	Redis	-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<!-- AI chat: Gemini -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-google-genai</artifactId>
+		</dependency>
+
+		<!-- AI embedding: dùng để biến text thành vector gửi Qdrant -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-google-genai-embedding</artifactId>
+		</dependency>
+
+
+
+		<!-- thư viện đọc file  -->
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>dotenv-java</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+		<!-- Giúp IntelliJ gợi ý cấu hình trong application.yaml -->
+
+		<!-- thư viện Gmail  -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
+		<!-- thư viện ThymeLeaf-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<!-- thư viện WebSocket-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
+		<finalName>be</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

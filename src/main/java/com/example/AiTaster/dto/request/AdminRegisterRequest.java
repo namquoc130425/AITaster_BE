@@ -18,6 +18,9 @@ public class AdminRegisterRequest {
     String email;
 
     @NotBlank(message = "FIELD_REQUIRED")
+    String username;
+
+    @NotBlank(message = "FIELD_REQUIRED")
     @Size(min = 8, message = "INVALID_FORMART")
     String password;
 

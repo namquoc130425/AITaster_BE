@@ -1,0 +1,71 @@
+package com.example.AiTaster.entity;
+
+import com.example.AiTaster.constant.JobpostStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class JobPost {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long jobPostId;
+
+    @Column(nullable = false)
+    String title;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    String requirementDescription; // Mô tả yêu cầu dự án
+
+    @Column(columnDefinition = "TEXT")
+    String businessGoal; // Mục tiêu kinh doanh
+
+    @Column(columnDefinition = "TEXT") // Text dài
+    String mainFeatures; // Chức năng chính
+
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal budgets; // Ngân sách dự kiến
+
+    @Column(nullable = false, length = 100)
+    String timeLine; // Thời gian thực hiện dự kiến
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    JobpostStatus jobPostStatus;
+
+    @CreationTimestamp
+    @Column(nullable = false)
+    LocalDateTime createAt;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    LocalDateTime updateAt;
+
+ @ManyToOne(fetch = FetchType.LAZY) // NHIỀU JobPost thuộc về 1 client
+ @JoinColumn(name = "clientprofile_id",nullable = false)
+    ClientProfile clientProfile;
+
+
+ @ManyToMany
+         @JoinTable(
+         name ="jobpost_skill",
+               joinColumns =  @JoinColumn(name = "jobpost_Id"),
+                 inverseJoinColumns = @JoinColumn(name = "skill_Id"))
+ List<Skill> skills;
+
+    @OneToMany(mappedBy = "jobpost")
+    List<ExpertApplication> expertApplications;
+}

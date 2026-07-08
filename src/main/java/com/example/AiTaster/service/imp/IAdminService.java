@@ -3,12 +3,16 @@ package com.example.AiTaster.service.imp;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.dto.UserResponse;
+import com.example.AiTaster.dto.request.Admin.UserFilterRequest;
 import com.example.AiTaster.dto.request.AdminRequest;
 import com.example.AiTaster.dto.response.AdminResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 
 import java.util.List;
 
 public interface IAdminService {
+    PageResponse<AdminResponse> getAllUsers(UserFilterRequest request);
+
     List<AdminResponse> getAllUsers(
             Role role,
             UserStatus userStatus,

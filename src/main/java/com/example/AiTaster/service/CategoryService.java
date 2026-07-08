@@ -1,14 +1,20 @@
 package com.example.AiTaster.service;
 
+import com.example.AiTaster.Util.PageUtil;
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.dto.request.Category.CategoryFilterRequest;
 import com.example.AiTaster.dto.request.CategoryRequest;
 import com.example.AiTaster.dto.response.CategoryResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.Category;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.CategoryMappper;
 import com.example.AiTaster.repository.CategoryRepo;
 import com.example.AiTaster.service.imp.ICategory;
+import com.example.AiTaster.specification.CategorySpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
@@ -59,6 +65,18 @@ CategoryRepo categoryRepo;
         Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Category: " + ErrorCode.NOT_FOUND.getMessage()));
         categoryRepo.delete(category);
         return null;
+    }
+
+    public PageResponse<CategoryResponse> getAllCategoriesPage(CategoryFilterRequest request) {
+        Pageable pageable = PageUtil.createPageable(request);
+
+        Page<Category> categoryPage =
+                categoryRepo.findAll(CategorySpecification.filter(request), pageable);
+
+        Page<CategoryResponse> responsePage =
+                categoryPage.map(categoryMapper::toResponse);
+
+        return PageResponse.fromPage(responsePage);
     }
 
 

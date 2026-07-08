@@ -7,6 +7,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -32,7 +33,7 @@ public class ClientProfile {
     @Column(columnDefinition = "TEXT")
     String description;
 
-    String bussinessField;
+    String businessField;
     String address;
 
 //    @Enumerated(EnumType.STRING)  nên bỏ vì set bên User rồi . sau này cần lấy thì join bảng để lấy ra
@@ -51,4 +52,7 @@ public class ClientProfile {
     protected void onUpdate() {
         updateAt = LocalDateTime.now();
     }
+
+    @OneToMany(mappedBy = "clientProfile",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    List<JobPost> jobPosts;
 }

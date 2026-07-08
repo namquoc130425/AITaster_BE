@@ -1,24 +1,31 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
+import com.example.AiTaster.controller.AuthController;
 import com.example.AiTaster.dto.UserResponse;
 import com.example.AiTaster.dto.request.*;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
-import com.example.AiTaster.dto.response.LoginResponse;
-import com.example.AiTaster.entity.ClientProfile;
-import com.example.AiTaster.entity.ExpertProfile;
-import com.example.AiTaster.entity.User;
+import com.example.AiTaster.dto.response.AuthResponse;
+import com.example.AiTaster.dto.response.AuthenticationResponse;
+import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
+import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
+import com.example.AiTaster.repository.CategoryRepo;
+import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.transaction.Transactional;
-import lombok.Builder;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -30,70 +37,83 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
+@FieldDefaults(level = AccessLevel.PRIVATE)
 
 public class AuthenticationService implements UserDetailsService, IAuthentication {
 
     @Autowired
     UserRepo userRepo;
+
     @Autowired
     UserMapper userMapper;
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
     @Autowired
     AuthenticationManager authenticationManager;
+
     @Autowired
     TokenService tokenService;
 
     @Autowired
-    ClientProfileService clientProfileService;
-    @Autowired
-    private ExpertProfileService expertProfileService;
-    @Autowired
-    private ClientProfileMapper clientProfileMapper;
-    @Autowired
-    private ExpertProfileMapper expertProfileMapper;
+    ClientProfileMapper clientProfileMapper;
 
+    @Autowired
+    ExpertProfileMapper expertProfileMapper;
 
-    // đăng ký client
+    @Autowired
+    RefreshTokenService refreshTokenService;
+
+    @Autowired
+    CurrentUserResponseMapper currentUserResponseMapper;
+
+    @Autowired
+    UserWalletService userWalletService;
+
+    @Autowired
+    SkillRepo skillRepo;
+
+    @Autowired
+    CategoryRepo categoryRepo;
+
+// Service xử lý đăng ký, đăng nhập và refresh token.
+
+    // Đăng ký client.
     @Transactional
     public ClientProfileResponse registerClient(ClientRegisterRequest request) {
 
         validateRegister(request.getEmail(), request.getPhone());
 
-        //tạo User
+        // Tạo User.
         User user = userMapper.clientRegisterToUser(request);
 
-        System.out.println("request username = " + request.getUsername());
-        System.out.println("user username = " + user.getUsername());
-        System.out.println("user email = " + user.getEmail());
-
-        //setRole , mã hóa Password, setStatus
+        // Set role, mã hóa password và set status.
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CLIENT);
         user.setUserStatus(UserStatus.ACTIVE);
 
 
- //builder:mapper thẳng
+        // Tạo ClientProfile từ dữ liệu yêu cầu.
         ClientProfile clientProfile = ClientProfile.builder()
                 .user(user)
                 .companyName(request.getCompanyName())
                 .contactName(request.getContactName())
                 .description(request.getDescription())
-                .bussinessField(request.getBusinessField())
+                .businessField(request.getBusinessField())
                 .address(request.getAddress())
                 .build();
 
         user.setClientProfile(clientProfile);
-        // lưu xuống db
+
         userRepo.save(user);
 
-
-        //chuyển User vừa lưu thành ClientProfile và lưu xuống db
-//        ClientProfileResponse response = clientProfileService.createForRegister(savedUser, request);
+        userWalletService.createdUserWallet(user);
 
         return clientProfileMapper.toResponse(clientProfile);
     }
@@ -103,29 +123,39 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
         validateRegister(request.getEmail(), request.getPhone());
 
-        // tạo user
+        // Tạo user.
         User user = userMapper.expertRegisterToUser(request);
-        //setRole , mã hóa pass , setStatus
+        // Set role, mã hóa password và set status.
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.EXPERT);
         user.setUserStatus(UserStatus.ACTIVE);
 
+        Category category = getCategoryByCategoryId(request.getCategoryId());
+        List<Skill> skills = getSkillBySkillId(request.getSkillIds());
+
         ExpertProfile expertProfile = ExpertProfile.builder()
                 .user(user)
                 .bio(request.getBio())
+                .category(category)
+                .skills(skills)
                 .yearOfExperience(request.getYearOfExperience())
                 .rating(BigDecimal.ZERO)
                 .completedProjects(0)
                 .portfolioUrl(request.getPortfolioUrl())
-
                 .build();
-        // lưu xuong db
+
+
+        ExpertVerification verification = ExpertVerification.builder()
+                .expertProfile(expertProfile)
+                .certificateUrl(request.getCertificateUrl())
+                .verificationStatus(ExpertVerificationStatus.SUBMITTED)
+                .build();
+
+        expertProfile.setVerification(verification);
+        // Lưu xuống DB.
         user.setExpertProfile(expertProfile);
         userRepo.save(user);
-
-        // chuyen use vừa lưu qua cho tk ExpertProfile và lưu xuong dbb
-//        ExpertProfileResponse response = expertProfileService.createForRegister(savedUser, request);
-
+        userWalletService.createdUserWallet(user);
 
         return expertProfileMapper.toResponse(expertProfile);
     }
@@ -149,10 +179,10 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     }
 
 
-    //login
+    // Đăng nhập.
     @Override
     @Transactional
-    public LoginResponse login(LoginRequest loginRequest) {
+    public AuthenticationResponse login(LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -162,52 +192,12 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             );
 
             User user = (User) authentication.getPrincipal();
-
             String accessToken = tokenService.generateAccessToken(user);
 
-            LoginResponse.LoginResponseBuilder responseBuilder = LoginResponse.builder()
-                    .userId(user.getUserId())
-                    .email(user.getEmail())
-                    .fullName(user.getFullName())
-                    .phone(user.getPhone())
-                    .avatarUrl(user.getAvatarUrl())
-                    .role(user.getRole())
-                    .userStatus(user.getUserStatus())
-                    .accessToken(accessToken);
+            String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-            if (user.getClientProfile() != null) {
-                ClientProfile clientProfile = user.getClientProfile();
 
-                responseBuilder.clientProfile(
-                        LoginResponse.ClientProfileInfo.builder()
-                                .clientProfileId(clientProfile.getClientProfileId())
-                                .companyName(clientProfile.getCompanyName())
-                                .contactName(clientProfile.getContactName())
-                                .description(clientProfile.getDescription())
-                                .businessField(clientProfile.getBussinessField())
-                                .address(clientProfile.getAddress())
-                                .build()
-                );
-            }
-
-            if (user.getExpertProfile() != null) {
-                ExpertProfile expertProfile = user.getExpertProfile();
-
-                responseBuilder.expertProfile(
-                        LoginResponse.ExpertProfileInfo.builder()
-                                .expertProfileId(expertProfile.getExpertProfileId())
-                                .bio(expertProfile.getBio())
-                                .category(expertProfile.getCategory())
-                                .skills(expertProfile.getSkills())
-                                .yearsOfExperience(expertProfile.getYearOfExperience())
-                                .portfolioUrl(expertProfile.getPortfolioUrl())
-                                .rating(expertProfile.getRating())
-                                .completedProjects(expertProfile.getCompletedProjects())
-                                .build()
-                );
-            }
-
-            return responseBuilder.build();
+            return buildAuthenticationResponse(user, accessToken, refreshToken);
 
         } catch (LockedException e) {
             throw new GlobalException(
@@ -227,12 +217,15 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
     }
 
-    //lấy username
+    // Lấy user theo username.
     @Override
     public UserDetails loadUserByUsername(String userName)
             throws UsernameNotFoundException {
 
-        User user = userRepo.findByUsername(userName);
+        User user = userRepo.findByUsername(userName).orElseThrow(() -> new GlobalException(
+                ErrorCode.USER_NOT_FOUND.getCode(),
+                ErrorCode.USER_NOT_FOUND.getMessage() + ": " + userName
+        ));
 
         if (user == null) {
             throw new UsernameNotFoundException(
@@ -256,9 +249,102 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         user.setUserStatus(UserStatus.ACTIVE);
 
         User savedUser = userRepo.save(user);
+        userWalletService.createdUserWallet(savedUser);
 
         return userMapper.toResponser(savedUser);
     }
 
+    @Override
+    @Transactional
+    public AuthResponse refresh(TokenRequest tokenRequest) {
+        RefreshToken validToken =
+                refreshTokenService.verifyToken(tokenRequest.getToken())
+                        .orElseThrow(() -> new GlobalException(
+                                ErrorCode.INVALID_REFRESH_TOKEN.getCode(),
+                                ErrorCode.INVALID_REFRESH_TOKEN.getMessage()
+                        ));
+
+        User user = userRepo.findById(validToken.getUserId())
+                .orElseThrow(() -> new GlobalException(
+                        ErrorCode.USER_NOT_FOUND.getCode(),
+                        ErrorCode.USER_NOT_FOUND.getMessage()
+                ));
+
+        // Xoay vòng token: thu hồi token cũ và cấp token mới.
+        validateRefreshUserStatus(user);
+
+        RefreshToken refreshToken = refreshTokenService.rotateToken(tokenRequest.getToken(), user);
+        String accessToken = tokenService.generateAccessToken(user);
+        return buildAuthResponse(accessToken, refreshToken.getToken());
+    }
+
+    private void validateRefreshUserStatus(User user) {
+        if (!user.isAccountNonLocked()) {
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_LOCKED.getCode(),
+                    ErrorCode.ACCOUNT_LOCKED.getMessage()
+            );
+        }
+
+        if (!user.isEnabled()) {
+            throw new GlobalException(
+                    ErrorCode.ACCOUNT_DISABLED.getCode(),
+                    ErrorCode.ACCOUNT_DISABLED.getMessage()
+            );
+        }
+    }
+
+    private AuthResponse buildAuthResponse(String accessToken, String refreshToken) {
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    private AuthenticationResponse buildAuthenticationResponse(User user, String accessToken, String refreshToken) {
+        return AuthenticationResponse.builder()
+                .auth(buildAuthResponse(accessToken, refreshToken))
+                .currentUser(currentUserResponseMapper.toResponse(user))
+                .build();
+    }
+
+    private Category getCategoryByCategoryId(Long categoryId) {
+        if (categoryId == null || categoryId <= 0) {
+            throw new GlobalException(400, "Category is required");
+        }
+        Category category = categoryRepo.getCategoriesByCategoryId(categoryId).orElseThrow(() -> new GlobalException(400, "Category Not Found"));
+        return category;
+    }
+
+
+    private List<Skill> getSkillBySkillId(List<Long> selectedSkillIds) {
+
+        if (selectedSkillIds == null || selectedSkillIds.isEmpty()) {
+            throw new GlobalException(400, "selectedSkillIds is required");
+        }
+        List<Long> checkSkillIds = new ArrayList<>();
+
+        for (Long skillId : selectedSkillIds) {
+            if (skillId == null) continue;
+
+            if (skillId <= 0) {
+                continue;
+            }
+            if (!checkSkillIds.contains(skillId)) {
+                checkSkillIds.add(skillId);
+            }
+        }
+        if (checkSkillIds.isEmpty()) {
+            throw new GlobalException(400, "Skill is required");
+        }
+
+        List<Skill> skills = skillRepo.findAllById(checkSkillIds);
+
+        if (skills.size() != checkSkillIds.size()) {
+            throw new GlobalException(400, "Some skills not found");
+        }
+
+        return skills;
+    }
 
 }

@@ -4,15 +4,18 @@ import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.request.ClientProfileRequest;
 import com.example.AiTaster.dto.request.ClientRegisterRequest;
 import com.example.AiTaster.dto.response.ClientProfileResponse;
+import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
+import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
 import com.example.AiTaster.repository.UserRepo;
 
 import com.example.AiTaster.service.imp.IClientProfile;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,10 @@ public class ClientProfileService implements IClientProfile {
 
     @Autowired
      ClientProfileMapper clientProfileMapper;
+    @Autowired
+    CurrentUserResponseMapper currentUserResponseMapper;
+    @Autowired
+    CurrentUserService currentUserService;
 
 
 
@@ -64,17 +71,27 @@ public class ClientProfileService implements IClientProfile {
 
 
     @Override
-    public ClientProfileResponse update(Long id, ClientProfileRequest request) {
+    @Transactional
+    public CurrentUserResponse update(Long id, ClientProfileRequest request) {
 
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode()
+                        ,"Client profile "+ ErrorCode.NOT_FOUND.getMessage()));
+
+        ClientProfile currentClientProfile = getCurrentClientProfile();
+        checkClientOwner(profile, currentClientProfile);
+
+        User user = profile.getUser();
 
         clientProfileMapper.updateEntity(request, profile);
 
+        userMapper.updateUserFromClientProfileRequest(request, user); // dirty checking tự động lưu (@Transactional)
+
         ClientProfile updatedProfile = clientProfileRepo.save(profile);
 
-        return clientProfileMapper.toResponse(updatedProfile);
+        return currentUserResponseMapper.toResponse(updatedProfile.getUser());
     }
+
 
     @Override
     public void delete(Long clientProfileId) {
@@ -95,15 +112,26 @@ public class ClientProfileService implements IClientProfile {
         if (clientProfileRepo.existsByUser_UserId(savedUser.getUserId())) {
             throw new GlobalException("This user already has a client profile");
         }
-         // request mapper qua entity
+         // Mapper chuyển dữ liệu yêu cầu sang entity.
         ClientProfile profile = clientProfileMapper.registerToEntity(request);
 
-        // lưu user
+        // Gắn user vào profile.
         profile.setUser(savedUser);
 
-        // lưu database
+        // Lưu database.
         ClientProfile saved = clientProfileRepo.save(profile);
 
         return clientProfileMapper.toResponse(saved);
     }
+    public ClientProfile getCurrentClientProfile() {
+        User currentUser = currentUserService.getCurrentUser();
+        return clientProfileRepo.findByUser(currentUser)
+                .orElseThrow(() -> new GlobalException(403, "Only client can access this resource"));
+    }
+
+    private void checkClientOwner(ClientProfile profile, ClientProfile currentClientProfile) {
+        if (!profile.getClientProfileId().equals(currentClientProfile.getClientProfileId())) {
+            throw new GlobalException(403, "You are not owner of this client profile");
+        }
+    };
 }

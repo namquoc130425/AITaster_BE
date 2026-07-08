@@ -11,9 +11,9 @@ import org.mapstruct.*;
 public interface UserMapper {
     User toEntity(RegisterRequest request);
 
-   // User toEntity(UserRequest request);  // admin create user
+   // User toEntity(UserRequest request);  // Admin tạo user.
 
-    // chuyển dữ liệu từ  entity qua response
+    // Chuyển dữ liệu từ entity sang dữ liệu trả về.
     UserResponse toResponser(User user);
     AdminResponse toAdminResponse(User user);
 
@@ -32,9 +32,10 @@ public interface UserMapper {
     User adminRegisterToUser(AdminRegisterRequest request);
 
 
-    //update
-   // @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-   // User updateEntity (UserRequest request, @MappingTarget User user);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    User updateUserFromClientProfileRequest(ClientProfileRequest request, @MappingTarget User user);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    User updateUserFromExpertProfileRequest(ExpertProfileRequest request, @MappingTarget User user);
 
 }

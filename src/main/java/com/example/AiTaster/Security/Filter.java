@@ -39,22 +39,22 @@ TokenService tokenService;
 @Qualifier("handlerExceptionResolver")
 HandlerExceptionResolver handlerException;
 
-//AntPathMatcher check xem có match với publicEndpoints không
+// AntPathMatcher kiểm tra URL có khớp với publicEndpoints không.
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
     @Autowired
     private HandlerExceptionResolver handlerExceptionResolver;
 
-    // check xem có phải public API ko
+    // Kiểm tra có phải API công khai không.
     private boolean isPulicEndpoints(String url) {
         List<String> publicEndpoints = securityProperties.getPublicEndpoints();
 
         if(publicEndpoints == null || publicEndpoints.isEmpty()) {
             return false;
         }
-        return publicEndpoints.stream().allMatch(pattern -> antPathMatcher.match(pattern, url));
+        return publicEndpoints.stream().anyMatch(pattern -> antPathMatcher.match(pattern, url));
     }
 
-    // lấy token
+    // Lấy token từ yêu cầu.
     private String getTokenFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -67,20 +67,20 @@ HandlerExceptionResolver handlerException;
        String path = request.getRequestURI();
        String token = getTokenFromRequest(request);
 
-       // chekc public API
+       // Kiểm tra API công khai.
         if(isPulicEndpoints(path)) {
              filterChain.doFilter(request, response);
              return;
         }
         if(token != null) {
             try{
-                log.info(token);
                User user = tokenService.verifyAccessToken(token);
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }catch (GlobalException e){
-SecurityContextHolder.clearContext();
-handlerExceptionResolver.resolveException(request, response, null, e);
+            } catch (GlobalException e) {
+                SecurityContextHolder.clearContext();
+                handlerExceptionResolver.resolveException(request, response, null, e);
+                return;
             }
         }
         filterChain.doFilter(request, response);

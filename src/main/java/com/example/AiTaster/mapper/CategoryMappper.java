@@ -11,13 +11,13 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMappper {
-    //request -> entity
+    // Chuyển dữ liệu yêu cầu sang entity.
     Category  toEntity(CategoryRequest request);
 
-    //entity -> responce
+    // Chuyển entity sang dữ liệu trả về.
     CategoryResponse toResponse(Category category);
 
-    // Update existing entity
+    // Cập nhật entity hiện có.
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Category updateEntity( CategoryRequest categoryRequest,@MappingTarget Category category);
 

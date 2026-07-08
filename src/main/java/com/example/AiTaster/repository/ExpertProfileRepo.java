@@ -1,7 +1,9 @@
 package com.example.AiTaster.repository;
 
 
+import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.ExpertProfile;
+import com.example.AiTaster.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 
@@ -13,4 +15,6 @@ public interface ExpertProfileRepo extends JpaRepository<ExpertProfile, Long> {
     Optional<ExpertProfile> findByUser_UserId(Long userId);
 
     Optional<ExpertProfile> findByExpertProfileId(Long expertProfileId);
+
+    Optional<ExpertProfile> findByUser(User user);
 }

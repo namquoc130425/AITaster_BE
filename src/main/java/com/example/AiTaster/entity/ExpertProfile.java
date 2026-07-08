@@ -29,21 +29,22 @@ public class ExpertProfile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     User user;
 
-//    //biến này lấy khóa chính của ExpertProfile gán cho bên kia
-//    @OneToMany(mappedBy = "expertProfile"
-//            , cascade = CascadeType.ALL // xóa th cha thì th con xóa theo
-//            , orphanRemoval = true // xóa con khi nó bị gỡ khỏi danh sách của cha
-//    )
-//   // List<ExpertProfileSkill> expertProfileSkills;
-
     @Column(columnDefinition = "TEXT")
     String bio;
 
-    String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    Category category;
 
-    String skills;
+    @ManyToMany
+    @JoinTable(
+            name = "expert_profile_skill",
+            joinColumns = @JoinColumn(name = "expert_profile_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    List<Skill> skills;
 
-    String yearOfExperience;
+    Integer yearOfExperience;
 
     BigDecimal rating;
 
@@ -51,23 +52,15 @@ public class ExpertProfile {
 
     String portfolioUrl;
 
-    @CreationTimestamp // y chang cai dưới
+    @CreationTimestamp
     LocalDateTime createAt;
 
-    @UpdateTimestamp // thấy sự lợi hại của anh chưa
+    @UpdateTimestamp
     LocalDateTime updateAt;
 
-    // chạy trước khi INSERT dữ liệu mới vào database
-//    @PrePersist
-//    protected void onCreate() {
-        // thời gian tạo tài khoản/profile
-//        createAt = LocalDateTime.now();
+    @OneToOne(mappedBy = "expertProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    ExpertVerification verification;
 
-        // lần đầu tạo thì updateAt cũng chính là thời gian tạo
-//        updateAt = LocalDateTime.now();
-
-
-//    }
 
     @PrePersist
     public void prePersist(){
@@ -84,12 +77,11 @@ public class ExpertProfile {
         }
     }
 
-    // chạy trước khi UPDATE dữ liệu
-//    @PreUpdate
-//    protected void onUpdate() {
+    @OneToMany(mappedBy = "expertProfile")
+    List<ExpertService> expertServices;
 
-        // mỗi lần chỉnh sửa profile
-        // tự động cập nhật thời gian sửa gần nhất
-//        updateAt = LocalDateTime.now();
-//    }
+
+
+    @OneToMany(mappedBy = "expertProfile")
+    List<ExpertApplication> expertApplications;
 }

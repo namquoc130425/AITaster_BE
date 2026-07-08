@@ -1,7 +1,6 @@
 package com.example.AiTaster.dto.response;
 
 
-import com.example.AiTaster.dto.UserResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -16,9 +15,6 @@ import java.time.LocalDateTime;
 @Data
 public class ClientProfileResponse {
     Long clientProfileId;
-
-    UserResponse user;
-
     String companyName;
     String contactName;
     String description;
