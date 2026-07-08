@@ -19,9 +19,11 @@ public class MessageResponse {
 
     Long senderId;
     String senderName;
+    String senderAvatarUrl;
 
     Long receiverId;
     String receiverName;
+    String receiverAvatarUrl;
 
     String content;
 

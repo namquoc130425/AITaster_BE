@@ -36,8 +36,9 @@ public class InvitationService implements Iinvitation {
     private final InvitationRepo invitationRepo;
     private final InvitationMapper invitationMapper;
     private final NotificationService notificationService;
+    private final RealtimeService realtimeService;
     private final ProjectRepo projectRepo;
-    private final ProjectEscrowRepo projectEscrowRepo;
+    private final ExpertVerificationGuardService expertVerificationGuardService;
 
 
   // đẩy dữ liệu lên form cho client xem
@@ -83,6 +84,11 @@ public class InvitationService implements Iinvitation {
         Invitation saveInvitation = invitationRepo.save(invitation);
 
         notificationService.notifyInvitationSent(saveInvitation);
+        realtimeService.pushInvitationParticipants(
+                saveInvitation,
+                "INVITATION_CREATED",
+                "Invitation created"
+        );
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -94,6 +100,7 @@ public class InvitationService implements Iinvitation {
 
         return invitationRepo.findByExpertApplication_Jobpost_ClientProfileOrderByCreateAtDesc(clientProfile)
                 .stream()
+                .filter(invitation -> !Boolean.TRUE.equals(invitation.getClientDeleted()))
                 .map(invitationMapper::toResponseInvitation)
                 .toList();
 
@@ -105,6 +112,7 @@ public class InvitationService implements Iinvitation {
         pendingInvitationsExpire();
         return invitationRepo.findByExpertApplication_ExpertProfileOrderByCreateAtDesc(expertProfile)
                 .stream()
+                .filter(invitation -> !Boolean.TRUE.equals(invitation.getExpertDeleted()))
                 .map(invitationMapper :: toResponseInvitation).toList();
 
     }
@@ -112,12 +120,13 @@ public class InvitationService implements Iinvitation {
     @Override
     public InvitationResponse getInvitationDetail(Long invitationId) {
         Invitation invitation = getInvitationWithDetail(invitationId);
+        refreshInvitationTimeoutStatus(invitation); // Check timeout bằng giờ server trước khi trả về FE.
         expireIfNeeded(invitation);
         if(isCurrentInvitedExpert(invitation)) {
             return invitationMapper.toResponseInvitation(invitation);
         }
-        ClientProfile clientProfile = getCurrentClientProfile();
-        checkInvitationOwnerClient(invitation,clientProfile);
+        ClientProfile clientProfile = getCurrentClientProfile();  // Nếu không phải expert thì kiểm tra client.
+        checkInvitationOwnerClient(invitation,clientProfile);   // Chỉ client chủ job được xem.
         return invitationMapper.toResponseInvitation(invitation);
     }
     @Transactional
@@ -130,6 +139,7 @@ public class InvitationService implements Iinvitation {
 
         ExpertProfile expertProfile = getCurrentExpertProfile();
 
+        ensureExpertVerified(expertProfile);
         checkInvitedExpert(invitation,expertProfile);
         ensurePendingAndNotExpired(invitation);
 
@@ -146,12 +156,33 @@ public class InvitationService implements Iinvitation {
         jobPostRepo.updateJobPostStatus(jobPost.getJobPostId(), JobpostStatus.CLOSED);
 
         notificationService.notifyInvitationAccepted(saveInvitation);
-//     //tạo project
-//     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
-//     // tạo project
-//     createProjectEscrow(newproject);
+        realtimeService.pushInvitationParticipants(
+                saveInvitation,
+                "INVITATION_ACCEPTED",
+                "Invitation accepted"
+        );
 
         return invitationMapper.toResponseInvitation(saveInvitation);
+    }
+
+    @Transactional
+    @Override
+    public void deleteInvitation(Long invitationId) {
+        Invitation invitation = getInvitationWithDetail(invitationId);
+
+        expireIfNeeded(invitation);
+
+        if (InvitationStatus.PENDING.equals(invitation.getInvitationStatus())) {
+            throw new GlobalException(400, "Pending invitation cannot be deleted");
+        }
+
+        markInvitationDeletedForCurrentUser(invitation);
+        Invitation savedInvitation = invitationRepo.save(invitation);
+        realtimeService.pushInvitationParticipants(
+                savedInvitation,
+                "INVITATION_DELETED",
+                "Invitation deleted"
+        );
     }
 
     @Override
@@ -166,6 +197,11 @@ public class InvitationService implements Iinvitation {
         Invitation saveInvitation = invitationRepo.save(invitation);
 
         notificationService.notifyInvitationRejected(saveInvitation);
+        realtimeService.pushInvitationParticipants(
+                saveInvitation,
+                "INVITATION_REJECTED",
+                "Invitation rejected"
+        );
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -182,12 +218,6 @@ public class InvitationService implements Iinvitation {
         });
         invitationRepo.saveAll(expiredInvitations);
     }
-
-
-
-
-
-
 
     // Nếu invitation đang PENDING nhưng quá hạn thì đổi sang EXPIRED.
     //kiểm tra thời gian hết hạn của lời mời có nằm trước thời điểm hiện tại hay không
@@ -281,6 +311,7 @@ public class InvitationService implements Iinvitation {
         User user = currentUserService.getCurrentUser();
         return expertProfileRepo.findByUser(user).map(expertProfile -> invitation.getExpertApplication().getExpertProfile().getExpertProfileId().equals(expertProfile.getExpertProfileId())).orElse(false);
     }
+
     // kiểm tra có phải expert này là chủ lời mời không
     private void checkInvitedExpert(Invitation invitation,ExpertProfile expertProfile) {
         Long invitationExpertId = invitation.getExpertApplication().getExpertProfile().getExpertProfileId();
@@ -291,13 +322,63 @@ public class InvitationService implements Iinvitation {
 
     }
 
+    private void markInvitationDeletedForCurrentUser(Invitation invitation) {
+        User user = currentUserService.getCurrentUser();
+
+        boolean isOwnerClient = clientProfileRepo.findByUser(user)
+                .map(clientProfile -> invitation.getExpertApplication()
+                        .getJobpost()
+                        .getClientProfile()
+                        .getClientProfileId()
+                        .equals(clientProfile.getClientProfileId()))
+                .orElse(false);
+
+        boolean isInvitedExpert = expertProfileRepo.findByUser(user)
+                .map(expertProfile -> invitation.getExpertApplication()
+                        .getExpertProfile()
+                        .getExpertProfileId()
+                        .equals(expertProfile.getExpertProfileId()))
+                .orElse(false);
+
+        if (!isOwnerClient && !isInvitedExpert) {
+            throw new GlobalException(403, "You are not allowed to delete this invitation");
+        }
+
+        if (isOwnerClient) {
+            invitation.setClientDeleted(true);
+        }
+
+        if (isInvitedExpert) {
+            invitation.setExpertDeleted(true);
+        }
+    }
+
     private Invitation getInvitationWithDetail(Long invitationId) {
         return invitationRepo.findWithDetailByInvitationId(invitationId)
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
     }
-//
-//
-//
-//
+
+    private void refreshInvitationTimeoutStatus(Invitation invitation) {
+        LocalDateTime now = LocalDateTime.now();
+        if (InvitationStatus.PENDING.equals(invitation.getInvitationStatus())
+                && invitation.getExpiresAt().isBefore(now)) {
+            invitation.setInvitationStatus(InvitationStatus.EXPIRED); // Expert không phản hồi đúng hạn.
+            invitation.setRespondedAt(null); // Hết hạn PENDING thì không có thời điểm phản hồi.
+            invitationRepo.save(invitation); // Lưu status mới vào DB.
+            return;
+        }
+        if (InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())
+                && invitation.getRespondedAt() != null
+                && invitation.getRespondedAt().plusHours(24).isBefore(now)
+                && !projectRepo.existsByInvitation(invitation)) {
+            invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED); // Client không thanh toán đúng hạn.
+            invitationRepo.save(invitation); // Lưu status mới vào DB.
+        }
+    }
+
+    // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho nhận dự án từ Client.
+    private void ensureExpertVerified(ExpertProfile expertProfile) {
+        expertVerificationGuardService.ensureVerified(expertProfile);
+    }
 
 }

@@ -44,7 +44,7 @@ public class DataSeeder implements CommandLineRunner { //CommandLineRunner
     }
 
     private void seedCreateAdminUser() {
-        // implement logic to create an admin user if not exists
+        // Tạo admin mặc định nếu chưa tồn tại.
         Optional<User> existingAdmin = userRepo.findByUsername("admin");
         if (existingAdmin.isPresent()) {
             userWalletService.createWalletIfAbsent(existingAdmin.get());

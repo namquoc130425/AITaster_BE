@@ -59,7 +59,7 @@ public class ProposalPurchaseWebhookHandler  implements SepayPaymentHandler {
 
         BigDecimal amount = payment.getGrossAmount();
 
-        // Tinh phi admin rieng.
+        // Tính phí sàn trước khi cộng tiền cho expert.
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
 
         Long expertUserId = proposal.getExpertApplication()
@@ -67,7 +67,7 @@ public class ProposalPurchaseWebhookHandler  implements SepayPaymentHandler {
                 .getUser()
                 .getUserId();
 
-        // SePay thanh toan tu ngan hang, nen khong tru vi client.
+        // Tiền SePay đến từ chuyển khoản ngân hàng nên không trừ ví client.
         PaymentTransaction successTransaction = moneyMovementService.moneyTransactionManagement(
                 null,
                 expertUserId,

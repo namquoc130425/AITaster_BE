@@ -8,7 +8,7 @@ import java.util.List;
 public interface IExpertApplication {
     ExpertApplicationResponse applyJobPost(Long jobPostId, ExpertApplicationRequest request);
 
-//detail
+// Xem chi tiết.
     List<ExpertApplicationResponse> getApplicationsByJobPost(Long jobPostId);
     // Expert xem danh sách application của chính mình.
      List<ExpertApplicationResponse> getMyApplications();

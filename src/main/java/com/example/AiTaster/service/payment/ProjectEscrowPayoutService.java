@@ -4,7 +4,10 @@ import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
+import com.example.AiTaster.service.InvoiceService;
 import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.NotificationService;
+import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 
 @Service
@@ -20,7 +25,9 @@ public class ProjectEscrowPayoutService {
     private final ProjectEscrowRepo projectEscrowRepo;
     private final MoneyMovementService moneyMovementService;
     private final ProjectRepo projectRepo;
-
+    private final RealtimeService realtimeService;
+    private final NotificationService notificationService;
+    private final InvoiceService invoiceService;
 
 
     @Transactional
@@ -39,7 +46,7 @@ public class ProjectEscrowPayoutService {
 
         User expertUser = project.getInvitation().getExpertApplication().getExpertProfile().getUser();
 
-        // calculateFee() se tu tao transaction PLATFORM_FEE cho admin,
+        // calculateFee() tự tạo transaction PLATFORM_FEE cho admin.
         BigDecimal expertAmount = moneyMovementService.calculateFee(heldAmount);
         BigDecimal platformFee = heldAmount.subtract(expertAmount);
 
@@ -68,8 +75,30 @@ public class ProjectEscrowPayoutService {
         project.setIsActive(false);
 
         projectRepo.save(project);
+        //tạo hóa đơn
+        ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
+        invoiceService.createForCompletedProject(project.getProjectId());
+        realtimeService.pushUserWalletEvent(
+                expertUser,
+                "PROJECT_ESCROW_RELEASED",
+                null,
+                "Project escrow released: " + formatMoney(expertAmount)
+        );
+        realtimeService.pushProjectParticipants(
+                project,
+                "PROJECT_COMPLETED",
+                "Project completed"
+        );
+        notificationService.notify(
+                expertUser,
+                NotificationType.ESCROW,
+                ReferenceType.PROJECT,
+                project.getProjectId(),
+                "Project payment received",
+                "You received " + formatMoney(expertAmount) + " for project: " + project.getTitle()
+        );
 
-        return projectEscrowRepo.save(escrow);
+        return savedEscrow;
     }
     @Transactional
     public ProjectEscrow refundToClient(Project project) {
@@ -87,8 +116,8 @@ public class ProjectEscrowPayoutService {
 
         User clientUser = project.getInvitation().getExpertApplication().getJobpost().getClientProfile().getUser();
 
-        // Refund khong tinh phi:
-        // escrow tra lai full tien cho client.
+        // Hoàn tiền không tính phí:
+        // escrow trả lại toàn bộ tiền cho client.
         moneyMovementService.moneyTransactionManagement(
                 escrow.getProjectEscrowId(),
                 clientUser.getUserId(),
@@ -108,8 +137,26 @@ public class ProjectEscrowPayoutService {
 
         projectRepo.save(project);
 
-        return projectEscrowRepo.save(escrow);
+        ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
+        realtimeService.pushUserWalletEvent(
+                clientUser,
+                "PROJECT_ESCROW_REFUNDED",
+                null,
+                "Project escrow refunded"
+        );
+        realtimeService.pushProjectParticipants(
+                project,
+                "PROJECT_CANCELED",
+                "Project canceled"
+        );
+
+        return savedEscrow;
     }
 
 
+    private String formatMoney(BigDecimal amount) {
+        BigDecimal safeAmount = amount != null ? amount : BigDecimal.ZERO;
+        return NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"))
+                .format(safeAmount) + " VND";
+    }
 }

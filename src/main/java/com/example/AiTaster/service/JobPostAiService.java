@@ -42,7 +42,8 @@ public class JobPostAiService {
 
         User currentUser = currentUserService.getCurrentUser();
 
-        ClientProfile clientProfile = clientProfileRepo.findByUser_UserId(currentUser.getUserId()).orElseThrow(() -> new GlobalException("Client Profile not found"));
+        ClientProfile clientProfile = clientProfileRepo.findByUser_UserId(currentUser.getUserId())
+                .orElseThrow(() -> new GlobalException(403, "Only client can create job posts"));
         //lấy selected từ fe
         List<Skill> selectedSkills = getSelectedSkills(request.getSelectedSkillIds());
         //build search text
@@ -82,10 +83,10 @@ public class JobPostAiService {
     }
 
 
-    // hàm lấy selected skill User chọn từ request
-    // fe trả id về thì mình cầm id đó xuống db lấy lên list<skill>
+    // Hàm lấy skill user chọn từ dữ liệu yêu cầu.
+    // FE trả id về thì mình dùng id đó xuống DB lấy list skill.
     private List<Skill> getSelectedSkills(List<Long> selectedSkillIds) {
-        // kiểm tra client có nhập không -> không nhập thì trả về list rỗng
+        // Kiểm tra client có nhập không, nếu không nhập thì trả về list rỗng.
         if (selectedSkillIds == null || selectedSkillIds.isEmpty()) {
             return List.of();
         }
@@ -98,7 +99,7 @@ public class JobPostAiService {
             if (skillId == null) {
                 continue;
             }
-            //Trùng thì bo qua
+            // Trùng thì bỏ qua.
             if (!validIds.contains(skillId)) {
                 validIds.add(skillId);
             }
@@ -111,8 +112,8 @@ public class JobPostAiService {
 
         List<Skill> skills = skillRepo.findAllById(validIds);
 
-        //Nếu số Skill lấy ra khác số ID hợp lệ,
-        //nghĩa là có ID không tồn tại trong database.
+        // Nếu số skill lấy ra khác số ID hợp lệ,
+        // nghĩa là có ID không tồn tại trong database.
 
         if (skills.size() != validIds.size()) {
             throw new GlobalException(400, "Some selected skills do not exist");
@@ -122,9 +123,8 @@ public class JobPostAiService {
 
     }
 
-    //buildJobPostText
-    // hàm này dùng để build text (gom text) của jobPostRequest để search Qdrant
-    // bien dũ liệu jobpost thành 1 đoạn test
+    // Hàm này gom text của JobPostAiRequest để tìm kiếm Qdrant.
+    // Biến dữ liệu job post thành một đoạn text.
     private String buildJobPostText(JobPostAiRequest jobPostAiRequest, List<Skill> selectedSkills) {
         String textSelectedSkills = buildSelectedSkillText(selectedSkills);
 
@@ -147,14 +147,13 @@ public class JobPostAiService {
         );
     }
 
-    //buildSelectedSkillText
-    // hàm này để biến List<skill> user chọn thành 1 chuổi text
+    // Hàm này biến List<Skill> user chọn thành một chuỗi text.
     private String buildSelectedSkillText(List<Skill> selectedSkills) {
         if (selectedSkills == null || selectedSkills.isEmpty()) {
             return "";
         }
 
-        //StringBuilder nối chuỗi hiệu
+        // StringBuilder nối chuỗi hiệu quả hơn.
         StringBuilder builder = new StringBuilder();
 
         // Duyệt từng Skill user chọn.
@@ -181,8 +180,8 @@ public class JobPostAiService {
     }
 
 
-    //hàm này giới hạn số lượng limit đưa cho Ai
-    // Qdrant trả về nhiều skill tầm 12-30 thì limt sẽ giới hạn số lần
+    // Hàm này giới hạn số lượng skill đưa cho AI.
+    // Qdrant có thể trả nhiều skill nên cần giới hạn lại.
     private List<VectorSkillResult> limitResult(List<VectorSkillResult> vectorSkillResult, int limit) {
 
         // result là danh sách candidate cuối cùng đưa cho AI.
@@ -290,18 +289,18 @@ public class JobPostAiService {
         return skillRepo.findAllById(checkskill);
     }
 
-    // Check nội dung user nhập có từ cấm / prompt injection không
+    // Kiểm tra nội dung user nhập có từ cấm hoặc prompt injection không.
     private void validateUserInputContent(JobPostAiRequest request) {
 
-        // Nếu request null thì chặn trước
+        // Nếu dữ liệu yêu cầu null thì chặn trước.
         if (request == null) {
             throw new GlobalException(400, "Request is required");
         }
 
-        // Check title
+        // Kiểm tra title.
         contentManagerService.validateKeywordInput(request.getTitle());
 
-        // Check mô tả yêu cầu
+        // Kiểm tra mô tả yêu cầu.
         contentManagerService.validateKeywordInput(request.getRequirementDescription());
 
         // Check mục tiêu kinh doanh

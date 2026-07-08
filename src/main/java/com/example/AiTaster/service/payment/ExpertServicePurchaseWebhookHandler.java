@@ -7,6 +7,7 @@ import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
+import com.example.AiTaster.service.InvoiceService;
 import com.example.AiTaster.service.MoneyMovementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,8 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
     private final ExpertServiceRepo expertServiceRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final MoneyMovementService moneyMovementService;
+    private final InvoiceService invoiceService;
+    private final ExpertServicePurchaseEventService purchaseEventService;
 
 
     @Override
@@ -38,18 +41,16 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
 
         BigDecimal amount = payment.getGrossAmount();
 
-        // Tinh phi admin rieng.
-        // calculateFee() tu tao transaction PLATFORM_FEE cho admin,
-        // va tra ve so tien net expert nhan.
+
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
 
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
-        // SePay la tien tu ngan hang, nen khong tru vi client.
-        // deductibleAmount = 0
-        // receivedAmount = tien expert nhan sau khi tru phi.
+        // Tiền SePay đến từ chuyển khoản ngân hàng nên không trừ ví client.
+        // Số tiền cần trừ ví = 0.
+        // Số tiền nhận = số tiền net expert nhận sau phí sàn.
         PaymentTransaction successTransaction = moneyMovementService.moneyTransactionManagement(
-                null,
+                payment.getSenderId(),          // sepay thu tiền ben ngoài hệ thống , nên deductibleAmount = 0, và Van truyen senderId de giu lai client mua service,
                 expertUserId,
                 TransactionType.EXPERT_SERVICE_PURCHASE,
                 expertService.getServiceId(),
@@ -60,11 +61,22 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
                 payment.getPaymentTransactionId()
         );
 
+
         successTransaction.setProviderTransactionCode(providerTransactionCode);
         successTransaction.setProviderContent(providerContent);
         successTransaction.setPaidAt(paidAt);
 
         paymentTransactionRepo.save(successTransaction);
+        invoiceService.createForPaidAiService(successTransaction.getPaymentTransactionId());
+        purchaseEventService.publishAfterPaymentSuccess(
+                payment.getSenderId(),
+                expertUserId,
+                expertService.getServiceId(),
+                expertService.getServiceName(),
+                successTransaction.getSourceWalletId(),
+                successTransaction.getTargetWalletId(),
+                balanceAmount
+        );
     }
 
 

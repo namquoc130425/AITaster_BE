@@ -74,6 +74,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/webhooks/sepay", "/api/webhooks/sepay/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/category", "/api/category/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/skill", "/api/skill/**").permitAll()
                         .requestMatchers(ADMIN).hasRole("ADMIN")
                         .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll() // chuyển qua mảng tring
                         .anyRequest().authenticated()

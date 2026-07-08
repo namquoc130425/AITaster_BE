@@ -21,72 +21,36 @@ public class PendingPaymentService {
     private final PaymentTransactionRepo paymentTransactionRepo;
 
     @Transactional
-    public PaymentTransaction createPendingPaymentTransaction(Long senderId,
-                                                              Long receiverId,
-                                                              Long sourceWalletId,
-                                                              Long targetWalletId,
-                                                              Long projectEscrowId,
-                                                              Long expertServiceId,
-                                                              TransactionType transactionType,
-                                                              Long referenceId,
-                                                              PaymentReferenceType referenceType,
-                                                              BigDecimal amount,
-                                                              String description,
-                                                              LocalDateTime expiredAt) {
-                validatePendingAmount(amount);
-                //tìm paymentTransaction có pending cũ,method SEPAY v.v.v.
+    public PaymentTransaction createPendingPaymentTransaction(
+            Long senderId,
+            Long receiverId,
+            Long sourceWalletId,
+            Long targetWalletId,
+            Long projectEscrowId,
+            Long expertServiceId,
+            TransactionType transactionType,
+            Long referenceId,
+            PaymentReferenceType referenceType,
+            BigDecimal amount,
+            String description,
+            LocalDateTime expiredAt
+    ) {
+        validatePendingAmount(amount);
 
-                return paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
-                        referenceType,
-                        referenceId,
-                        transactionType,
-                        senderId,
-                        PaymentStatus.PENDING,
-                        PaymentMethod.SEPAY
-                ).map(existingPayment  -> { // nếu paymentTransaction có pending cũ == amount cu thì trả về Pendding cũ
-                    if (existingPayment.getExpiredAt() != null
-                            && existingPayment.getExpiredAt().isBefore(LocalDateTime.now())) { // nếu hết time thì set expired và tạo thanh toán, transaction mới
-                        existingPayment.setPaymentStatus(PaymentStatus.EXPIRED);
-                        paymentTransactionRepo.save(existingPayment);
-                        return createNewPendingPayment(
-                                senderId,
-                                receiverId,
-                                sourceWalletId,
-                                targetWalletId,
-                                projectEscrowId,
-                                expertServiceId,
-                                transactionType,
-                                referenceId,
-                                referenceType,
-                                amount,
-                                description,
-                                expiredAt
-                        );
-                    }
-                    if (existingPayment.getGrossAmount().compareTo(amount) == 0) {  // Pending cũ chưa hết hạn và cùng amount thì dùng lại.
-                        return existingPayment;
-                    }
+        return paymentTransactionRepo.findPendingTransactionByReferenceAndMethod( // tìm payment Pendding cũ : có 1 số thông tin v..v
+                referenceType,
+                referenceId,
+                transactionType,
+                senderId,
+                PaymentStatus.PENDING,
+                PaymentMethod.SEPAY
+        ).map(existingPayment -> {     // nếu tìm thấy kiểm tra payment pendding đó còn hạn hay không / không set status lưu lại
+            if (existingPayment.getExpiredAt() != null
+                    && existingPayment.getExpiredAt().isBefore(LocalDateTime.now())) {
+                existingPayment.setPaymentStatus(PaymentStatus.EXPIRED);
+                paymentTransactionRepo.save(existingPayment);
 
-                    existingPayment.setPaymentStatus(PaymentStatus.EXPIRED);
-                    paymentTransactionRepo.save(existingPayment);
-
-
-                    return createNewPendingPayment(
-                            senderId,
-                            receiverId,
-                            sourceWalletId,
-                            targetWalletId,
-                            projectEscrowId,
-                            expertServiceId,
-                            transactionType,
-                            referenceId,
-                            referenceType,
-                            amount,
-                            description,
-                            expiredAt
-
-                    );
-                }).orElseGet(() -> createNewPendingPayment( // tạo pendding mới và trả về pendding mới
+                return createNewPendingPayment( //Link thanh toán cũ hết hạn rồi, không dùng lại nữa. sau đó tạo payment transaction mới
                         senderId,
                         receiverId,
                         sourceWalletId,
@@ -99,9 +63,44 @@ public class PendingPaymentService {
                         amount,
                         description,
                         expiredAt
-                ));
+                );
+            }
 
+            if (existingPayment.getGrossAmount().compareTo(amount) == 0) { // th2 : payment cũng còn hạn và cùng giá tiền -> trả payment cũ
+                return existingPayment;
+            }                                                              //th3 : payment còn hạn nhưng khác giá tiền -> set status cũ là EXPIRED và tạo   payment mới
 
+            existingPayment.setPaymentStatus(PaymentStatus.EXPIRED);
+            paymentTransactionRepo.save(existingPayment);
+
+            return createNewPendingPayment(
+                    senderId,
+                    receiverId,
+                    sourceWalletId,
+                    targetWalletId,
+                    projectEscrowId,
+                    expertServiceId,
+                    transactionType,
+                    referenceId,
+                    referenceType,
+                    amount,
+                    description,
+                    expiredAt
+            );
+        }).orElseGet(() -> createNewPendingPayment( // Không có payment PENDING nào phù hợp => tạo payment mới
+                senderId,
+                receiverId,
+                sourceWalletId,
+                targetWalletId,
+                projectEscrowId,
+                expertServiceId,
+                transactionType,
+                referenceId,
+                referenceType,
+                amount,
+                description,
+                expiredAt
+        ));
     }
 
     private PaymentTransaction createNewPendingPayment(
@@ -179,5 +178,4 @@ public class PendingPaymentService {
             throw new GlobalException(400, "Amount must be greater than zero");
         }
     }
-
 }

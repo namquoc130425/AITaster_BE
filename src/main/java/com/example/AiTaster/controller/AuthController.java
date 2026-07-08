@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-// dùng swagger phải co hai tk nay
+// Dùng Swagger cần cấu hình security requirement.
 @CrossOrigin("*")
 @SecurityRequirement(name = "api")
-// hàm chứa API  về Authentication
+// Controller chứa API về authentication.
 public class AuthController {
     @Autowired
     AuthenticationService authenticationService;
-    // tạo API register
+    // API đăng ký client.
     @PostMapping("/register/client")
     public ResponseEntity<APIResponse<ClientProfileResponse>> register (@RequestBody @Valid ClientRegisterRequest request ) {
              ClientProfileResponse response = authenticationService.registerClient(request);
@@ -46,7 +46,7 @@ public class AuthController {
                 (APIResponse.response(201,"Register Expert sucessfully",response)
                 );
     }
-    // API login
+    // API đăng nhập.
     @PostMapping("login")
     public ResponseEntity<APIResponse<AuthenticationResponse>> login (@RequestBody @Valid LoginRequest request) {
         AuthenticationResponse response = authenticationService.login(request);

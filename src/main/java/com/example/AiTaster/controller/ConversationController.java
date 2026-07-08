@@ -61,4 +61,17 @@ public class ConversationController {
                 )
         );
     }
+
+    @GetMapping("/projects/{projectId}")
+    public ResponseEntity<APIResponse<ConversationResponse>> getProjectConversation(
+            @PathVariable Long projectId
+    ) {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get project conversation successfully",
+                        conversationService.getOrCreateProjectConversation(projectId)
+                )
+        );
+    }
 }

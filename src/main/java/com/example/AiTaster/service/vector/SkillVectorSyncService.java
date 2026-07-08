@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-// đẩy toàn bộ skill đang có trong db lên Qdrant
+// lấy skill từ DB → biến thành text → tạo embedding vector → đẩy lên Qdrant.
 public class SkillVectorSyncService {
     private final SkillRepo skillRepo;
     private final EmbeddingService embeddingService;
@@ -22,9 +22,10 @@ public class SkillVectorSyncService {
     private final RestClient qdrantRestClient;
     private final QdrantProperties qdrantProperties;
 
-
-// hàm đẩy toàn bộ skill trong db qua Qdrant
-// đẩy list thì vòng lặp rồi thêm vào list rỗng bên ngoài rồi lại add rồi trả về size()
+// tạo skill thành text -> từ text mới embeddingService thành vector -> build point : bao gồm id ,vector ,payloads
+    //-> up tất cả point lên Qdran -> Qdran trả về số lượng (size) point đã upsert thành công.
+// Hàm đẩy toàn bộ skill trong DB qua Qdrant.
+// Duyệt danh sách skill, build point rồi trả về số point đã đẩy.
 @Transactional(readOnly = true)
     public int syncSkillVector() {
         qdrantCollectionService.checkSkillCollectionExits();
@@ -44,8 +45,8 @@ public class SkillVectorSyncService {
     }
 
 
-    // upseart 1 skill lên Qdrant
-    // dùng khi admin tạo mới skill hoặc sửa skill
+    // Upsert một skill lên Qdrant.
+    // Dùng khi admin tạo mới hoặc sửa skill.
     public void upsertOneSkill(Skill skill){
         qdrantCollectionService.checkSkillCollectionExits();
          Map<String, Object> points = buildQdrantPoint(skill);
@@ -55,12 +56,12 @@ public class SkillVectorSyncService {
          upsertPointsToQdranr(skills);
 
     }
-
-   // chuyển skill thành Qdrant point
-   // map(string) là kiểu dữ liệu key-value giống json
-   //1 skill sau khi biến thành vertor sẽ là 1 point
+   // đóng gói thành Qdrant point
+   // Chuyển skill thành Qdrant point.
+   // Map là kiểu dữ liệu key-value giống JSON.
+   // Một skill sau khi biến thành vector sẽ là một point.
     private Map<String,Object> buildQdrantPoint(Skill skills){
-        // b1 gom text
+        // Bước 1: gom text.
         String skillname = skills.getSkillName() == null ? "" :skills.getSkillName();
 
         String textSkill = buildSkillText(skills);
@@ -79,12 +80,12 @@ public class SkillVectorSyncService {
     }
 
 
-    // gữi danh sách point lêm Qdrant
-    // List<map<String> là danh sách chứa nhiều map
-    // mỗi map là 1 points
+    // Gửi danh sách point lên Qdrant.
+    // List<Map<String, Object>> là danh sách chứa nhiều map.
+    // Mỗi map là một point.
     private String upsertPointsToQdranr(List<Map<String,Object>> points) {
         String  collectionName = qdrantProperties.getCollection().getSkills();
-      Map<String,Object> map = Map.of("points",points); // tạo json point :
+      Map<String,Object> map = Map.of("points",points); // Tạo JSON point.
                                                                             // ......
                                                                             // ...
 
@@ -100,7 +101,7 @@ public class SkillVectorSyncService {
 
 
 
-// hàm này để gom thông tin để tạo thành đoạn text từ test mới thành vector
+// Hàm này gom thông tin thành đoạn text
     private String buildSkillText(Skill skill) {
     String skillname = skill.getSkillName() == null ? "" : skill.getSkillName();
     String description = skill.getDescription() == null ? "" : skill.getDescription();

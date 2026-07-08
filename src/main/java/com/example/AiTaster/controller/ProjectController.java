@@ -30,4 +30,15 @@ public class ProjectController {
                 )
         );
     }
+
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<APIResponse<Void>> deleteProject(
+            @PathVariable Long projectId
+    ) {
+        projectService.deleteProject(projectId);
+
+        return ResponseEntity.ok(
+                APIResponse.response(200, "Delete project successfully", null)
+        );
+    }
 }

@@ -11,9 +11,11 @@ import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
+import com.example.AiTaster.service.ConversationService;
 import com.example.AiTaster.service.MoneyMovementService;
 import com.example.AiTaster.service.PlatformFeeCalculator;
 import com.example.AiTaster.service.ProjectMilestoneService;
+import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +31,8 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
     private final ProjectMilestoneService projectMilestoneService   ;
     private final PlatformFeeCalculator platformFeeCalculator;
     private  final MoneyMovementService moneyMovementService;
+    private final ConversationService conversationService;
+    private final RealtimeService realtimeService;
     @Override
     public boolean supports(PaymentTransaction payment) {
         return PaymentMethod.SEPAY.equals(payment.getPaymentMethod())
@@ -50,6 +54,10 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
         ProjectEscrow newProjectEscrow = createProjectEscrow(newProject);
 
         projectMilestoneService.createMilestoneForProject(newProject);
+        conversationService.attachProject(
+                invitation.getExpertApplication().getApplicationId(),
+                newProject.getProjectId()
+        );
 
         PaymentTransaction successTransaction  =   moneyMovementService.moneyTransactionManagement(
                 null,
@@ -83,6 +91,11 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
         projectEscrowRepo.save(updatedEscrow);
 
         projectRepo.save(newProject);
+        realtimeService.pushProjectParticipants(
+                newProject,
+                "PROJECT_CREATED",
+                "Project created"
+        );
     }
     private ProjectEscrow createProjectEscrow(Project project) {
         if (projectEscrowRepo.existsByProjectId(project.getProjectId())) {

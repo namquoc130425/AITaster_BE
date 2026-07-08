@@ -21,6 +21,18 @@ public class UserWalletResponse {
 
     UserWalletStatus status;
 
+    Boolean requestWithdrawal;
+
+    BigDecimal amountRequestWithdrawal;
+
+    String username;
+
+    String fullName;
+
+    String email;
+
+    UserBankAccountResponse bankAccount;
+
     LocalDateTime createAt;
 
     LocalDateTime updateAt;

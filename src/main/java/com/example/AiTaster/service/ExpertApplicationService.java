@@ -35,11 +35,13 @@ private final ProposalUnlockRepo proposalUnlockRepo;
 private final JobPostRepo jobPostRepo;
 private final ProposalPurchaseService proposalPurchaseService;
 private final NotificationService notificationService;
+private final ExpertVerificationGuardService expertVerificationGuardService;
 
     @Override
     public ExpertApplicationResponse applyJobPost(Long jobPostId, ExpertApplicationRequest request) {
         validateApplicationInput(request);
         ExpertProfile expertProfile = getCurrentExpertProfile();
+        ensureExpertVerified(expertProfile);
         JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId)
                 .orElseThrow(() -> new GlobalException("JobPost not found"));
 
@@ -139,7 +141,7 @@ private final NotificationService notificationService;
     }
 
 
-//map probosal cho client
+// Map proposal cho client.
 private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposal ,ClientProfile clientProfile){
     if(expertProposal == null ||Boolean.TRUE.equals(expertProposal.getIsDeleted())) {
         return null;
@@ -150,7 +152,7 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
 }
 
 
-   //Map probosal có detail cho chính chủ Expert
+   // Map proposal có detail cho đúng expert sở hữu.
    private ExpertProposalResponse mapProposalForExpert(ExpertProposal expertProposal) {
      if(expertProposal == null ||Boolean.TRUE.equals(expertProposal.getIsDeleted())) {
            return null;
@@ -180,7 +182,7 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
         return clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Only client can use this API"));
     }
 
-    // Check client hiện tại có phải owner của JobPost không.
+    // Kiểm tra client hiện tại có phải owner của JobPost không.
     // Client chỉ được xem applications/unlock proposal của job do mình tạo.
     private void checkJobPostOwner(JobPost jobPost , ClientProfile clientProfile) {
         if(!jobPost.getClientProfile().getClientProfileId().equals(clientProfile.getClientProfileId())) {
@@ -188,7 +190,7 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
         }
     }
 
-    // Check user đang đăng nhập có phải expert owner của application không.
+    // Kiểm tra user đang đăng nhập có phải expert sở hữu application không.
    public Boolean isCurrnetExpertOwner(ExpertApplication expertApplication) {
        User user = currentUserService.getCurrentUser();
 
@@ -197,7 +199,7 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
        ).orElse(false);
    }
 
-    // Validate input của application: timeline, shortMessage và proposal optional.
+    // Kiểm tra input của application: timeline, shortMessage và proposal không bắt buộc.
     private void validateApplicationInput(ExpertApplicationRequest request) {
         if (request == null) {
             throw new GlobalException(400, "Request is required");
@@ -229,5 +231,9 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
         contentManagerService.validateKeywordInput(request.getDetailContent());
     }
 
+    // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho dùng nghiệp vụ kinh doanh.
+    private void ensureExpertVerified(ExpertProfile expertProfile) {
+        expertVerificationGuardService.ensureVerified(expertProfile);
+    }
 
 }

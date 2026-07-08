@@ -27,6 +27,16 @@ public interface ConversationRepo extends JpaRepository<Conversation, Long> {
     @EntityGraph(attributePaths = {
             "expertApplication",
             "expertApplication.jobpost",
+            "expertApplication.jobpost.clientProfile",
+            "expertApplication.expertProfile",
+            "client",
+            "expert"
+    })
+    Optional<Conversation> findWithDetailByProjectId(Long projectId);
+
+    @EntityGraph(attributePaths = {
+            "expertApplication",
+            "expertApplication.jobpost",
             "client",
             "expert"
     })

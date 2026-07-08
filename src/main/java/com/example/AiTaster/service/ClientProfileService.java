@@ -112,13 +112,13 @@ public class ClientProfileService implements IClientProfile {
         if (clientProfileRepo.existsByUser_UserId(savedUser.getUserId())) {
             throw new GlobalException("This user already has a client profile");
         }
-         // request mapper qua entity
+         // Mapper chuyển dữ liệu yêu cầu sang entity.
         ClientProfile profile = clientProfileMapper.registerToEntity(request);
 
-        // lưu user
+        // Gắn user vào profile.
         profile.setUser(savedUser);
 
-        // lưu database
+        // Lưu database.
         ClientProfile saved = clientProfileRepo.save(profile);
 
         return clientProfileMapper.toResponse(saved);
@@ -126,7 +126,7 @@ public class ClientProfileService implements IClientProfile {
     public ClientProfile getCurrentClientProfile() {
         User currentUser = currentUserService.getCurrentUser();
         return clientProfileRepo.findByUser(currentUser)
-                .orElseThrow(() -> new GlobalException("Client Profile Not Found"));
+                .orElseThrow(() -> new GlobalException(403, "Only client can access this resource"));
     }
 
     private void checkClientOwner(ClientProfile profile, ClientProfile currentClientProfile) {

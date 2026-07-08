@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
+import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.UserStatus;
 import com.example.AiTaster.controller.AuthController;
@@ -10,15 +11,14 @@ import com.example.AiTaster.dto.response.ClientProfileResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.dto.response.AuthResponse;
 import com.example.AiTaster.dto.response.AuthenticationResponse;
-import com.example.AiTaster.entity.ClientProfile;
-import com.example.AiTaster.entity.ExpertProfile;
-import com.example.AiTaster.entity.RefreshToken;
-import com.example.AiTaster.entity.User;
+import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ClientProfileMapper;
 import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.UserMapper;
+import com.example.AiTaster.repository.CategoryRepo;
+import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IAuthentication;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,6 +37,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -74,24 +76,30 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Autowired
     UserWalletService userWalletService;
 
-//code quá bẩn
+    @Autowired
+    SkillRepo skillRepo;
 
-    // đăng ký client
+    @Autowired
+    CategoryRepo categoryRepo;
+
+// Service xử lý đăng ký, đăng nhập và refresh token.
+
+    // Đăng ký client.
     @Transactional
     public ClientProfileResponse registerClient(ClientRegisterRequest request) {
 
         validateRegister(request.getEmail(), request.getPhone());
 
-        //tạo User
+        // Tạo User.
         User user = userMapper.clientRegisterToUser(request);
 
-        //setRole , mã hóa Password, setStatus
+        // Set role, mã hóa password và set status.
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CLIENT);
         user.setUserStatus(UserStatus.ACTIVE);
 
 
-        //builder:mapper thẳng
+        // Tạo ClientProfile từ dữ liệu yêu cầu.
         ClientProfile clientProfile = ClientProfile.builder()
                 .user(user)
                 .companyName(request.getCompanyName())
@@ -115,23 +123,36 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     public ExpertProfileResponse registerExpert(ExpertRegisterRequest request) {
         validateRegister(request.getEmail(), request.getPhone());
 
-        // tạo user
+        // Tạo user.
         User user = userMapper.expertRegisterToUser(request);
-        //setRole , mã hóa pass , setStatus
+        // Set role, mã hóa password và set status.
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.EXPERT);
         user.setUserStatus(UserStatus.ACTIVE);
 
+        Category category = getCategoryByCategoryId(request.getCategoryId());
+        List<Skill> skills = getSkillBySkillId(request.getSkillIds());
+
         ExpertProfile expertProfile = ExpertProfile.builder()
                 .user(user)
                 .bio(request.getBio())
+                .category(category)
+                .skills(skills)
                 .yearOfExperience(request.getYearOfExperience())
                 .rating(BigDecimal.ZERO)
                 .completedProjects(0)
                 .portfolioUrl(request.getPortfolioUrl())
-
                 .build();
-        // lưu xuong db
+
+
+        ExpertVerification verification = ExpertVerification.builder()
+                .expertProfile(expertProfile)
+                .certificateUrl(request.getCertificateUrl())
+                .verificationStatus(ExpertVerificationStatus.SUBMITTED)
+                .build();
+
+        expertProfile.setVerification(verification);
+        // Lưu xuống DB.
         user.setExpertProfile(expertProfile);
         userRepo.save(user);
         userWalletService.createdUserWallet(user);
@@ -158,7 +179,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     }
 
 
-    //login
+    // Đăng nhập.
     @Override
     @Transactional
     public AuthenticationResponse login(LoginRequest loginRequest) {
@@ -196,7 +217,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
     }
 
-    //lấy username
+    // Lấy user theo username.
     @Override
     public UserDetails loadUserByUsername(String userName)
             throws UsernameNotFoundException {
@@ -249,7 +270,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                         ErrorCode.USER_NOT_FOUND.getMessage()
                 ));
 
-        //rotation: revoke cũ + cấp mới
+        // Xoay vòng token: thu hồi token cũ và cấp token mới.
         validateRefreshUserStatus(user);
 
         RefreshToken refreshToken = refreshTokenService.rotateToken(tokenRequest.getToken(), user);
@@ -287,5 +308,43 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 .build();
     }
 
+    private Category getCategoryByCategoryId(Long categoryId) {
+        if (categoryId == null || categoryId <= 0) {
+            throw new GlobalException(400, "Category is required");
+        }
+        Category category = categoryRepo.getCategoriesByCategoryId(categoryId).orElseThrow(() -> new GlobalException(400, "Category Not Found"));
+        return category;
+    }
+
+
+    private List<Skill> getSkillBySkillId(List<Long> selectedSkillIds) {
+
+        if (selectedSkillIds == null || selectedSkillIds.isEmpty()) {
+            throw new GlobalException(400, "selectedSkillIds is required");
+        }
+        List<Long> checkSkillIds = new ArrayList<>();
+
+        for (Long skillId : selectedSkillIds) {
+            if (skillId == null) continue;
+
+            if (skillId <= 0) {
+                continue;
+            }
+            if (!checkSkillIds.contains(skillId)) {
+                checkSkillIds.add(skillId);
+            }
+        }
+        if (checkSkillIds.isEmpty()) {
+            throw new GlobalException(400, "Skill is required");
+        }
+
+        List<Skill> skills = skillRepo.findAllById(checkSkillIds);
+
+        if (skills.size() != checkSkillIds.size()) {
+            throw new GlobalException(400, "Some skills not found");
+        }
+
+        return skills;
+    }
 
 }

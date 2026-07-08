@@ -49,4 +49,42 @@ public class EmailService {
             throw new RuntimeException("Failed to send email");
         }
     }
+
+    public void sendBankAccountOtpEmail(
+            String to,
+            String otp,
+            int expireMinutes,
+            String bankCode,
+            String maskedAccountNumber
+    ) {
+        try {
+            Context context = new Context();
+            context.setVariable("otp", otp);
+            context.setVariable("expireMinutes", expireMinutes);
+            context.setVariable("bankCode", bankCode);
+            context.setVariable("maskedAccountNumber", maskedAccountNumber);
+
+            String htmlContent = templateEngine.process(
+                    "bank-account-otp",
+                    context
+            );
+
+            MimeMessage message = mailSender.createMimeMessage();
+
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    "UTF-8"
+            );
+
+            helper.setTo(to);
+            helper.setSubject("AITasker bank account verification OTP");
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email");
+        }
+    }
 }

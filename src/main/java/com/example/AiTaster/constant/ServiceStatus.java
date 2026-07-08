@@ -1,5 +1,9 @@
 package com.example.AiTaster.constant;
 
 public enum ServiceStatus {
-    OPEN,CLOSED,DELETED
+    DRAFT,
+    PENDING_REVIEW,
+    OPEN,
+    REJECTED,
+    DELETED
 }

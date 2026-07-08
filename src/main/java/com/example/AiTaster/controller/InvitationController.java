@@ -111,4 +111,15 @@ public class InvitationController {
                 APIResponse.response(200, "Reject invitation successfully", response)
         );
     }
+
+    @DeleteMapping("/{invitationId}")
+    public ResponseEntity<APIResponse<Void>> deleteInvitation(
+            @PathVariable Long invitationId
+    ) {
+        invitationService.deleteInvitation(invitationId);
+
+        return ResponseEntity.ok(
+                APIResponse.response(200, "Delete invitation successfully", null)
+        );
+    }
 }

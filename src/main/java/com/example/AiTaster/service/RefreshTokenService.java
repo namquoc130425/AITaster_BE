@@ -25,7 +25,7 @@ public class RefreshTokenService {
     @Value("30")
     long DURATION;
 
-    // createRefreshToken(): tạo token random, lưu Redis
+    // createRefreshToken(): tạo token ngẫu nhiên và lưu Redis.
     public RefreshToken createRefreshToken(User user) {
         RefreshToken refreshTokenEntity = new RefreshToken();
 

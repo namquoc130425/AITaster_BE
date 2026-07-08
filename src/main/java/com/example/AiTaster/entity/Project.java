@@ -59,6 +59,10 @@ public class Project {
     // isActive=false khi chờ escrow; chỉ bật true khi escrow đã giữ tiền (webhook payment success). // true thì expert mới được làm việt
     Boolean isActive;
 
+    Boolean clientDeleted;
+
+    Boolean expertDeleted;
+
     // Project bat dau chay tu luc payment success.
      // Gia tri nay set bang paidAt cua PaymentTransaction.
     LocalDateTime startAt;
@@ -85,5 +89,7 @@ public class Project {
     public void prePersist() {
         if (projectStatus == null) projectStatus = ProjectStatus.WAITING_ESCROW;
         if (isActive == null) isActive = false;
+        if (clientDeleted == null) clientDeleted = false;
+        if (expertDeleted == null) expertDeleted = false;
     }
 }
