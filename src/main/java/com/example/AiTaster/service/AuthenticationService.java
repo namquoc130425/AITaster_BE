@@ -263,6 +263,133 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         return buildAuthResponse(accessToken, refreshToken.getToken());
     }
 
+    @Transactional
+    public AuthenticationResponse registerClientWithSupabaseGoogle(
+            GoogleClientRegisterRequest request
+    ) {
+        GoogleLoginUserInfoResponse supabaseUserInfo =
+                supabaseService.verifyGoogleAccessToken(
+                        request.getAccessToken()
+                );
+
+        validateGoogleRegister(
+                supabaseUserInfo.getEmail(),
+                request.getPhone(),
+                request.getUsername()
+        );
+
+        User user = User.builder()
+                .email(supabaseUserInfo.getEmail())
+                .fullName(request.getFullName())
+                .username(request.getUsername())
+                .phone(request.getPhone())
+                .avatarUrl(supabaseUserInfo.getAvatarUrl())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(Role.CLIENT)
+                .userStatus(UserStatus.ACTIVE)
+                .build();
+
+        ClientProfile clientProfile = ClientProfile.builder()
+                .user(user)
+                .companyName(request.getCompanyName())
+                .contactName(request.getContactName())
+                .description(request.getDescription())
+                .businessField(request.getBusinessField())
+                .address(request.getAddress())
+                .build();
+
+        user.setClientProfile(clientProfile);
+
+        User savedUser = userRepo.save(user);
+
+        userWalletService.createdUserWallet(savedUser);
+
+        String accessToken =
+                tokenService.generateAccessToken(savedUser);
+
+        String refreshToken =
+                refreshTokenService
+                        .createRefreshToken(savedUser)
+                        .getToken();
+
+        return buildAuthenticationResponse(
+                savedUser,
+                accessToken,
+                refreshToken
+        );
+    }
+
+    @Transactional
+    public AuthenticationResponse registerExpertWithSupabaseGoogle(
+            GoogleExpertRegisterRequest request
+    ) {
+        GoogleLoginUserInfoResponse supabaseUserInfo =
+                supabaseService.verifyGoogleAccessToken(
+                        request.getAccessToken()
+                );
+
+        validateGoogleRegister(
+                supabaseUserInfo.getEmail(),
+                request.getPhone(),
+                request.getUsername()
+        );
+
+        Category category =
+                getCategoryByCategoryId(request.getCategoryId());
+
+        List<Skill> skills =
+                getSkillBySkillId(request.getSkillIds());
+
+        User user = User.builder()
+                .email(supabaseUserInfo.getEmail())
+                .fullName(request.getFullName())
+                .username(request.getUsername())
+                .phone(request.getPhone())
+                .avatarUrl(supabaseUserInfo.getAvatarUrl())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(Role.EXPERT)
+                .userStatus(UserStatus.ACTIVE)
+                .build();
+
+        ExpertProfile expertProfile = ExpertProfile.builder()
+                .user(user)
+                .bio(request.getBio())
+                .category(category)
+                .skills(skills)
+                .yearOfExperience(request.getYearOfExperience())
+                .rating(BigDecimal.ZERO)
+                .completedProjects(0)
+                .portfolioUrl(request.getPortfolioUrl())
+                .build();
+
+        ExpertVerification verification = ExpertVerification.builder()
+                .expertProfile(expertProfile)
+                .certificateUrl(request.getCertificateUrl())
+                .verificationStatus(ExpertVerificationStatus.SUBMITTED)
+                .build();
+
+        expertProfile.setVerification(verification);
+        user.setExpertProfile(expertProfile);
+
+        User savedUser = userRepo.save(user);
+
+        userWalletService.createdUserWallet(savedUser);
+
+        String accessToken =
+                tokenService.generateAccessToken(savedUser);
+
+        String refreshToken =
+                refreshTokenService
+                        .createRefreshToken(savedUser)
+                        .getToken();
+
+        return buildAuthenticationResponse(
+                savedUser,
+                accessToken,
+                refreshToken
+        );
+    }
+
     private void validateRegister(String email, String phone) {
         if (userRepo.existsByPhone(phone)) {
             throw new GlobalException(
@@ -368,5 +495,38 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
 
         return skills;
+    }
+
+    private void validateGoogleRegister(
+            String email,
+            String phone,
+            String username
+    ) {
+        if (email == null || email.isBlank()) {
+            throw new GlobalException(ErrorCode.SUPABASE_EMAIL_REQUIRED);
+        }
+
+        if (phone == null || phone.isBlank()) {
+            throw new GlobalException(400, "Phone is required");
+        }
+
+        if (username == null || username.isBlank()) {
+            throw new GlobalException(400, "Username is required");
+        }
+
+        if (userRepo.existsByEmail(email)) {
+            throw new GlobalException(
+                    ErrorCode.DUPLICATE_EMAIL.getCode(),
+                    ErrorCode.DUPLICATE_EMAIL.getMessage()
+            );
+        }
+
+        if (userRepo.existsByPhone(phone)) {
+            throw new GlobalException(
+                    ErrorCode.DUPLICATE_PHONE.getCode(),
+                    ErrorCode.DUPLICATE_PHONE.getMessage()
+            );
+        }
+
     }
 }

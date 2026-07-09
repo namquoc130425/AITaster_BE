@@ -42,6 +42,38 @@ public class AuthController {
                 (APIResponse.response(201,"Register Expert sucessfully",response)
                 );
     }
+
+    @PostMapping("/register/client/supabase/google")
+    public ResponseEntity<APIResponse<AuthenticationResponse>> registerClientWithSupabaseGoogle(
+            @RequestBody @Valid GoogleClientRegisterRequest request
+    ) {
+        AuthenticationResponse response =
+                authenticationService.registerClientWithSupabaseGoogle(request);
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Register client with Google successfully",
+                        response
+                )
+        );
+    }
+
+    @PostMapping("/register/expert/supabase/google")
+    public ResponseEntity<APIResponse<AuthenticationResponse>> registerExpertWithSupabaseGoogle(
+            @RequestBody @Valid GoogleExpertRegisterRequest request
+    ) {
+        AuthenticationResponse response =
+                authenticationService.registerExpertWithSupabaseGoogle(request);
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Register expert with Google successfully",
+                        response
+                )
+        );
+    }
     // API đăng nhập.
     @PostMapping("login")
     public ResponseEntity<APIResponse<AuthenticationResponse>> login (@RequestBody @Valid LoginRequest request) {
