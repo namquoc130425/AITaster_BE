@@ -71,6 +71,13 @@ public enum ErrorCode {
     SERVICE_SKILL_REQUIRED("Skill is required", HttpStatus.BAD_REQUEST),
     SERVICE_CATEGORY_REQUIRED("Category is required", HttpStatus.BAD_REQUEST),
     SERVICE_FILE_REQUIRED("Document file and source file are required before review", HttpStatus.BAD_REQUEST),
+
+    SUPABASE_TOKEN_INVALID("Invalid Supabase token", HttpStatus.UNAUTHORIZED),
+    SUPABASE_ACCOUNT_NOT_AUTHENTICATED("Supabase account is not authenticated", HttpStatus.UNAUTHORIZED),
+    SUPABASE_GOOGLE_PROVIDER_REQUIRED("Supabase token is not from Google provider", HttpStatus.UNAUTHORIZED),
+    SUPABASE_EMAIL_REQUIRED("Supabase email is required", HttpStatus.BAD_REQUEST),
+    SUPABASE_ACCOUNT_NOT_REGISTERED("Supabase account is not registered in AiTaster", HttpStatus.NOT_FOUND),
+    SUPABASE_ACCOUNT_ALREADY_LINKED("This Supabase account is already linked to another user", HttpStatus.CONFLICT),
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED);
