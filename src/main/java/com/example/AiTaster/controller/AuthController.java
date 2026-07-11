@@ -3,11 +3,7 @@ package com.example.AiTaster.controller;
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.dto.UserResponse;
-import com.example.AiTaster.dto.request.AdminRegisterRequest;
-import com.example.AiTaster.dto.request.ClientRegisterRequest;
-import com.example.AiTaster.dto.request.ExpertRegisterRequest;
-import com.example.AiTaster.dto.request.LoginRequest;
-import com.example.AiTaster.dto.request.TokenRequest;
+import com.example.AiTaster.dto.request.*;
 
 import com.example.AiTaster.dto.response.*;
 import com.example.AiTaster.exception.GlobalException;
@@ -46,6 +42,38 @@ public class AuthController {
                 (APIResponse.response(201,"Register Expert sucessfully",response)
                 );
     }
+
+    @PostMapping("/register/client/supabase/google")
+    public ResponseEntity<APIResponse<AuthenticationResponse>> registerClientWithSupabaseGoogle(
+            @RequestBody @Valid GoogleClientRegisterRequest request
+    ) {
+        AuthenticationResponse response =
+                authenticationService.registerClientWithSupabaseGoogle(request);
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Register client with Google successfully",
+                        response
+                )
+        );
+    }
+
+    @PostMapping("/register/expert/supabase/google")
+    public ResponseEntity<APIResponse<AuthenticationResponse>> registerExpertWithSupabaseGoogle(
+            @RequestBody @Valid GoogleExpertRegisterRequest request
+    ) {
+        AuthenticationResponse response =
+                authenticationService.registerExpertWithSupabaseGoogle(request);
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Register expert with Google successfully",
+                        response
+                )
+        );
+    }
     // API đăng nhập.
     @PostMapping("login")
     public ResponseEntity<APIResponse<AuthenticationResponse>> login (@RequestBody @Valid LoginRequest request) {
@@ -53,6 +81,22 @@ public class AuthController {
         return ResponseEntity.status(201).body
                 (APIResponse.response(201,"Login sucessfully",response)
                 );
+    }
+
+    @PostMapping("/login/supabase/google")
+    public ResponseEntity<APIResponse<AuthenticationResponse>> loginWithSupabaseGoogle(
+            @RequestBody @Valid GoogleLoginRequest request
+    ) {
+        AuthenticationResponse response =
+                authenticationService.loginWithSupabaseGoogle(request);
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Login with Google successfully",
+                        response
+                )
+        );
     }
 
     @PostMapping("/refresh")
