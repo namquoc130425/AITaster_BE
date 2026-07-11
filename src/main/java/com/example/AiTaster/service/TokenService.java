@@ -60,9 +60,9 @@ public class TokenService implements IToken {
                 .claim("scope", "ROLE_"+ user.getRole().name())
                 .build();
 
-        JWSObject jwsObject = new JWSObject(header,new Payload(clams.toJSONObject()));
+        JWSObject jwsObject = new JWSObject(header,new Payload(clams.toJSONObject())); // tạo header và payload
         try {
-            jwsObject.sign(new MACSigner(keyBytes));
+            jwsObject.sign(new MACSigner(keyBytes));                                   //
             return jwsObject.serialize();
         }catch (Exception e) {
             log.error(e.getMessage());

@@ -64,19 +64,19 @@ HandlerExceptionResolver handlerException;
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-       String path = request.getRequestURI();
-       String token = getTokenFromRequest(request);
+       String path = request.getRequestURI();                 // lấy đường dẫn request
+       String token = getTokenFromRequest(request);           // lấy token từ request
 
        // Kiểm tra API công khai.
         if(isPulicEndpoints(path)) {
-             filterChain.doFilter(request, response);
+             filterChain.doFilter(request, response);        // nếu dường dẫn công khai thì bỏ qua filter và tiếp tục đi tới filter tiếp theo
              return;
         }
         if(token != null) {
             try{
-               User user = tokenService.verifyAccessToken(token);
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+               User user = tokenService.verifyAccessToken(token);         // kiểm tra token từ người dùng
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());  // tạo 1 đối tượng Authentication để biết ai gữi request ,đăng nhập chưa,role hoặc permission gì (phần quyền)
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken); // sau này có thể lấy user đang đăng nhập bằng cách gọi SecurityContextHolder.getContext().getAuthentication().getPrincipal()
             } catch (GlobalException e) {
                 SecurityContextHolder.clearContext();
                 handlerExceptionResolver.resolveException(request, response, null, e);

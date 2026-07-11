@@ -61,7 +61,8 @@ public class SecurityConfig {
 
 
 
-
+    // Filter thứ 2 .
+    // Cấu hình rule phân quyền: API nào public, API nào cần login, API nào cần role.
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         List<String> publicEndpoints = securityProperties.getPublicEndpoints();
@@ -70,7 +71,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)   // chạy trước kiểm tra token , lấy user , set vào Authentication vào SecurityContext
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/webhooks/sepay", "/api/webhooks/sepay/**").permitAll()
