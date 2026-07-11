@@ -24,7 +24,7 @@ public class InvoiceController {
             @RequestParam(name = "type", required = false) InvoiceType invoiceType
     ) {
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get my invoices successfully", invoiceService.getMyInvoices(invoiceType)
+                APIResponse.response(200, "Lấy hóa đơn của tôi thành công", invoiceService.getMyInvoices(invoiceType)
                 )
         );
     }
@@ -34,7 +34,7 @@ public class InvoiceController {
             @PathVariable Long invoiceId
     ) {
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get invoice detail successfully", invoiceService.getMyInvoiceDetail(invoiceId)
+                APIResponse.response(200, "Lấy chi tiết hóa đơn thành công", invoiceService.getMyInvoiceDetail(invoiceId)
                 )
         );
     }

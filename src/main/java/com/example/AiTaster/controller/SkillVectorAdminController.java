@@ -24,7 +24,7 @@ public class SkillVectorAdminController {
 
         return  APIResponse.response(
                 200,
-                "Synced skills to Qdrant successfully",
+                "Đồng bộ kỹ năng lên Qdrant thành công",
                 syncedCount
         );
     }

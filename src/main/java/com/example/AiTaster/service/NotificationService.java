@@ -321,7 +321,7 @@ public class NotificationService implements INotificationService {
                 ReferenceType.INVITATION,
                 invitation.getInvitationId(),
                 "Bạn nhận được lời mời dự án",
-                "Client đã gửi cho bạn lời mời tham gia dự án: " + projectTitle
+                "Khách hàng đã gửi cho bạn lời mời tham gia dự án: " + projectTitle
         );
     }
 
@@ -370,7 +370,7 @@ public class NotificationService implements INotificationService {
                 NotificationType.INVITATION,
                 ReferenceType.INVITATION,
                 invitation.getInvitationId(),
-                "Expert đã chấp nhận lời mời",
+                "Chuyên gia đã chấp nhận lời mời",
                 expertName + " đã chấp nhận lời mời dự án: " + projectTitle
         );
     }
@@ -420,7 +420,7 @@ public class NotificationService implements INotificationService {
                 NotificationType.INVITATION,
                 ReferenceType.INVITATION,
                 invitation.getInvitationId(),
-                "Expert đã từ chối lời mời",
+                "Chuyên gia đã từ chối lời mời",
                 expertName + " đã từ chối lời mời dự án: " + projectTitle
         );
     }
@@ -454,7 +454,7 @@ public class NotificationService implements INotificationService {
                     ReferenceType.REPORT,
                     report.getReportId(),
                     "Có report mới",
-                    reporterName + " đã gửi một report mới: " + report.getReportTitle()
+                    reporterName + " đã gửi một báo cáo mới: " + report.getReportTitle()
             );
         }
     }
@@ -476,10 +476,10 @@ public class NotificationService implements INotificationService {
                 NotificationType.REPORT,
                 ReferenceType.REPORT,
                 report.getReportId(),
-                "Report của bạn đã được xử lý",
+                "Báo cáo của bạn đã được xử lý",
                 safeText(
                         report.getAdminResponse(),
-                        "Admin đã xử lý report: " + report.getReportTitle()
+                        "Quản trị viên đã xử lý báo cáo: " + report.getReportTitle()
                 )
         );
     }
@@ -501,10 +501,10 @@ public class NotificationService implements INotificationService {
                 NotificationType.REPORT,
                 ReferenceType.REPORT,
                 report.getReportId(),
-                "Report của bạn đã bị từ chối",
+                "Báo cáo của bạn đã bị từ chối",
                 safeText(
                         report.getAdminResponse(),
-                        "Admin đã từ chối report: " + report.getReportTitle()
+                        "Quản trị viên đã từ chối báo cáo: " + report.getReportTitle()
                 )
         );
     }
@@ -519,8 +519,8 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service mới được tạo",
-                "Expert vừa tạo AI Service '" + expertService.getServiceName()
+                "Dịch vụ AI mới được tạo",
+                "Chuyên gia vừa tạo dịch vụ AI '" + expertService.getServiceName()
                         + "'. Trạng thái hiện tại là DRAFT."
         );
     }
@@ -535,8 +535,8 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service vừa được cập nhật",
-                "Expert vừa cập nhật AI Service '" + expertService.getServiceName()
+                "Dịch vụ AI vừa được cập nhật",
+                "Chuyên gia vừa cập nhật dịch vụ AI '" + expertService.getServiceName()
                         + "'. Service cần được kiểm tra nếu được submit lại."
         );
     }
@@ -551,8 +551,8 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service chờ duyệt",
-                "Expert đã gửi AI Service '" + expertService.getServiceName()
+                "Dịch vụ AI chờ duyệt",
+                "Chuyên gia đã gửi dịch vụ AI '" + expertService.getServiceName()
                         + "' để admin duyệt."
         );
     }
@@ -570,8 +570,8 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service đã được duyệt",
-                "AI Service '" + expertService.getServiceName()
+                "Dịch vụ AI đã được duyệt",
+                "Dịch vụ AI '" + expertService.getServiceName()
                         + "' đã được admin duyệt và đang hiển thị công khai."
         );
     }
@@ -587,7 +587,7 @@ public class NotificationService implements INotificationService {
         String reason = expertService.getRejectionReason();
 
         if (reason == null || reason.isBlank()) {
-            reason = "Admin đã từ chối AI Service của bạn. Vui lòng kiểm tra lại nội dung và resubmit.";
+            reason = "Quản trị viên đã từ chối dịch vụ AI của bạn. Vui lòng kiểm tra lại nội dung và gửi lại.";
         }
 
         notify(
@@ -595,8 +595,8 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service bị từ chối",
-                "AI Service '" + expertService.getServiceName()
+                "Dịch vụ AI bị từ chối",
+                "Dịch vụ AI '" + expertService.getServiceName()
                         + "' bị từ chối. Lý do: " + reason
         );
     }

@@ -32,7 +32,7 @@ public class ConversationController {
         return ResponseEntity.status(201).body(
                 APIResponse.response(
                         201,
-                        "Conversation started successfully",
+                        "Bắt đầu cuộc trò chuyện thành công",
                         response
                 )
         );
@@ -43,7 +43,7 @@ public class ConversationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get conversations successfully",
+                        "Lấy danh sách cuộc trò chuyện thành công",
                         conversationService.getMyConversations()
                 )
         );
@@ -56,7 +56,7 @@ public class ConversationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get conversation successfully",
+                        "Lấy cuộc trò chuyện thành công",
                         conversationService.getConversationDetail(conversationId)
                 )
         );
@@ -69,7 +69,7 @@ public class ConversationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get project conversation successfully",
+                        "Lấy cuộc trò chuyện của dự án thành công",
                         conversationService.getOrCreateProjectConversation(projectId)
                 )
         );

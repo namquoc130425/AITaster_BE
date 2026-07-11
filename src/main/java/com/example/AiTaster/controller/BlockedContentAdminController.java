@@ -25,7 +25,7 @@ public class BlockedContentAdminController {
     @GetMapping("/getAllBlockContent")
     public ResponseEntity<APIResponse<List<BlockedContent>>> getAll() {
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get blocked contents successfully", service.getAll())
+                APIResponse.response(200, "Lấy nội dung bị chặn thành công", service.getAll())
         );
     }
 
@@ -34,7 +34,7 @@ public class BlockedContentAdminController {
             @RequestBody @Valid BlockedContentRequest request
     ) {
         return ResponseEntity.status(201).body(
-                APIResponse.response(201, "Created blocked content successfully", service.create(request))
+                APIResponse.response(201, "Tạo nội dung bị chặn thành công", service.create(request))
         );
     }
 
@@ -44,7 +44,7 @@ public class BlockedContentAdminController {
             @RequestBody @Valid BlockedContentRequest request
     ) {
         return ResponseEntity.ok(
-                APIResponse.response(200, "Updated blocked content successfully", service.update(id, request))
+                APIResponse.response(200, "Cập nhật nội dung bị chặn thành công", service.update(id, request))
         );
     }
 
@@ -52,7 +52,7 @@ public class BlockedContentAdminController {
     public ResponseEntity<APIResponse<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(
-                APIResponse.response(200, "Deleted blocked content successfully", null)
+                APIResponse.response(200, "Xóa nội dung bị chặn thành công", null)
         );
     }
 }

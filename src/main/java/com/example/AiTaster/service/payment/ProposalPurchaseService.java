@@ -39,15 +39,15 @@ public class ProposalPurchaseService {
         ClientProfile clientProfile = getCurrentClientProfile();
 
         ExpertProposal expertProposal = expertProposalRepo.findExpertProposalByProposalId(proposalId)
-                .orElseThrow(() -> new GlobalException("Proposal not found"));
+                .orElseThrow(() -> new GlobalException("Không tìm thấy đề xuất"));
 
         if (Boolean.TRUE.equals(expertProposal.getIsDeleted())) {
-            throw new GlobalException(400, "Proposal was deleted");
+            throw new GlobalException(400, "Đề xuất đã bị xóa");
         }
 
         ExpertApplication expertApplication = expertApplicationRepo
                 .findByApplicationId(expertProposal.getExpertApplication().getApplicationId())
-                .orElseThrow(() -> new GlobalException("Application not found"));
+                .orElseThrow(() -> new GlobalException("Không tìm thấy hồ sơ ứng tuyển"));
 
         checkJobPostOwner(expertApplication.getJobpost(), clientProfile);
 
@@ -55,7 +55,7 @@ public class ProposalPurchaseService {
                 .existsByProposalAndClientProfileAndIsUnlockedTrue(expertProposal, clientProfile);
 
         if (alreadyUnlocked) {
-            throw new GlobalException(400, "Proposal already unlocked");
+            throw new GlobalException(400, "Đề xuất đã được mở khóa");
         }
 
         BigDecimal amount = expertProposal.getPriceToUnlock();
@@ -95,15 +95,15 @@ public class ProposalPurchaseService {
         ClientProfile clientProfile = getCurrentClientProfile();
 
         ExpertProposal expertProposal = expertProposalRepo.findExpertProposalByProposalId(proposalId)
-                .orElseThrow(() -> new GlobalException(404, "Proposal not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy đề xuất"));
 
         if (Boolean.TRUE.equals(expertProposal.getIsDeleted())) {
-            throw new GlobalException(400, "Proposal was deleted");
+            throw new GlobalException(400, "Đề xuất đã bị xóa");
         }
 
         ExpertApplication expertApplication = expertApplicationRepo
                 .findByApplicationId(expertProposal.getExpertApplication().getApplicationId())
-                .orElseThrow(() -> new GlobalException(404, "Application not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hồ sơ ứng tuyển"));
 
         checkJobPostOwner(expertApplication.getJobpost(), clientProfile);
 
@@ -111,7 +111,7 @@ public class ProposalPurchaseService {
                 .existsByProposalAndClientProfileAndIsUnlockedTrue(expertProposal, clientProfile);
 
         if (alreadyUnlocked) {
-            throw new GlobalException(400, "Proposal already unlocked");
+            throw new GlobalException(400, "Đề xuất đã được mở khóa");
         }
 
         BigDecimal amount = expertProposal.getPriceToUnlock();
@@ -144,12 +144,12 @@ public class ProposalPurchaseService {
         User user = currentUserService.getCurrentUser();
 
         return clientProfileRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(403, "Only client can purchase proposal"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể mua đề xuất"));
     }
 
     private void checkJobPostOwner(JobPost jobPost, ClientProfile clientProfile) {
         if (!jobPost.getClientProfile().getClientProfileId().equals(clientProfile.getClientProfileId())) {
-            throw new GlobalException(403, "You are not owner of this jobpost");
+            throw new GlobalException(403, "Bạn không phải chủ sở hữu tin tuyển dụng này");
         }
     }
 }

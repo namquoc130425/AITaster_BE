@@ -41,7 +41,7 @@ public class AdminController {
     ) {
         PageResponse<AdminResponse> response = adminService.getAllUsers(request);
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get users with filter and pagination successfully", response)
+                APIResponse.response(200, "Lấy và lọc người dùng thành công", response)
         );
     }
 
@@ -83,7 +83,7 @@ public class AdminController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "User deactivated successfully",
+                        "Vô hiệu hóa người dùng thành công",
                         "INACTIVE"
                 )
         );

@@ -30,14 +30,14 @@ ClientProfileService clientProfileService;
     @GetMapping
     public ResponseEntity<APIResponse<List<ClientProfileResponse>>> getAll() {
         List<ClientProfileResponse> responses = clientProfileService.getAll();
-        return ResponseEntity.ok(APIResponse.response(201, "Get all client successfully", responses));
+        return ResponseEntity.ok(APIResponse.response(201, "Lấy tất cả hồ sơ khách hàng thành công", responses));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<ClientProfileResponse>> getById( @PathVariable Long id) {
 
           ClientProfileResponse response =  clientProfileService.getByClientId(id);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Get successfully",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Lấy hồ sơ khách hàng thành công",response));
 
     }
 
@@ -45,12 +45,12 @@ ClientProfileService clientProfileService;
     public ResponseEntity<APIResponse<CurrentUserResponse>> update(@Valid@PathVariable Long id, @RequestBody ClientProfileRequest request
     ) {
         CurrentUserResponse response =  clientProfileService.update(id,request);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Update Client successfully",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Cập nhật hồ sơ khách hàng thành công",response));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<APIResponse<ClientProfileResponse>> delete(@PathVariable Long id) {
         clientProfileService.delete(id);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Deleted Client successfully",null));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Xóa hồ sơ khách hàng thành công",null));
     }
 }

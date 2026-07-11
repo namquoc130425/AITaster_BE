@@ -38,11 +38,11 @@ public class ExpertServicePurchaseService {
     public PaymentTransaction purchaseService(Long serviceId) {
         User user = currentUserService.getCurrentUser();
 
-        ClientProfile clientProfile = clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Only client can purchase service"));
-        ExpertService expertService = expertServiceRepo.findById(serviceId).orElseThrow(() -> new GlobalException(404, "Expert service not found"));
+        ClientProfile clientProfile = clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể mua dịch vụ"));
+        ExpertService expertService = expertServiceRepo.findById(serviceId).orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ chuyên gia"));
 
         if(!expertService.getServiceStatus().equals(ServiceStatus.OPEN)) {
-            throw new GlobalException(400, "Service is not available");
+            throw new GlobalException(400, "Dịch vụ chưa khả dụng");
         }
         Long clientUserId = clientProfile.getUser().getUserId();
         // expertService -> expertProfile -> user.
@@ -85,13 +85,13 @@ public class ExpertServicePurchaseService {
         User user = currentUserService.getCurrentUser();
 
         ClientProfile clientProfile = clientProfileRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(403, "Only client can purchase service"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể mua dịch vụ"));
 
         ExpertService expertService = expertServiceRepo.findById(serviceId)
-                .orElseThrow(() -> new GlobalException(404, "Expert service not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ chuyên gia"));
 
         if (!ServiceStatus.OPEN.equals(expertService.getServiceStatus())) {
-            throw new GlobalException(400, "Service is not available");
+            throw new GlobalException(400, "Dịch vụ chưa khả dụng");
         }
 
         BigDecimal amount = expertService.getServiceFee();

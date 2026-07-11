@@ -24,14 +24,14 @@ public class ExpertProfileController {
     @GetMapping
     public ResponseEntity<APIResponse<List<ExpertProfileResponse>>> getAll() {
         List<ExpertProfileResponse> responses = expertProfileService.getAll();
-        return ResponseEntity.ok(APIResponse.response(201, "Get all client successfully", responses));
+        return ResponseEntity.ok(APIResponse.response(201, "Lấy tất cả hồ sơ chuyên gia thành công", responses));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<ExpertProfileResponse>> getById( @PathVariable Long id) {
 
         ExpertProfileResponse response =  expertProfileService.getByExpertId(id);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Get Expert successfully",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Lấy hồ sơ chuyên gia thành công",response));
 
     }
 
@@ -39,12 +39,12 @@ public class ExpertProfileController {
     public ResponseEntity<APIResponse<CurrentUserResponse>> update(@Valid @PathVariable Long id, @RequestBody ExpertProfileRequest request
     ) {
         CurrentUserResponse response =  expertProfileService.update(id,request);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Update Client successfully",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Cập nhật hồ sơ chuyên gia thành công",response));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<APIResponse<ExpertProfileResponse>> delete(@PathVariable Long id) {
         expertProfileService.delete(id);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Deleted Client successfully",null));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Xóa hồ sơ chuyên gia thành công",null));
     }
 }

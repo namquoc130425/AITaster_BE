@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +52,8 @@ class ExpertVerificationGuardTest {
     private ProposalPurchaseService proposalPurchaseService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private ExpertVerificationGuardService expertVerificationGuardService;
 
     @InjectMocks
     private ExpertApplicationService expertApplicationService;
@@ -95,10 +98,13 @@ class ExpertVerificationGuardTest {
 
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
+        doThrow(new GlobalException(403, "Chuyên gia phải được quản trị viên xác minh trước khi dùng tính năng này"))
+                .when(expertVerificationGuardService)
+                .ensureVerified(expertProfile);
 
         assertThatThrownBy(() -> expertApplicationService.applyJobPost(10L, request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Expert must be verified by admin before using this feature");
+                .hasMessage("Chuyên gia phải được quản trị viên xác minh trước khi dùng tính năng này");
 
         verify(jobPostRepo, never()).findJobPostByjobPostId(10L);
     }
@@ -113,10 +119,13 @@ class ExpertVerificationGuardTest {
 
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
+        doThrow(new GlobalException(403, "Chuyên gia phải được quản trị viên xác minh trước khi dùng tính năng này"))
+                .when(expertVerificationGuardService)
+                .ensureVerified(expertProfile);
 
         assertThatThrownBy(() -> expertProductService.CreatService(request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Expert must be verified by admin before using this feature");
+                .hasMessage("Chuyên gia phải được quản trị viên xác minh trước khi dùng tính năng này");
 
         verify(categoryRepo, never()).getCategoriesByCategoryId(org.mockito.ArgumentMatchers.any());
     }
@@ -140,10 +149,13 @@ class ExpertVerificationGuardTest {
         when(invitationRepo.findWithDetailByInvitationId(10L)).thenReturn(Optional.of(invitation));
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
+        doThrow(new GlobalException(403, "Chuyên gia phải được quản trị viên xác minh trước khi dùng tính năng này"))
+                .when(expertVerificationGuardService)
+                .ensureVerified(expertProfile);
 
         assertThatThrownBy(() -> invitationService.acceptInvitation(10L, request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Expert must be verified by admin before using this feature");
+                .hasMessage("Chuyên gia phải được quản trị viên xác minh trước khi dùng tính năng này");
 
         verify(jobPostRepo, never()).updateJobPostStatus(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }

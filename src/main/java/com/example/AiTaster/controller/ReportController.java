@@ -30,7 +30,7 @@ public class ReportController {
         return ResponseEntity.status(201).body(
                 APIResponse.response(
                         201,
-                        "Create report successfully",
+                        "Tạo báo cáo thành công",
                         reportService.createReport(request)
                 )
         );
@@ -41,7 +41,7 @@ public class ReportController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get my reports successfully",
+                        "Lấy báo cáo của tôi thành công",
                         reportService.getMyReports()
                 )
         );
@@ -54,7 +54,7 @@ public class ReportController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get report successfully",
+                        "Lấy báo cáo thành công",
                         reportService.getReportById(reportId)
                 )
         );
@@ -65,7 +65,7 @@ public class ReportController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get reports successfully",
+                        "Lấy danh sách báo cáo thành công",
                         reportService.getAllReports()
                 )
         );
@@ -82,7 +82,7 @@ public class ReportController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Update report successfully",
+                        "Cập nhật báo cáo thành công",
                         reportService.updateReport(reportId, request)
                 )
         );
@@ -97,7 +97,7 @@ public class ReportController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Report status updated successfully",
+                        "Cập nhật trạng thái báo cáo thành công",
                         reportService.changeReportStatus(
                                 reportId,
                                 reportStatus,
@@ -116,7 +116,7 @@ public class ReportController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Delete report successfully",
+                        "Xóa báo cáo thành công",
                         null
                 )
         );

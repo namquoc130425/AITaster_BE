@@ -54,7 +54,7 @@ public class ExpertServicePurchaseEventService {
     ) {
         User expertUser = findUser(expertUserId);
         String safeServiceName = serviceName == null || serviceName.isBlank()
-                ? "AI Service"
+                ? "Dịch vụ AI"
                 : serviceName;
         String formattedAmount = formatMoney(expertAmount);
 
@@ -63,22 +63,22 @@ public class ExpertServicePurchaseEventService {
                     expertUser,
                     "WALLET_EXPERT_SERVICE_PURCHASE_RECEIVED",
                     targetWalletId,
-                    "AI service payment received: " + formattedAmount
+                    "Đã nhận thanh toán dịch vụ AI: " + formattedAmount
             );
             realtimeService.pushUserDashboardEvent(
                     expertUser,
                     "EXPERT_SERVICE_PURCHASED",
                     ReferenceType.EXPERT_SERVICE,
                     serviceId,
-                    "AI service purchased: " + safeServiceName
+                    "Đã mua dịch vụ AI: " + safeServiceName
             );
             notificationService.notify(
                     expertUser,
                     NotificationType.EXPERT_SERVICE,
                     ReferenceType.EXPERT_SERVICE,
                     serviceId,
-                    "AI Service purchased",
-                    "Client purchased '" + safeServiceName + "'. You received " + formattedAmount + "."
+                    "Dịch vụ AI đã được mua",
+                    "Khách hàng đã mua '" + safeServiceName + "'. Bạn đã nhận " + formattedAmount + "."
             );
         }
 
@@ -93,7 +93,7 @@ public class ExpertServicePurchaseEventService {
                 "EXPERT_SERVICE_PURCHASED",
                 ReferenceType.EXPERT_SERVICE,
                 serviceId,
-                "AI service purchase completed: " + safeServiceName
+                "Hoàn tất mua dịch vụ AI: " + safeServiceName
         );
 
         if (sourceWalletId != null) {

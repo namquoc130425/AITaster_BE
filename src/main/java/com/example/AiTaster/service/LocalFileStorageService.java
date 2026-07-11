@@ -66,7 +66,7 @@ public class LocalFileStorageService {
         } catch (Exception e) {
             throw new GlobalException(
                     500,
-                    "Cannot save file"
+                    "Không thể lưu file"
             );
         }
     }

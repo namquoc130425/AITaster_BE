@@ -25,7 +25,7 @@ public class ProjectController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get my projects successfully",
+                        "Lấy dự án của tôi thành công",
                         projectService.getMyProjects(search)
                 )
         );
@@ -38,7 +38,7 @@ public class ProjectController {
         projectService.deleteProject(projectId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Delete project successfully", null)
+                APIResponse.response(200, "Xóa dự án thành công", null)
         );
     }
 }

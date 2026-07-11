@@ -27,7 +27,7 @@ public class AdminDashboardController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get admin dashboard summary successfully",
+                        "Lấy tổng quan bảng điều khiển quản trị thành công",
                         response
                 )
         );
@@ -43,7 +43,7 @@ public class AdminDashboardController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get user growth successfully",
+                        "Lấy tăng trưởng người dùng thành công",
                         response
                 )
         );
@@ -59,7 +59,7 @@ public class AdminDashboardController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get recent accounts successfully",
+                        "Lấy tài khoản gần đây thành công",
                         response
                 )
         );

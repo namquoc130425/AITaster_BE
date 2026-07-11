@@ -33,7 +33,7 @@ public class AuthController {
     public ResponseEntity<APIResponse<ClientProfileResponse>> register (@RequestBody @Valid ClientRegisterRequest request ) {
              ClientProfileResponse response = authenticationService.registerClient(request);
             return ResponseEntity.status(201).body
-                    (APIResponse.response(201,"Register sucessfully",response)
+                    (APIResponse.response(201,"Đăng ký khách hàng thành công",response)
                     );
 
     }
@@ -43,7 +43,7 @@ public class AuthController {
     ){
         ExpertProfileResponse response = authenticationService.registerExpert(expertRegisterRequest);
         return ResponseEntity.status(201).body
-                (APIResponse.response(201,"Register Expert sucessfully",response)
+                (APIResponse.response(201,"Đăng ký chuyên gia thành công",response)
                 );
     }
     // API đăng nhập.
@@ -51,7 +51,7 @@ public class AuthController {
     public ResponseEntity<APIResponse<AuthenticationResponse>> login (@RequestBody @Valid LoginRequest request) {
         AuthenticationResponse response = authenticationService.login(request);
         return ResponseEntity.status(201).body
-                (APIResponse.response(201,"Login sucessfully",response)
+                (APIResponse.response(201,"Đăng nhập thành công",response)
                 );
     }
 
@@ -59,12 +59,12 @@ public class AuthController {
     @Operation(summary = "refresh token")
     public ResponseEntity<APIResponse<AuthResponse>> refresh(@RequestBody @Valid TokenRequest request){
         AuthResponse response = authenticationService.refresh(request);
-        return ResponseEntity.ok(APIResponse.response(200, "Refresh token sucessfully", response));
+        return ResponseEntity.ok(APIResponse.response(200, "Làm mới token thành công", response));
     }
 
     @PostMapping("/register/admin")
     public ResponseEntity<APIResponse<UserResponse>> registerAdmin(@RequestBody AdminRegisterRequest request) {
         UserResponse response= authenticationService.registerAdmin(request);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Register Admin sucessfully",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Đăng ký quản trị viên thành công",response));
     }
 }

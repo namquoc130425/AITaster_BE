@@ -310,9 +310,9 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
     private Category getCategoryByCategoryId(Long categoryId) {
         if (categoryId == null || categoryId <= 0) {
-            throw new GlobalException(400, "Category is required");
+            throw new GlobalException(400, "Danh mục là bắt buộc");
         }
-        Category category = categoryRepo.getCategoriesByCategoryId(categoryId).orElseThrow(() -> new GlobalException(400, "Category Not Found"));
+        Category category = categoryRepo.getCategoriesByCategoryId(categoryId).orElseThrow(() -> new GlobalException(400, "Không tìm thấy danh mục"));
         return category;
     }
 
@@ -320,7 +320,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     private List<Skill> getSkillBySkillId(List<Long> selectedSkillIds) {
 
         if (selectedSkillIds == null || selectedSkillIds.isEmpty()) {
-            throw new GlobalException(400, "selectedSkillIds is required");
+            throw new GlobalException(400, "Danh sách kỹ năng đã chọn là bắt buộc");
         }
         List<Long> checkSkillIds = new ArrayList<>();
 
@@ -335,13 +335,13 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
             }
         }
         if (checkSkillIds.isEmpty()) {
-            throw new GlobalException(400, "Skill is required");
+            throw new GlobalException(400, "Kỹ năng là bắt buộc");
         }
 
         List<Skill> skills = skillRepo.findAllById(checkSkillIds);
 
         if (skills.size() != checkSkillIds.size()) {
-            throw new GlobalException(400, "Some skills not found");
+            throw new GlobalException(400, "Một số kỹ năng không tồn tại");
         }
 
         return skills;

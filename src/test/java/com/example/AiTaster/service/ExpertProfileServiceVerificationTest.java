@@ -115,6 +115,6 @@ class ExpertProfileServiceVerificationTest {
 
         assertThatThrownBy(() -> service.resubmitCertificate(request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Verified expert does not need to resubmit certificate");
+                .hasMessage("Chuyên gia đã xác minh không cần gửi lại chứng chỉ");
     }
 }

@@ -23,6 +23,6 @@ public class CurrentUserController {
         User user = currentUserService.getCurrentUser();
         CurrentUserResponse response = currentUserResponseMapper.toResponse(user);
 
-        return ResponseEntity.ok(APIResponse.response(200, "Get current user successfully", response));
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy người dùng hiện tại thành công", response));
     }
 }

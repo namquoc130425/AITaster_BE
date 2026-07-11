@@ -23,7 +23,7 @@ public class ForgotPasswordController {
 
         return APIResponse.response(
                 200,
-                "OTP sent to email successfully",
+                "Gửi OTP đến email thành công",
                 null
         );
     }
@@ -36,7 +36,7 @@ public class ForgotPasswordController {
 
         return APIResponse.response(
                 200,
-                "Password reset successfully",
+                "Đặt lại mật khẩu thành công",
                 null
         );
     }

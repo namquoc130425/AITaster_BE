@@ -42,7 +42,7 @@ public class ProjectService {
         ExpertProfile expertProfile = expertProfileRepo.findByUser(user).orElse(null);
 
         if (clientProfile == null && expertProfile == null) {
-            throw new GlobalException(403, "User has no client or expert profile");
+            throw new GlobalException(403, "Người dùng chưa có hồ sơ khách hàng hoặc chuyên gia");
         }
 
         Long clientProfileId = clientProfile != null ? clientProfile.getClientProfileId() : null;
@@ -88,20 +88,20 @@ public class ProjectService {
     @Transactional
     public void deleteProject(Long projectId) {
         Project project = projectRepo.findWithDetailByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dự án"));
 
         User user = currentUserService.getCurrentUser();
         ClientProfile clientProfile = clientProfileRepo.findByUser(user).orElse(null);
         ExpertProfile expertProfile = expertProfileRepo.findByUser(user).orElse(null);
 
         if (clientProfile == null && expertProfile == null) {
-            throw new GlobalException(403, "User has no client or expert profile");
+            throw new GlobalException(403, "Người dùng chưa có hồ sơ khách hàng hoặc chuyên gia");
         }
 
         checkProjectMember(project, clientProfile, expertProfile);
 
         if (!canDeleteProject(project.getProjectStatus())) {
-            throw new GlobalException(400, "Project in progress cannot be deleted");
+            throw new GlobalException(400, "Không thể xóa dự án đang thực hiện");
         }
 
         markProjectDeleted(project, clientProfile, expertProfile);
@@ -109,7 +109,7 @@ public class ProjectService {
         realtimeService.pushProjectParticipants(
                 savedProject,
                 "PROJECT_DELETED",
-                "Project deleted"
+                "Dự án đã được xóa"
         );
     }
 
@@ -160,7 +160,7 @@ public class ProjectService {
                 && projectExpertId.equals(expertProfile.getExpertProfileId());
 
         if (!isClient && !isExpert) {
-            throw new GlobalException(403, "You are not allowed to delete this project");
+            throw new GlobalException(403, "Bạn không có quyền xóa dự án này");
         }
     }
 

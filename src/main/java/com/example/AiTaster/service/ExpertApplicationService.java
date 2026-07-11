@@ -43,14 +43,14 @@ private final ExpertVerificationGuardService expertVerificationGuardService;
         ExpertProfile expertProfile = getCurrentExpertProfile();
         ensureExpertVerified(expertProfile);
         JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId)
-                .orElseThrow(() -> new GlobalException("JobPost not found"));
+                .orElseThrow(() -> new GlobalException("Không tìm thấy tin tuyển dụng"));
 
         if (!JobpostStatus.OPEN.equals(jobPost.getJobPostStatus())) {
-            throw new GlobalException(400, "Job post is not OPEN");
+            throw new GlobalException(400, "Tin tuyển dụng chưa mở");
         }
         boolean existed = expertApplicationRepo.existsByJobpostAndExpertProfile(jobPost, expertProfile);
         if (existed) {
-            throw new GlobalException(400, "You already applied to this job post");
+            throw new GlobalException(400, "Bạn đã ứng tuyển tin tuyển dụng này");
         }
         ExpertApplication expertApplication = expertApplicationMapper.toEntity(request,jobPost,expertProfile);
         ExpertApplication savedExpertApplication = expertApplicationRepo.save(expertApplication);
@@ -71,7 +71,7 @@ private final ExpertVerificationGuardService expertVerificationGuardService;
     @Override
     public List<ExpertApplicationResponse> getApplicationsByJobPost(Long jobPostId) {
         ClientProfile clientProfile = getCurrentClientProfile();
-        JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId).orElseThrow(() -> new GlobalException("Job Post Not Found"));
+        JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId).orElseThrow(() -> new GlobalException("Không tìm thấy tin tuyển dụng"));
 
         checkJobPostOwner(jobPost,clientProfile);
 
@@ -163,11 +163,11 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
 
     // Tìm application theo id, không có thì báo lỗi.
     private ExpertApplication getExpertApplication(Long applicationId) {
-        return expertApplicationRepo.findByApplicationId(applicationId) .orElseThrow(() -> new GlobalException("Application not found"));
+        return expertApplicationRepo.findByApplicationId(applicationId) .orElseThrow(() -> new GlobalException("Không tìm thấy hồ sơ ứng tuyển"));
     }
     // Tìm proposal theo id, không có thì báo lỗi.
     private ExpertProposal getProposalById(Long proposalId) {
-        return expertProposalRepo.findExpertProposalByProposalId(proposalId).orElseThrow(() ->  new GlobalException("Proposal not found"));
+        return expertProposalRepo.findExpertProposalByProposalId(proposalId).orElseThrow(() ->  new GlobalException("Không tìm thấy đề xuất"));
     }
 
     // Lấy ExpertProfile của user đang đăng nhập.
@@ -179,14 +179,14 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
     // Lấy ClientProfile của user đang đăng nhập.
     private ClientProfile getCurrentClientProfile() {
         User user = currentUserService.getCurrentUser();
-        return clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Only client can use this API"));
+        return clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể dùng API này"));
     }
 
     // Kiểm tra client hiện tại có phải owner của JobPost không.
     // Client chỉ được xem applications/unlock proposal của job do mình tạo.
     private void checkJobPostOwner(JobPost jobPost , ClientProfile clientProfile) {
         if(!jobPost.getClientProfile().getClientProfileId().equals(clientProfile.getClientProfileId())) {
-            throw new GlobalException(403, "You are not owner of this jobpost");
+            throw new GlobalException(403, "Bạn không phải chủ sở hữu tin tuyển dụng này");
         }
     }
 
@@ -202,7 +202,7 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
     // Kiểm tra input của application: timeline, shortMessage và proposal không bắt buộc.
     private void validateApplicationInput(ExpertApplicationRequest request) {
         if (request == null) {
-            throw new GlobalException(400, "Request is required");
+            throw new GlobalException(400, "Yêu cầu là bắt buộc");
         }
 
         contentManagerService.validateKeywordInput(request.getEstimatedTimeline());
@@ -219,7 +219,7 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
     // Validate input của proposal nếu expert gửi kèm proposal khi apply.
     private void validateProposalInput(ExpertProposalRequest request) {
         if (request == null) {
-            throw new GlobalException(400, "Proposal request is required");
+            throw new GlobalException(400, "Yêu cầu đề xuất là bắt buộc");
         }
 
         contentManagerService.validateKeywordInput(request.getTitle());

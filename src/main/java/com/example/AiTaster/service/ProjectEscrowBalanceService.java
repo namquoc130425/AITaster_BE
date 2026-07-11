@@ -18,11 +18,11 @@ public class ProjectEscrowBalanceService {
         validateAmount(amount);
 
         ProjectEscrow escrow = projectEscrowRepo.findByProjectEscrowIdForUpdate(escrowId)
-                .orElseThrow(() -> new GlobalException(404, "Project escrow not found: " + escrowId));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ký quỹ dự án: " + escrowId));
 
         if (!EscrowStatus.WAITING_PAYMENT.equals(escrow.getEscrowStatus())
                 && !EscrowStatus.HELD.equals(escrow.getEscrowStatus())) {
-            throw new GlobalException(400, "Escrow cannot receive money");
+            throw new GlobalException(400, "Ký quỹ không thể nhận thêm tiền");
         }
 
         escrow.setHeldAmount(escrow.getHeldAmount().add(amount));
@@ -35,14 +35,14 @@ public class ProjectEscrowBalanceService {
         validateAmount(amount);
 
         ProjectEscrow escrow = projectEscrowRepo.findByProjectEscrowIdForUpdate(escrowId)
-                .orElseThrow(() -> new GlobalException(404, "Project escrow not found: " + escrowId));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ký quỹ dự án: " + escrowId));
 
         if (!EscrowStatus.HELD.equals(escrow.getEscrowStatus())) {
-            throw new GlobalException(400, "Escrow is not HELD");
+            throw new GlobalException(400, "Tiền ký quỹ chưa được giữ");
         }
 
         if (escrow.getHeldAmount().compareTo(amount) < 0) {
-            throw new GlobalException(400, "Insufficient escrow balance");
+            throw new GlobalException(400, "Số dư ký quỹ không đủ");
         }
 
         escrow.setHeldAmount(escrow.getHeldAmount().subtract(amount));
@@ -52,11 +52,11 @@ public class ProjectEscrowBalanceService {
 
     private void validateAmount(BigDecimal amount) {
         if (amount == null) {
-            throw new GlobalException(400, "Amount must not be null");
+            throw new GlobalException(400, "Số tiền không được để trống");
         }
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Amount must be greater than zero");
+            throw new GlobalException(400, "Số tiền phải lớn hơn 0");
         }
     }
 }

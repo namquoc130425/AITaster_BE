@@ -59,7 +59,7 @@ public class SepayBankGateway {
         JsonNode response = postJson(payoutUrl, payload);
 
         if (!isSuccessfulResponse(response)) {
-            throw new GlobalException(400, "SePay payout request failed");
+            throw new GlobalException(400, "Yêu cầu chi trả SePay thất bại");
         }
 
         return SepayPayoutResult.builder()
@@ -91,14 +91,14 @@ public class SepayBankGateway {
             );
 
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new GlobalException(400, "SePay request failed");
+                throw new GlobalException(400, "Yêu cầu SePay thất bại");
             }
 
             return objectMapper.readTree(response.body());
         } catch (GlobalException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new GlobalException(500, "Cannot call SePay bank API");
+            throw new GlobalException(500, "Không thể gọi API ngân hàng SePay");
         }
     }
 

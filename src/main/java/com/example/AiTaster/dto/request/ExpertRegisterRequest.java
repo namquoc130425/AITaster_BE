@@ -22,20 +22,20 @@ public class ExpertRegisterRequest {
      @Size(min = 8, message = "INVALID_FORMART")
      String password;
      @NotBlank(message = "FIELD_REQUIRED")
-     @Size(max = 30, message = "fullName max 30 characters")
+     @Size(max = 30, message = "Họ và tên tối đa 30 ký tự")
      String fullName;
      String avatarUrl;
 
      @NotBlank(message = "FIELD_REQUIRED")
-     @NotBlank(message = "username is required")
+     @NotBlank(message = "Tên đăng nhập là bắt buộc")
      String username;
 
-     @NotBlank(message = "phone is required")
-     @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "phone invalid")
+     @NotBlank(message = "Số điện thoại là bắt buộc")
+     @Pattern(regexp = "^(0|84)(3|5|7|8|9)[0-9]{8}$", message = "Số điện thoại không hợp lệ")
      String phone;
 
      @NotBlank(message = "FIELD_REQUIRED")
-     @Size(max = 1000, message = "bio max 1000 characters")
+     @Size(max = 1000, message = "Tiểu sử tối đa 1000 ký tự")
      String bio;
 
      @NotNull(message = "FIELD_REQUIRED")
@@ -62,7 +62,7 @@ public class ExpertRegisterRequest {
 
      String portfolioUrl;
 
-     @NotBlank(message = "certificateUrl is required")
+     @NotBlank(message = "Đường dẫn chứng chỉ là bắt buộc")
      String certificateUrl;
 
 }

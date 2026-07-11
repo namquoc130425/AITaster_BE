@@ -158,7 +158,7 @@ public class JobPostService implements IJobPost {
 
     public JobPostResponse changeJobPostStatus(Long id, JobpostStatus jobPostStatus) {
         if (jobPostStatus == null) {
-            throw new GlobalException(400, "Job post status is required");
+            throw new GlobalException(400, "Trạng thái tin tuyển dụng là bắt buộc");
         }
 
         ClientProfile clientProfile = getCurrentClientProfile();
@@ -182,7 +182,7 @@ public class JobPostService implements IJobPost {
     public ClientProfile getCurrentClientProfile() {
         User currentUser = currentUserService.getCurrentUser();
         return clientProfileRepo.findByUser(currentUser)
-                .orElseThrow(() -> new GlobalException(403, "Only client can access job posts"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể truy cập tin tuyển dụng"));
     }
 
     // hàm check jobPost thuộc về client Profile nào
@@ -197,7 +197,7 @@ public class JobPostService implements IJobPost {
 
         // Nếu dữ liệu yêu cầu null thì chặn trước.
         if (request == null) {
-            throw new GlobalException(400, "Request is required");
+            throw new GlobalException(400, "Yêu cầu là bắt buộc");
         }
 
         // Check title
@@ -216,7 +216,7 @@ public class JobPostService implements IJobPost {
         contentManagerService.validateKeywordInput(request.getTimeLine());
 
         if (request.getBudgets() == null || request.getBudgets().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Budget must be greater than 0");
+            throw new GlobalException(400, "Ngân sách phải lớn hơn 0");
         }
     }
 
@@ -233,7 +233,7 @@ public class JobPostService implements IJobPost {
         );
 
         if (duplicated) {
-            throw new GlobalException(409, "Duplicate job post request. Please do not submit the same job post twice");
+            throw new GlobalException(409, "Tin tuyển dụng bị gửi trùng. Vui lòng không gửi cùng một tin hai lần");
         }
     }
 

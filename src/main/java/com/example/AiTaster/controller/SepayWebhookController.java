@@ -23,7 +23,7 @@ public class SepayWebhookController {
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "IPN received"
+                "message", "Đã nhận IPN"
         ));
     }
 }

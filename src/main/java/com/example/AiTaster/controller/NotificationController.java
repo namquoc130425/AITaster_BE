@@ -25,7 +25,7 @@ public class NotificationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get notifications successfully",
+                        "Lấy thông báo thành công",
                         notificationService.getMyNotifications()
                 )
         );
@@ -37,7 +37,7 @@ public class NotificationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get unread notifications successfully",
+                        "Lấy thông báo chưa đọc thành công",
                         notificationService.getMyUnreadNotifications()
                 )
         );
@@ -49,7 +49,7 @@ public class NotificationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Count unread notifications successfully",
+                        "Đếm thông báo chưa đọc thành công",
                         notificationService.countMyUnreadNotifications()
                 )
         );

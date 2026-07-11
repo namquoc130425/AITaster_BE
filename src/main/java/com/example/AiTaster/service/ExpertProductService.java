@@ -376,7 +376,7 @@ public class ExpertProductService implements IExpertService {
                         .orElseThrow(() ->
                                 new GlobalException(
                                         403,
-                                        "Only client can view purchased services"
+                                        "Chỉ khách hàng mới có thể xem dịch vụ đã mua"
                                 )
                         );
 
@@ -485,7 +485,7 @@ public class ExpertProductService implements IExpertService {
 
         if (serviceFile == null
                 || !serviceFileId.equals(serviceFile.getServiceFileId())) {
-            throw new GlobalException(404, "Service file not found");
+            throw new GlobalException(404, "Không tìm thấy file dịch vụ");
         }
 
         checkCanDownloadServiceFile(expertService);
@@ -496,20 +496,20 @@ public class ExpertProductService implements IExpertService {
         String filePathValue = switch (requestedKind) {
             case "instruction" -> serviceFile.getFileContent();
             case "product" -> serviceFile.getProductFile();
-            default -> throw new GlobalException(400, "Unsupported service file kind");
+            default -> throw new GlobalException(400, "Loại file dịch vụ không được hỗ trợ");
         };
 
         Path filePath =
                 resolveLocalUploadPath(filePathValue);
         if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
-            throw new GlobalException(404, "Service file not found on server");
+            throw new GlobalException(404, "Không tìm thấy file dịch vụ trên máy chủ");
         }
 
         try {
             Resource resource =
                     new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                throw new GlobalException(404, "Service file is not readable");
+                throw new GlobalException(404, "Không thể đọc file dịch vụ");
             }
 
             String contentType =
@@ -523,7 +523,7 @@ public class ExpertProductService implements IExpertService {
         } catch (GlobalException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new GlobalException(500, "Cannot download service file");
+            throw new GlobalException(500, "Không thể tải file dịch vụ");
         }
     }
 
@@ -531,7 +531,7 @@ public class ExpertProductService implements IExpertService {
         if (request == null) {
             throw new GlobalException(
                     400,
-                    "request is required"
+                    "Yêu cầu là bắt buộc"
             );
         }
 
@@ -607,7 +607,7 @@ public class ExpertProductService implements IExpertService {
                         );
 
         if (!isExpertOwner && !isPurchasedClient) {
-            throw new GlobalException(403, "You cannot download this service file");
+            throw new GlobalException(403, "Bạn không thể tải file dịch vụ này");
         }
     }
 
@@ -655,11 +655,11 @@ public class ExpertProductService implements IExpertService {
 
     private Path resolveLocalUploadPath(String filePathValue) {
         if (filePathValue == null || filePathValue.isBlank()) {
-            throw new GlobalException(404, "Service file path is empty");
+            throw new GlobalException(404, "Đường dẫn file dịch vụ đang trống");
         }
 
         if (filePathValue.matches("(?i)^https?://.*")) {
-            throw new GlobalException(400, "External service file is not supported");
+            throw new GlobalException(400, "Không hỗ trợ file dịch vụ bên ngoài hệ thống");
         }
 
         String relativePath =
@@ -675,7 +675,7 @@ public class ExpertProductService implements IExpertService {
                 Path.of(relativePath).toAbsolutePath().normalize();
 
         if (!filePath.startsWith(uploadsRoot)) {
-            throw new GlobalException(403, "Invalid service file path");
+            throw new GlobalException(403, "Đường dẫn file dịch vụ không hợp lệ");
         }
 
         return filePath;
@@ -771,7 +771,7 @@ public class ExpertProductService implements IExpertService {
         if (skills.size() != checkSkillIds.size()) {
             throw new GlobalException(
                     400,
-                    "Some skills not found"
+                    "Một số kỹ năng không tồn tại"
             );
         }
 
@@ -788,7 +788,7 @@ public class ExpertProductService implements IExpertService {
                 .orElseThrow(() ->
                         new GlobalException(
                                 400,
-                                "Category Not Found"
+                                "Không tìm thấy danh mục"
                         )
                 );
     }
@@ -803,7 +803,7 @@ public class ExpertProductService implements IExpertService {
                 .equals(expertProfile.getExpertProfileId())) {
             throw new GlobalException(
                     403,
-                    "You are not owner of this AI service"
+                    "Bạn không phải chủ sở hữu dịch vụ AI này"
             );
         }
     }

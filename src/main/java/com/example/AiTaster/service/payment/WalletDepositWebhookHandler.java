@@ -38,7 +38,7 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
             String providerContent,
             LocalDateTime paidAt
     ) {
-        UserWallet wallet = userWalletRepo.findByUserWalletId(payment.getReferenceId()).orElseThrow(() -> new RuntimeException("UserWallet not found"));
+        UserWallet wallet = userWalletRepo.findByUserWalletId(payment.getReferenceId()).orElseThrow(() -> new RuntimeException("Không tìm thấy ví người dùng"));
 
         if (wallet == null || !UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
             markFailed(payment, request, providerTransactionCode);
@@ -50,7 +50,7 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
                 TransactionType.USER_DEPOSIT,
                 wallet.getUserWalletId(),
                 PaymentReferenceType.USER_WALLET,
-                "SePay wallet deposit",
+                "Nạp ví qua SePay",
                 BigDecimal.ZERO,
                 payment.getGrossAmount(),
                 payment.getPaymentTransactionId()
@@ -64,7 +64,7 @@ public class WalletDepositWebhookHandler implements SepayPaymentHandler {
                 wallet.getUser(),
                 "WALLET_DEPOSIT_SUCCEEDED",
                 wallet.getUserWalletId(),
-                "Wallet deposit succeeded"
+                "Nạp ví thành công"
         );
     }
 

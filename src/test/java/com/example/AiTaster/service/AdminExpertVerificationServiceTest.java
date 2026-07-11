@@ -69,7 +69,7 @@ class AdminExpertVerificationServiceTest {
     void reject_requiresReason() {
         assertThatThrownBy(() -> service.reject(1L, " "))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Reject reason is required");
+                .hasMessage("Lý do từ chối là bắt buộc");
     }
 
     @Test

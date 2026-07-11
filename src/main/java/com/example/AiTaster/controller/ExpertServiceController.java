@@ -45,7 +45,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "get All and Filter and Search Success",
+                        "Lấy và lọc dịch vụ AI công khai thành công",
                         response
                 )
         );
@@ -61,7 +61,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Purchase service successfully",
+                        "Mua dịch vụ AI thành công",
                         paymentTransaction
                 )
         );
@@ -77,7 +77,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "SePay service payment created",
+                        "Tạo thanh toán SePay cho dịch vụ AI thành công",
                         response
                 )
         );
@@ -96,7 +96,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         201,
-                        "Submit AI service for review successfully",
+                        "Gửi dịch vụ AI chờ duyệt thành công",
                         response
                 )
         );
@@ -119,7 +119,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Update AI service successfully",
+                        "Cập nhật dịch vụ AI thành công",
                         response
                 )
         );
@@ -135,7 +135,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Resubmit rejected AI service successfully",
+                        "Gửi lại dịch vụ AI đã bị từ chối thành công",
                         response
                 )
         );
@@ -151,7 +151,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Accept AI service successfully",
+                        "Duyệt dịch vụ AI thành công",
                         response
                 )
         );
@@ -168,7 +168,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Reject AI service successfully",
+                        "Từ chối dịch vụ AI thành công",
                         response
                 )
         );
@@ -182,7 +182,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get AI service review queue successfully",
+                        "Lấy danh sách dịch vụ AI chờ duyệt thành công",
                         response
                 )
         );
@@ -197,7 +197,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Delete AI service successfully",
+                        "Xóa dịch vụ AI thành công",
                         null
                 )
         );
@@ -211,7 +211,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get my AI services successfully",
+                        "Lấy dịch vụ AI của tôi thành công",
                         responses
                 )
         );
@@ -227,7 +227,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get my AI service detail successfully",
+                        "Lấy chi tiết dịch vụ AI của tôi thành công",
                         response
                 )
         );
@@ -241,7 +241,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get purchased AI services successfully",
+                        "Lấy dịch vụ AI đã mua thành công",
                         responses
                 )
         );
@@ -277,7 +277,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get public AI services successfully",
+                        "Lấy dịch vụ AI công khai thành công",
                         responses
                 )
         );
@@ -293,7 +293,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get public AI service detail successfully",
+                        "Lấy chi tiết dịch vụ AI công khai thành công",
                         response
                 )
         );
@@ -307,7 +307,7 @@ public class ExpertServiceController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get draft AI services successfully",
+                        "Lấy dịch vụ AI nháp thành công",
                         response
                 )
         );

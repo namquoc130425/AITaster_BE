@@ -40,7 +40,7 @@ public class AdminExpertVerificationService {
         ExpertVerification verification = getVerification(verificationId);
 
         if (verification.getVerificationStatus() != ExpertVerificationStatus.SUBMITTED) {
-            throw new GlobalException(400, "Only submitted verification can be approved");
+            throw new GlobalException(400, "Chỉ có thể duyệt hồ sơ xác minh đã gửi");
         }
 
         verification.setVerificationStatus(ExpertVerificationStatus.VERIFIED);
@@ -52,8 +52,8 @@ public class AdminExpertVerificationService {
 
         notifyExpert(
                 saved,
-                "Certificate approved",
-                "Your expert certificate has been approved."
+                "Chứng chỉ đã được duyệt",
+                "Chứng chỉ chuyên gia của bạn đã được duyệt."
         );
 
         return expertVerificationMapper.toResponse(saved);
@@ -63,13 +63,13 @@ public class AdminExpertVerificationService {
     @Transactional
     public ExpertVerificationResponse reject(Long verificationId, String reason) {
         if (reason == null || reason.isBlank()) {
-            throw new GlobalException(400, "Reject reason is required");
+            throw new GlobalException(400, "Lý do từ chối là bắt buộc");
         }
 
         ExpertVerification verification = getVerification(verificationId);
 
         if (verification.getVerificationStatus() != ExpertVerificationStatus.SUBMITTED) {
-            throw new GlobalException(400, "Only submitted verification can be rejected");
+            throw new GlobalException(400, "Chỉ có thể từ chối hồ sơ xác minh đã gửi");
         }
 
         verification.setVerificationStatus(ExpertVerificationStatus.REJECTED);
@@ -81,8 +81,8 @@ public class AdminExpertVerificationService {
 
         notifyExpert(
                 saved,
-                "Certificate rejected",
-                "Your expert certificate was rejected. Reason: " + reason
+                "Chứng chỉ bị từ chối",
+                "Chứng chỉ chuyên gia của bạn bị từ chối. Lý do: " + reason
         );
 
         return expertVerificationMapper.toResponse(saved);
@@ -90,7 +90,7 @@ public class AdminExpertVerificationService {
 
     private ExpertVerification getVerification(Long verificationId) {
         return expertVerificationRepo.findById(verificationId)
-                .orElseThrow(() -> new GlobalException(404, "Verification not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hồ sơ xác minh"));
     }
 
     private void notifyExpert(

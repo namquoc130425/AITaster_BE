@@ -96,10 +96,10 @@ public class MoneyMovementService {
         }
 
         User adminUser = userRepo.findByUsername(adminUsername)
-                .orElseThrow(() -> new GlobalException(404, "Admin user not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy tài khoản quản trị"));
 
         UserWallet adminWallet = userWalletRepo.findByUserForUpdate(adminUser)
-                .orElseThrow(() -> new GlobalException(404, "Admin wallet not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ví quản trị"));
 
         moneyTransactionManagement(
                 null,
@@ -129,10 +129,10 @@ public class MoneyMovementService {
             BigDecimal receivedAmount
     ) {
         PaymentTransaction transaction = paymentTransactionRepo.findById(transactionId)
-                .orElseThrow(() -> new GlobalException(404, "Payment transaction not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy giao dịch thanh toán"));
 
         if (!PaymentStatus.PENDING.equals(transaction.getPaymentStatus())) {
-            throw new GlobalException(400, "Payment transaction is not pending");
+            throw new GlobalException(400, "Giao dịch thanh toán không ở trạng thái chờ");
         }
 
         transaction.setSenderId(fromId != null ? fromId : transaction.getSenderId());
@@ -206,15 +206,15 @@ public class MoneyMovementService {
 
     private void validatePaymentAmount(BigDecimal deductibleAmount, BigDecimal receivedAmount) {
         if (deductibleAmount == null || receivedAmount == null) {
-            throw new GlobalException(400, "Payment amount must not be null");
+            throw new GlobalException(400, "Số tiền thanh toán không được để trống");
         }
 
         if (deductibleAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new GlobalException(400, "Deductible amount must not be negative");
+            throw new GlobalException(400, "Số tiền khấu trừ không được âm");
         }
 
         if (receivedAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new GlobalException(400, "Received amount must not be negative");
+            throw new GlobalException(400, "Số tiền nhận được không được âm");
         }
     }
 
@@ -236,11 +236,11 @@ public class MoneyMovementService {
     }
     private void validateAmount(BigDecimal amount, String fieldName) {
         if (amount == null) {
-            throw new GlobalException(400, fieldName + " must not be null");
+            throw new GlobalException(400, fieldName + " không được để trống");
         }
 
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new GlobalException(400, fieldName + " must not be negative");
+            throw new GlobalException(400, fieldName + " không được âm");
         }
     }
     // trừ tiền trong ví,,không gọi qua UserWallerService nữa
@@ -256,14 +256,14 @@ public class MoneyMovementService {
         }
 
         UserWallet wallet = userWalletRepo.findByUserIdForUpdate(fromId)
-                .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + fromId));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ví của người dùng: " + fromId));
 
         if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
-            throw new GlobalException(400, "Wallet is not active");
+            throw new GlobalException(400, "Ví chưa hoạt động");
         }
 
         if (wallet.getBalance().compareTo(amount) < 0) {
-            throw new GlobalException(400, "Insufficient balance");
+            throw new GlobalException(400, "Số dư không đủ");
         }
 
         wallet.setBalance(wallet.getBalance().subtract(amount));
@@ -281,10 +281,10 @@ public class MoneyMovementService {
         }
 
         UserWallet wallet = userWalletRepo.findByUserIdForUpdate(toId)
-                .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + toId));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ví của người dùng: " + toId));
 
         if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
-            throw new GlobalException(400, "Wallet is not active");
+            throw new GlobalException(400, "Ví chưa hoạt động");
         }
 
         wallet.setBalance(wallet.getBalance().add(amount));

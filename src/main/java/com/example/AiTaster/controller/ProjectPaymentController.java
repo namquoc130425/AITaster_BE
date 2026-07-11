@@ -23,7 +23,7 @@ public class ProjectPaymentController {
         ProjectPaymentResponse response = projectPaymentService.createProjectPayment(invitationId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Create invitation payment successfully", response)
+                APIResponse.response(200, "Tạo thanh toán lời mời thành công", response)
         );
     }
 
@@ -34,7 +34,7 @@ public class ProjectPaymentController {
         ProjectPaymentResponse response = projectPaymentService.createProjectPaymentByWallet(invitationId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Pay project by wallet successfully", response)
+                APIResponse.response(200, "Thanh toán dự án bằng ví thành công", response)
         );
     }
 }

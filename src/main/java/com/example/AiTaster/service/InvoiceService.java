@@ -32,17 +32,17 @@ public class InvoiceService {
     @Transactional
     public Invoices createForCompletedProject(Long projectId) {
         Project project = projectRepo.findWithDetailByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dự án"));
 
         ProjectEscrow escrow = projectEscrowRepo.findByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ký quỹ dự án"));
 
         if (!ProjectStatus.COMPLETED.equals(project.getProjectStatus())) {
-            throw new GlobalException(400, "Project is not completed");
+            throw new GlobalException(400, "Dự án chưa hoàn thành");
         }
 
         if (!EscrowStatus.RELEASED.equals(escrow.getEscrowStatus())) {
-            throw new GlobalException(400, "Escrow is not released");
+            throw new GlobalException(400, "Tiền ký quỹ chưa được giải ngân");
         }
 
         return invoiceRepo.findByProjectEscrowId(escrow.getProjectEscrowId()).orElseGet(
@@ -58,7 +58,7 @@ public class InvoiceService {
                             );
                     PaymentTransaction payment = payments.stream()
                             .findFirst()
-                            .orElseThrow(() -> new GlobalException(404, "Project release transaction not found"));
+                            .orElseThrow(() -> new GlobalException(404, "Không tìm thấy giao dịch giải ngân dự án"));
                     Invoices invoice = invoiceMapper.toProjectCompletionInvoice(project, escrow, payment);
 
                     invoice.setInvoiceCode(generateInvoiceCode());
@@ -77,7 +77,7 @@ public class InvoiceService {
                     invoice.setDiscountAmount(BigDecimal.ZERO);
                     invoice.setTotalAmount(totalAmount);
 
-                    invoice.setDescription("Invoice for completed project: " + project.getTitle());
+                    invoice.setDescription("Hóa đơn cho dự án đã hoàn thành: " + project.getTitle());
                     invoice.setPaidAt(payment.getPaidAt());
                     invoice.setCreatedAt(LocalDateTime.now());
 
@@ -89,15 +89,15 @@ public class InvoiceService {
     @Transactional
     public Invoices createForPaidAiService(Long paymentTransactionId) {
         PaymentTransaction payment = paymentTransactionRepo.findById(paymentTransactionId)
-                .orElseThrow(() -> new GlobalException(404, "Payment transaction not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy giao dịch thanh toán"));
 
         if (!PaymentStatus.SUCCESS.equals(payment.getPaymentStatus())) {
-            throw new GlobalException(400, "Payment is not success");
+            throw new GlobalException(400, "Thanh toán chưa thành công");
         }
 
         if (!TransactionType.EXPERT_SERVICE_PURCHASE.equals(payment.getTransactionType())
                 || !PaymentReferenceType.EXPERT_SERVICE.equals(payment.getPaymentReferenceType())) {
-            throw new GlobalException(400, "Payment is not AI service purchase");
+            throw new GlobalException(400, "Thanh toán không phải giao dịch mua dịch vụ AI");
         }
 
         return invoiceRepo.findByPaymentTransactionId(paymentTransactionId)
@@ -107,7 +107,7 @@ public class InvoiceService {
                             : payment.getReferenceId();
 
                     ExpertService expertService = expertServiceRepo.findById(serviceId)
-                            .orElseThrow(() -> new GlobalException(404, "Expert service not found"));
+                            .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ chuyên gia"));
 
                     Invoices invoice = invoiceMapper.toAiServiceInvoice(expertService, payment);
 
@@ -128,7 +128,7 @@ public class InvoiceService {
                     invoice.setDiscountAmount(BigDecimal.ZERO);
                     invoice.setTotalAmount(totalAmount);
 
-                    invoice.setDescription("Invoice for AI Service: " + expertService.getServiceName());
+                    invoice.setDescription("Hóa đơn cho dịch vụ AI: " + expertService.getServiceName());
                     invoice.setPaidAt(payment.getPaidAt());
                     invoice.setCreatedAt(LocalDateTime.now());
 
@@ -152,10 +152,10 @@ public class InvoiceService {
         User currentUser = currentUserService.getCurrentUser();
 
         Invoices invoice = invoiceRepo.findById(invoiceId)
-                .orElseThrow(() -> new GlobalException(404, "Invoice not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hóa đơn"));
 
         if (!currentUser.getUserId().equals(invoice.getClientId())) {
-            throw new GlobalException(403, "You are not allowed to view this invoice");
+            throw new GlobalException(403, "Bạn không có quyền xem hóa đơn này");
         }
 
         return invoiceMapper.toInvoiceResponse(invoice);

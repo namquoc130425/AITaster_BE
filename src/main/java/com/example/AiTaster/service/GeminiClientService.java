@@ -8,7 +8,9 @@ import com.example.AiTaster.exception.GlobalException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,20 +22,43 @@ public class GeminiClientService {
     private final ChatClient.Builder chatClientBuilder; // BUILDER CỦA SPRINGAI
     private final ObjectMapper objectMapper;  // bieens  json thanh dto
 
+    @Value("${spring.ai.google.genai.api-key:}")
+    private String googleGenAiApiKey;
+
 
 
     public GeminiJobPostResponse generateJobPost(JobPostAiRequest jobPostAiRequest , List<VectorSkillResult> vectorSkillResult) {
         try {
 
+            ensureGeminiApiKeyConfigured();
             String prompt = buildPrompt(jobPostAiRequest, vectorSkillResult);
             String aicontext = chatClientBuilder.build().prompt().user(prompt).call().content();
             String clearJsonContext = clearJson(aicontext);
             return objectMapper.readValue(clearJsonContext, GeminiJobPostResponse.class); // chuyển json sang
+        } catch (GlobalException e) {
+            throw e;
         } catch (Exception e) {
             e.printStackTrace();
+            if (isGeminiAuthenticationError(e)) {
+                throw new GlobalException(500, "Gemini API key không hợp lệ hoặc chưa được cấp quyền. Hãy kiểm tra GEMINI_API_KEY rồi khởi động lại backend");
+            }
             throw new GlobalException(ErrorCode.CALL_AI_FAILED);
         }
 
+    }
+
+    private void ensureGeminiApiKeyConfigured() {
+        if (!StringUtils.hasText(googleGenAiApiKey)) {
+            throw new GlobalException(500, "GEMINI_API_KEY chưa được cấu hình cho chức năng tạo job post bằng AI");
+        }
+    }
+
+    private boolean isGeminiAuthenticationError(Exception exception) {
+        String message = exception.getMessage();
+        return message != null
+                && (message.contains("401")
+                || message.toLowerCase().contains("authentication credential")
+                || message.toLowerCase().contains("api key"));
     }
 
 

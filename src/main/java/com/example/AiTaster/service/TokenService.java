@@ -66,7 +66,7 @@ public class TokenService implements IToken {
             return jwsObject.serialize();
         }catch (Exception e) {
             log.error(e.getMessage());
-            throw new GlobalException(e.getMessage());
+            throw new GlobalException("Không thể tạo token");
         }
     }
     //hàm kiểm tra token

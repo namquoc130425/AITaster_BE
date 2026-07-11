@@ -114,7 +114,7 @@ class ProjectPaymentServiceTest {
 
         assertThatThrownBy(() -> projectPaymentService.createProjectPayment(1L))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Project already exists for this invitation");
+                .hasMessage("Dự án đã tồn tại cho lời mời này");
 
         assertThat(invitation.getInvitationStatus()).isEqualTo(InvitationStatus.ACCEPTED);
         verify(invitationRepo, never()).save(invitation);
@@ -146,7 +146,7 @@ class ProjectPaymentServiceTest {
 
         assertThatThrownBy(() -> projectPaymentService.createProjectPaymentByWallet(1L))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Project already exists for this invitation");
+                .hasMessage("Dự án đã tồn tại cho lời mời này");
 
         assertThat(invitation.getInvitationStatus()).isEqualTo(InvitationStatus.ACCEPTED);
         verify(invitationRepo, never()).save(invitation);
@@ -192,7 +192,7 @@ class ProjectPaymentServiceTest {
 
         assertThatThrownBy(() -> projectPaymentService.createProjectPayment(1L))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Payment deadline is expired");
+                .hasMessage("Hạn thanh toán đã hết");
 
         assertThat(invitation.getInvitationStatus()).isEqualTo(InvitationStatus.PAYMENT_EXPIRED);
         assertThat(pendingPayment.getPaymentStatus()).isEqualTo(PaymentStatus.EXPIRED);
@@ -242,7 +242,7 @@ class ProjectPaymentServiceTest {
                 eq(TransactionType.PROJECT_ESCROW_DEPOSIT),
                 eq(100L),
                 eq(PaymentReferenceType.PROJECT),
-                eq("Wallet project escrow deposit - project 100"),
+                eq("Nạp ký quỹ dự án bằng ví - dự án 100"),
                 eq(invitation.getFinalOfferedPrice()),
                 eq(invitation.getFinalOfferedPrice()),
                 eq(null)

@@ -161,45 +161,45 @@ public interface ProjectMapper {
 
     private String getCurrentStepTitle(InvitationStatus status) {
         return switch (status) {
-            case PENDING -> "Waiting for expert acceptance";
-            case ACCEPTED -> "Waiting for escrow payment";
-            case PAYMENT_EXPIRED -> "Payment expired";
-            case REJECTED -> "Invitation rejected";
-            case EXPIRED -> "Invitation expired";
+            case PENDING -> "Chờ chuyên gia chấp nhận";
+            case ACCEPTED -> "Chờ thanh toán ký quỹ";
+            case PAYMENT_EXPIRED -> "Thanh toán đã hết hạn";
+            case REJECTED -> "Lời mời đã bị từ chối";
+            case EXPIRED -> "Lời mời đã hết hạn";
         };
     }
 
     private String getCurrentStepDescription(InvitationStatus status) {
         return switch (status) {
-            case PENDING -> "The invitation has been sent and is waiting for the expert to accept.";
-            case ACCEPTED -> "The expert accepted. Client payment is required before the project starts.";
-            case PAYMENT_EXPIRED -> "The payment window expired before escrow was funded.";
-            case REJECTED -> "The expert rejected this invitation.";
-            case EXPIRED -> "The expert did not respond before the invitation expired.";
+            case PENDING -> "Lời mời đã được gửi và đang chờ chuyên gia chấp nhận.";
+            case ACCEPTED -> "Chuyên gia đã chấp nhận. Khách hàng cần thanh toán trước khi dự án bắt đầu.";
+            case PAYMENT_EXPIRED -> "Thời gian thanh toán đã hết trước khi ký quỹ được nạp.";
+            case REJECTED -> "Chuyên gia đã từ chối lời mời này.";
+            case EXPIRED -> "Chuyên gia không phản hồi trước khi lời mời hết hạn.";
         };
     }
 
     private List<ProjectStepResponse> buildInvitationSteps(InvitationStatus status) {
         if (status == InvitationStatus.ACCEPTED) {
             return List.of(
-                    step("EXPERT_ACCEPT", "Expert Accept", "DONE"),
-                    step("ESCROW_PAYMENT", "Escrow Payment", "CURRENT"),
-                    step("PROJECT_START", "Project Start", "LOCKED")
+                    step("EXPERT_ACCEPT", "Chuyên gia chấp nhận", "DONE"),
+                    step("ESCROW_PAYMENT", "Thanh toán ký quỹ", "CURRENT"),
+                    step("PROJECT_START", "Bắt đầu dự án", "LOCKED")
             );
         }
 
         if (status == InvitationStatus.PENDING) {
             return List.of(
-                    step("EXPERT_ACCEPT", "Expert Accept", "CURRENT"),
-                    step("ESCROW_PAYMENT", "Escrow Payment", "LOCKED"),
-                    step("PROJECT_START", "Project Start", "LOCKED")
+                    step("EXPERT_ACCEPT", "Chuyên gia chấp nhận", "CURRENT"),
+                    step("ESCROW_PAYMENT", "Thanh toán ký quỹ", "LOCKED"),
+                    step("PROJECT_START", "Bắt đầu dự án", "LOCKED")
             );
         }
 
         return List.of(
-                step("EXPERT_ACCEPT", "Expert Accept", "LOCKED"),
-                step("ESCROW_PAYMENT", "Escrow Payment", "LOCKED"),
-                step("PROJECT_START", "Project Start", "LOCKED")
+                step("EXPERT_ACCEPT", "Chuyên gia chấp nhận", "LOCKED"),
+                step("ESCROW_PAYMENT", "Thanh toán ký quỹ", "LOCKED"),
+                step("PROJECT_START", "Bắt đầu dự án", "LOCKED")
         );
     }
 
@@ -234,39 +234,39 @@ public interface ProjectMapper {
 
     private String getCurrentStepTitle(ProjectStatus projectStatus, ProjectMilestone milestone) {
         if (projectStatus == ProjectStatus.WAITING_ESCROW) {
-            return "Waiting for escrow payment";
+            return "Chờ thanh toán ký quỹ";
         }
         if (projectStatus == ProjectStatus.COMPLETED) {
-            return "All milestones completed";
+            return "Tất cả mốc đã hoàn tất";
         }
         if (projectStatus == ProjectStatus.CANCELED) {
-            return "Project canceled";
+            return "Dự án đã hủy";
         }
         if (milestone == null || milestone.getCurrentStep() == null) {
-            return "Document";
+            return "Tài liệu";
         }
         return milestone.getCurrentStep().getTitle();
     }
 
     private String getCurrentStepDescription(ProjectStatus projectStatus, ProjectMilestone milestone) {
         if (projectStatus == ProjectStatus.WAITING_ESCROW) {
-            return "Client payment is required before the project starts.";
+            return "Khách hàng cần thanh toán trước khi dự án bắt đầu.";
         }
         if (projectStatus == ProjectStatus.COMPLETED) {
-            return "All project milestones have been approved.";
+            return "Tất cả mốc dự án đã được phê duyệt.";
         }
         if (projectStatus == ProjectStatus.CANCELED) {
-            return "This project is no longer active.";
+            return "Dự án này không còn hoạt động.";
         }
         if (milestone == null || milestone.getStatus() == null) {
-            return "Project workspace is ready.";
+            return "Không gian làm việc của dự án đã sẵn sàng.";
         }
 
         return switch (milestone.getStatus()) {
-            case WAITING_EXPERT_SUBMIT -> "Waiting for expert to submit deliverables.";
-            case WAITING_CLIENT_REVIEW -> "Waiting for client review.";
-            case REVISION_REQUESTED -> "Client requested revisions.";
-            case COMPLETED -> "All milestones completed.";
+            case WAITING_EXPERT_SUBMIT -> "Đang chờ chuyên gia nộp sản phẩm bàn giao.";
+            case WAITING_CLIENT_REVIEW -> "Đang chờ khách hàng duyệt.";
+            case REVISION_REQUESTED -> "Khách hàng đã yêu cầu chỉnh sửa.";
+            case COMPLETED -> "Tất cả mốc đã hoàn tất.";
         };
     }
 

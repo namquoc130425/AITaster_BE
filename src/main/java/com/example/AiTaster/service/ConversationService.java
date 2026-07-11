@@ -144,7 +144,7 @@ public class ConversationService implements IConversationService {
     @Transactional
     public ConversationResponse getOrCreateProjectConversation(Long projectId) {
         Project project = projectRepo.findWithDetailByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dự án"));
 
         User currentUser = currentUserService.getCurrentUser();
         checkProjectMember(project, currentUser);
@@ -193,7 +193,7 @@ public class ConversationService implements IConversationService {
     @Transactional
     public void attachProject(Long applicationId, Long projectId) {
         Project project = projectRepo.findWithDetailByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dự án"));
 
         Conversation conversation = conversationRepo
                 .findByExpertApplication_ApplicationId(applicationId)
@@ -277,7 +277,7 @@ public class ConversationService implements IConversationService {
                 .getUserId();
 
         if (!currentUserId.equals(clientUserId) && !currentUserId.equals(expertUserId)) {
-            throw new GlobalException(403, "You are not a participant of this project");
+            throw new GlobalException(403, "Bạn không phải thành viên của dự án này");
         }
     }
 }

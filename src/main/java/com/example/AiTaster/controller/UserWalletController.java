@@ -42,7 +42,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         201,
-                        "Wallet created",
+                        "Tạo ví thành công",
                         userWalletService.createWallet(request)
                 )
         );
@@ -55,7 +55,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Success",
+                        "Lấy ví thành công",
                         userWalletService.getMyWallet()
                 )
         );
@@ -70,7 +70,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Success",
+                        "Lấy thông tin ví thành công",
                         userWalletService.getWalletById(walletId)
                 )
         );
@@ -84,7 +84,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Success",
+                        "Lấy danh sách ví thành công",
                         userWalletService.getAllWallets()
                 )
         );
@@ -97,7 +97,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get wallet transactions successfully",
+                        "Lấy lịch sử giao dịch ví thành công",
                         userWalletService.getMyTransactions()
                 )
         );
@@ -110,7 +110,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get my bank account successfully",
+                        "Lấy tài khoản ngân hàng thành công",
                         userBankAccountService.getMyBankAccount()
                 )
         );
@@ -125,7 +125,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Bank account OTP sent",
+                        "Đã gửi OTP tài khoản ngân hàng",
                         userBankAccountService.requestBankAccountOtp(request)
                 )
         );
@@ -140,7 +140,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Bank account verified",
+                        "Xác minh tài khoản ngân hàng thành công",
                         userBankAccountService.verifyBankAccountOtp(request)
                 )
         );
@@ -156,7 +156,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "SePay wallet deposit created",
+                        "Tạo thanh toán nạp ví SePay thành công",
                         walletDepositService.createWalletDeposit(walletId, request)
                 )
         );
@@ -175,7 +175,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Withdrawal requested",
+                        "Gửi yêu cầu rút tiền thành công",
                         userWalletService.requestWithdraw(
                                 walletId,
                                 request.getAmount()
@@ -192,7 +192,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get withdrawal requests successfully",
+                        "Lấy yêu cầu rút tiền thành công",
                         userWalletService.getWithdrawalRequests()
                 )
         );
@@ -211,7 +211,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Withdrawal approved",
+                        "Duyệt yêu cầu rút tiền thành công",
                         userWalletService.approveWithdraw(walletId)
                 )
         );
@@ -227,7 +227,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Withdrawal rejected",
+                        "Từ chối yêu cầu rút tiền thành công",
                         userWalletService.rejectWithdraw(walletId)
                 )
         );
@@ -244,7 +244,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Status changed",
+                        "Đổi trạng thái ví thành công",
                         userWalletService.changeStatus(
                                 walletId,
                                 status
@@ -265,7 +265,7 @@ public class UserWalletController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Wallet deleted",
+                        "Xóa ví thành công",
                         null
                 )
         );

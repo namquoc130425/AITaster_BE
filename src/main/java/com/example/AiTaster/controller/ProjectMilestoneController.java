@@ -25,7 +25,7 @@ public class ProjectMilestoneController {
     // lấy chi tiết trạng thái
     @GetMapping("/{projectId}/milestone")
     public ResponseEntity<APIResponse<ProjectMilestoneResponse>> getMilestone(@PathVariable Long projectId) {
-        return ResponseEntity.ok(APIResponse.response(200, "Get milestone successfully",
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy mốc tiến độ thành công",
                 projectMilestoneService.getMilestone(projectId)));
     }
     //nộp file
@@ -34,29 +34,29 @@ public class ProjectMilestoneController {
             @PathVariable Long projectId,
             @RequestParam("file") MultipartFile file
     ) {
-        return ResponseEntity.ok(APIResponse.response(200, "Submit deliverable successfully",
+        return ResponseEntity.ok(APIResponse.response(200, "Nộp sản phẩm bàn giao thành công",
                 projectMilestoneService.submit(projectId, file)));
     }
     // từ chối làm lại
     @PostMapping("/{projectId}/milestone/request-revision")
     public ResponseEntity<APIResponse<ProjectMilestoneResponse>> requestRevision(@PathVariable Long projectId) {
-        return ResponseEntity.ok(APIResponse.response(200, "Request revision successfully",
+        return ResponseEntity.ok(APIResponse.response(200, "Yêu cầu chỉnh sửa thành công",
                 projectMilestoneService.requestRevision(projectId)));
     }
     //chấp nhận
     @PostMapping("/{projectId}/milestone/approve")
     public ResponseEntity<APIResponse<ProjectMilestoneResponse>> approve(@PathVariable Long projectId) {
-        return ResponseEntity.ok(APIResponse.response(200, "Approve milestone successfully",
+        return ResponseEntity.ok(APIResponse.response(200, "Duyệt mốc tiến độ thành công",
                 projectMilestoneService.approve(projectId)));
     }
     @GetMapping("/{projectId}/milestone/current-deliverable")
     public ResponseEntity<APIResponse<DeliverableResponse>> getCurrentDeliverable(@PathVariable Long projectId) {
-        return ResponseEntity.ok(APIResponse.response(200, "Get current deliverable successfully",
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy sản phẩm bàn giao hiện tại thành công",
                 projectMilestoneService.getDetailDeliverable(projectId)));
     }
     @GetMapping("/{projectId}/deliverables")
     public ResponseEntity<APIResponse<List<DeliverableResponse>>> getDeliverables(@PathVariable Long projectId) {
-        return ResponseEntity.ok(APIResponse.response(200, "Get deliverables successfully",
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy danh sách sản phẩm bàn giao thành công",
                 projectMilestoneService.findDeliverables(projectId)));
     }
 

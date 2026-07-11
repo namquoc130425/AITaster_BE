@@ -39,7 +39,7 @@ public class MessageController {
         return ResponseEntity.status(201).body(
                 APIResponse.response(
                         201,
-                        "Send message successfully",
+                        "Gửi tin nhắn thành công",
                         response
                 )
         );
@@ -78,7 +78,7 @@ public class MessageController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get messages successfully",
+                        "Lấy tin nhắn thành công",
                         responses
                 )
         );

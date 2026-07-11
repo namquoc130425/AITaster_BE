@@ -27,7 +27,7 @@ public class AdminExpertVerificationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get submitted expert verifications successfully",
+                        "Lấy chứng chỉ chuyên gia đã gửi thành công",
                         service.getSubmittedVerifications()
                 )
         );
@@ -40,7 +40,7 @@ public class AdminExpertVerificationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Expert verification approved successfully",
+                        "Duyệt xác minh chuyên gia thành công",
                         service.approve(verificationId)
                 )
         );
@@ -54,7 +54,7 @@ public class AdminExpertVerificationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Expert verification rejected successfully",
+                        "Từ chối xác minh chuyên gia thành công",
                         service.reject(verificationId, request.getReason())
                 )
         );

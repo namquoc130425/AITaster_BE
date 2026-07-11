@@ -43,7 +43,7 @@ public class JobPostAiService {
         User currentUser = currentUserService.getCurrentUser();
 
         ClientProfile clientProfile = clientProfileRepo.findByUser_UserId(currentUser.getUserId())
-                .orElseThrow(() -> new GlobalException(403, "Only client can create job posts"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể tạo tin tuyển dụng"));
         //lấy selected từ fe
         List<Skill> selectedSkills = getSelectedSkills(request.getSelectedSkillIds());
         //build search text
@@ -52,7 +52,7 @@ public class JobPostAiService {
         List<VectorSkillResult> vectorResults = skillVectorSearchService.searchSkillResult(buildText, 10);
         //Nếu Qdrant không trả skill nào thì báo lỗi.
         if (vectorResults == null || vectorResults.isEmpty()) {
-            throw new GlobalException(400, "No suitable skills found from Qdrant");
+            throw new GlobalException(400, "Không tìm thấy kỹ năng phù hợp từ Qdrant");
         }
         // Giới hạn số số skill mà qdrant  đưa cho Gemini.
         List<VectorSkillResult> aiLimitResult = limitResult(vectorResults, 8);
@@ -70,7 +70,7 @@ public class JobPostAiService {
         //Nếu AI không trả skill hợp lệ thì báo lỗi.
 
         if (finalSkillIds.isEmpty()) {
-            throw new GlobalException(400, "AI did not return valid skills");
+            throw new GlobalException(400, "AI không trả về kỹ năng hợp lệ");
         }
 
         //Lấy Skill entity thật từ MySQL.
@@ -116,7 +116,7 @@ public class JobPostAiService {
         // nghĩa là có ID không tồn tại trong database.
 
         if (skills.size() != validIds.size()) {
-            throw new GlobalException(400, "Some selected skills do not exist");
+            throw new GlobalException(400, "Một số kỹ năng đã chọn không tồn tại");
         }
 
         return skills;
@@ -294,7 +294,7 @@ public class JobPostAiService {
 
         // Nếu dữ liệu yêu cầu null thì chặn trước.
         if (request == null) {
-            throw new GlobalException(400, "Request is required");
+            throw new GlobalException(400, "Yêu cầu là bắt buộc");
         }
 
         // Kiểm tra title.
@@ -317,7 +317,7 @@ public class JobPostAiService {
     private void validateAiResponse(GeminiJobPostResponse aiResponse) {
 
         if (aiResponse == null) {
-            throw new GlobalException(500, "AI response is empty");
+            throw new GlobalException(500, "Phản hồi AI đang trống");
         }
 
         contentManagerService.validateKeywordInput(aiResponse.getTitle());
@@ -339,7 +339,7 @@ public class JobPostAiService {
         );
 
         if (aiResponse.getFinalSkillIds() == null || aiResponse.getFinalSkillIds().isEmpty()) {
-            throw new GlobalException(500, "AI final skill ids are empty");
+            throw new GlobalException(500, "Danh sách mã kỹ năng cuối cùng từ AI đang trống");
         }
     }
 

@@ -31,7 +31,7 @@ public class ExpertApplicationController {
     ) {
         ExpertApplicationResponse response = expertApplicationService.applyJobPost(jobPostId, request);
         return ResponseEntity.ok(
-                APIResponse.response(201, "Apply job post successfully", response)
+                APIResponse.response(201, "Ứng tuyển tin tuyển dụng thành công", response)
         );
     }
   // Thanh toán proposal qua SePay.
@@ -43,7 +43,7 @@ public class ExpertApplicationController {
                 proposalPurchaseService.createProposalSepayPayment(proposalId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "SePay proposal payment created", response)
+                APIResponse.response(200, "Tạo thanh toán SePay cho đề xuất thành công", response)
         );
     }
 
@@ -56,7 +56,7 @@ public class ExpertApplicationController {
                 expertApplicationService.getApplicationsByJobPost(jobPostId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get applications successfully", responses)
+                APIResponse.response(200, "Lấy danh sách hồ sơ ứng tuyển thành công", responses)
         );
     }
 
@@ -67,7 +67,7 @@ public class ExpertApplicationController {
                 expertApplicationService.getMyApplications();
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get my applications successfully", responses)
+                APIResponse.response(200, "Lấy hồ sơ ứng tuyển của tôi thành công", responses)
         );
     }
 
@@ -80,7 +80,7 @@ public class ExpertApplicationController {
                 expertApplicationService.getApplicationDetail(applicationId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get application detail successfully", response)
+                APIResponse.response(200, "Lấy chi tiết hồ sơ ứng tuyển thành công", response)
         );
     }
 
@@ -94,7 +94,7 @@ public class ExpertApplicationController {
                 expertApplicationService.unlockProposal(proposalId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Unlock proposal successfully", response)
+                APIResponse.response(200, "Mở khóa đề xuất thành công", response)
         );
     }
 }

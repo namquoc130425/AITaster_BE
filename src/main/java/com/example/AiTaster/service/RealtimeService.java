@@ -55,7 +55,7 @@ public class RealtimeService {
                 "MESSAGE_RECEIVED",
                 ReferenceType.CONVERSATION,
                 message.getConversationId(),
-                "New message received"
+                "Có tin nhắn mới"
         );
     }
 

@@ -32,7 +32,7 @@ public class InvitationController {
                 invitationService.getDraftByApplication(applicationId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get invitation draft successfully", response)
+                APIResponse.response(200, "Lấy nháp lời mời thành công", response)
         );
     }
 
@@ -45,7 +45,7 @@ public class InvitationController {
                 invitationService.createInvitation(request);
 
         return ResponseEntity.ok(
-                APIResponse.response(201, "Create invitation successfully", response)
+                APIResponse.response(201, "Tạo lời mời thành công", response)
         );
     }
 
@@ -56,7 +56,7 @@ public class InvitationController {
                 invitationService.getMyClientInvitations();
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get my client invitations successfully", responses)
+                APIResponse.response(200, "Lấy lời mời của khách hàng thành công", responses)
         );
     }
 
@@ -67,7 +67,7 @@ public class InvitationController {
                 invitationService.getMyExpertInvitations();
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get my expert invitations successfully", responses)
+                APIResponse.response(200, "Lấy lời mời của chuyên gia thành công", responses)
         );
     }
 
@@ -80,7 +80,7 @@ public class InvitationController {
                 invitationService.getInvitationDetail(invitationId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Get invitation detail successfully", response)
+                APIResponse.response(200, "Lấy chi tiết lời mời thành công", response)
         );
     }
 
@@ -95,7 +95,7 @@ public class InvitationController {
                 invitationService.acceptInvitation(invitationId, request);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Accept invitation successfully", response)
+                APIResponse.response(200, "Chấp nhận lời mời thành công", response)
         );
     }
 
@@ -108,7 +108,7 @@ public class InvitationController {
                 invitationService.rejectInvitation(invitationId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Reject invitation successfully", response)
+                APIResponse.response(200, "Từ chối lời mời thành công", response)
         );
     }
 
@@ -119,7 +119,7 @@ public class InvitationController {
         invitationService.deleteInvitation(invitationId);
 
         return ResponseEntity.ok(
-                APIResponse.response(200, "Delete invitation successfully", null)
+                APIResponse.response(200, "Xóa lời mời thành công", null)
         );
     }
 }

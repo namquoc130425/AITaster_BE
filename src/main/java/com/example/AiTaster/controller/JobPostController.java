@@ -38,14 +38,14 @@ public class JobPostController {
             @RequestBody @Valid JobPostFilterRequest jobPostFilterRequest
     ) {
         PageResponse<JobPostResponse> jobPostResponses = jobPostService.getAllPublicJobPostsPage(jobPostFilterRequest);
-        return ResponseEntity.ok(APIResponse.response(200, "get All JobPost and Filter and Search Success", jobPostResponses));
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy và lọc tin tuyển dụng thành công", jobPostResponses));
     }
 
     @PostMapping("/ai/draft")
     public ResponseEntity<APIResponse<JobPostResponse>> createJobPostByAI(@RequestBody @Valid JobPostAiRequest jobPostAiRequest) throws JsonProcessingException {
         try {
             JobPostResponse jobPostResponse = jobPostAiService.creatJobPostByAi(jobPostAiRequest);
-            return ResponseEntity.ok(APIResponse.response(201, "Create job post with AI successfully", jobPostResponse));
+            return ResponseEntity.ok(APIResponse.response(201, "Tạo nháp tin tuyển dụng bằng AI thành công", jobPostResponse));
 
         } catch (Exception e) {
             // Trả về lỗi dạng JSON, không throw
@@ -57,38 +57,38 @@ public class JobPostController {
     @PostMapping("/client/draft")
     public ResponseEntity<APIResponse<JobPostResponse>> createJobPostByUser(@RequestBody @Valid JobPostRequest jobPostRequest) {
         JobPostResponse jobPostResponse = jobPostService.createJobPost(jobPostRequest);
-        return ResponseEntity.ok(APIResponse.response(201, "Create job post successfully", jobPostResponse));
+        return ResponseEntity.ok(APIResponse.response(201, "Tạo tin tuyển dụng thành công", jobPostResponse));
     }
 
     @PutMapping("/updateJobPost/{id}")
     public ResponseEntity<APIResponse<JobPostResponse>> updateJobPost(@PathVariable @Valid long id, @RequestBody @Valid JobPostRequest jobPostRequest) {
         JobPostResponse jobPostResponse = jobPostService.UpdateJobPost(id, jobPostRequest);
-        return ResponseEntity.ok(APIResponse.response(200, "Update job post successfully", jobPostResponse));
+        return ResponseEntity.ok(APIResponse.response(200, "Cập nhật tin tuyển dụng thành công", jobPostResponse));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<JobPostResponse>> getJobPostById(@Valid @PathVariable long id) {
-        JobPost jobPost = jobPostRepo.findById(id).orElseThrow(() -> new GlobalException("Job Post Not Found"));
+        JobPost jobPost = jobPostRepo.findById(id).orElseThrow(() -> new GlobalException("Không tìm thấy tin tuyển dụng"));
         JobPostResponse jobPostResponse = jobPostService.GetJobPostById(jobPost.getJobPostId());
-        return ResponseEntity.ok(APIResponse.response(200, "Job Post successfully", jobPostResponse));
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy tin tuyển dụng thành công", jobPostResponse));
     }
 
     @GetMapping("/lastJobpost/myJobPost")
     public ResponseEntity<APIResponse<List<JobPostResponse>>> getLastMyJobPostByClient() {
         List<JobPostResponse> jobPostResponses = jobPostService.GetMyJobPostByClient();
-        return ResponseEntity.ok(APIResponse.response(200, "Get My Job Post Last By Client successfully", jobPostResponses));
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy tin tuyển dụng gần đây của tôi thành công", jobPostResponses));
     }
 
     @GetMapping("/lastjobpost")
     public ResponseEntity<APIResponse<List<JobPostResponse>>> getAllJobPostPublic() {
         List<JobPostResponse> jobPostResponses = jobPostService.GetAllJobPostPublic();
-        return ResponseEntity.ok(APIResponse.response(200, "Get All Job Post Public successfully", jobPostResponses));
+        return ResponseEntity.ok(APIResponse.response(200, "Lấy tin tuyển dụng công khai thành công", jobPostResponses));
     }
 
     @PutMapping("/hiddenjobpost/{id}")
     public ResponseEntity<APIResponse<JobPostResponse>> hiddenJobPost(@PathVariable @Valid Long id) {
         JobPostResponse jobPostResponse = jobPostService.hideJobPost(id);
-        return ResponseEntity.ok(APIResponse.response(200, "Hide Job Post successfully", jobPostResponse));
+        return ResponseEntity.ok(APIResponse.response(200, "Ẩn tin tuyển dụng thành công", jobPostResponse));
     }
 
     @PatchMapping("/{id}/status")
@@ -97,13 +97,13 @@ public class JobPostController {
             @RequestParam JobpostStatus jobPostStatus
     ) {
         JobPostResponse jobPostResponse = jobPostService.changeJobPostStatus(id, jobPostStatus);
-        return ResponseEntity.ok(APIResponse.response(200, "Change job post status successfully", jobPostResponse));
+        return ResponseEntity.ok(APIResponse.response(200, "Đổi trạng thái tin tuyển dụng thành công", jobPostResponse));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<APIResponse<Void>> deleteJobPost(@PathVariable @Valid Long id) {
         jobPostService.DeleteJobPost(id);
-        return ResponseEntity.ok(APIResponse.response(200, "Delete job post successfully", null));
+        return ResponseEntity.ok(APIResponse.response(200, "Xóa tin tuyển dụng thành công", null));
     }
 
 }

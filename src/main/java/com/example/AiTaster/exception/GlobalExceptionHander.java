@@ -51,7 +51,7 @@ public class GlobalExceptionHander {
         // badRequest() là lỗi 400.
         // errors là tất cả mã lỗi đã được chuyển đổi.
 
-        return ResponseEntity.badRequest().body(APIResponse.response(400, "Validation Failed", errors)); // Ví dụ: { code: 400, messages: "Validation Failed", result: [...] }.
+        return ResponseEntity.badRequest().body(APIResponse.response(400, "Dữ liệu không hợp lệ", errors)); // Ví dụ: { code: 400, messages: "Dữ liệu không hợp lệ", result: [...] }.
     }
 }
 

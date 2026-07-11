@@ -85,7 +85,7 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
         paymentTransactionRepo.save(successTransaction);
 
         ProjectEscrow updatedEscrow = projectEscrowRepo.findByProjectEscrowId(newProjectEscrow.getProjectEscrowId())
-                .orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ký quỹ dự án"));
 
         updatedEscrow.setStartedAt(paidAt);
         projectEscrowRepo.save(updatedEscrow);
@@ -94,12 +94,12 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
         realtimeService.pushProjectParticipants(
                 newProject,
                 "PROJECT_CREATED",
-                "Project created"
+                "Dự án đã được tạo"
         );
     }
     private ProjectEscrow createProjectEscrow(Project project) {
         if (projectEscrowRepo.existsByProjectId(project.getProjectId())) {
-            throw new GlobalException(400, "Project escrow already exists");
+            throw new GlobalException(400, "Ký quỹ dự án đã tồn tại");
         }
 
         Long clientProfileId = project.getInvitation()
@@ -133,7 +133,7 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
 
     private Project createProjectByExpertAcceptInvitation(Invitation invitation, PaymentTransaction payment) {
         if (projectRepo.existsByInvitation(invitation)) {
-            throw new GlobalException(400, "Project already exists for this invitation");
+            throw new GlobalException(400, "Dự án đã tồn tại cho lời mời này");
         }
         Project project = Project.builder()
                 .invitation(invitation)

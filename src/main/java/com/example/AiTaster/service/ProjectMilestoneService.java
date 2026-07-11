@@ -53,7 +53,7 @@ public class ProjectMilestoneService {
     @Transactional
     public ProjectMilestone createMilestoneForProject(Project project) {
         if (projectMilestoneRepo.existsByProjectId(project.getProjectId())) {
-            throw new GlobalException(400, "Milestone already exists for this project");
+            throw new GlobalException(400, "Mốc tiến độ đã tồn tại cho dự án này");
         }
         ProjectMilestone milestone = ProjectMilestone.builder()
                 .projectId(project.getProjectId())
@@ -78,33 +78,35 @@ public class ProjectMilestoneService {
     @Transactional
     public ProjectMilestoneResponse submit(Long projectId, MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new GlobalException(400, "File is required");
+            throw new GlobalException(400, "File là bắt buộc");
         }
         Project project = getProjectWithDetail(projectId);
         ExpertProfile expertProfile = getCurrentExpertProfile();
         checkExpertOfProject(project, expertProfile);
         if (project.getProjectStatus() != ProjectStatus.ACTIVE) {
-            throw new GlobalException(400, "Project is not active");
+            throw new GlobalException(400, "Dự án chưa hoạt động");
         }
         ProjectEscrow escrow = getEscrowByProjectId(projectId);
         if (escrow.getEscrowStatus() != EscrowStatus.HELD) {
-            throw new GlobalException(400, "Escrow is not held");
+            throw new GlobalException(400, "Tiền ký quỹ chưa được giữ");
         }
         ProjectMilestone milestone = getMilestoneByProjectId(projectId);
         if (milestone.getStatus() == MilestoneStatus.COMPLETED) {
-            throw new GlobalException(400, "Milestone already completed");
+            throw new GlobalException(400, "Mốc tiến độ đã hoàn thành");
         }
 
         MilestoneStep step = milestone.getCurrentStep();
-        // Expert must submit a deliverable for every active milestone, including final confirmation.
+        if (step == MilestoneStep.FINAL_CONFIRMATION) {
+            throw new GlobalException(400, "Mốc 3 là bước xác nhận cuối, không cần nộp file");
+        }
         // Chỉ được nộp khi đang chờ expert nộp, hoặc client yêu cầu làm lại
         if (milestone.getStatus() != MilestoneStatus.WAITING_EXPERT_SUBMIT
                 && milestone.getStatus() != MilestoneStatus.REVISION_REQUESTED) {
-            throw new GlobalException(400, "Not allowed to submit in current status");
+            throw new GlobalException(400, "Không thể nộp sản phẩm ở trạng thái hiện tại");
         }
         // Mốc 2 chỉ mở khi mốc 1 đã được duyệt
         if (step == MilestoneStep.SOURCE_CODE && milestone.getStep1ApprovedAt() == null) {
-            throw new GlobalException(400, "Step 1 not approved yet");
+            throw new GlobalException(400, "Bước 1 chưa được duyệt");
         }
         // version = max version hiện tại của (project, step) + 1
         int nextVersion = deliverableRepo.findMaxVersionByProjectIdAndStep(projectId, step) + 1;
@@ -133,7 +135,7 @@ public class ProjectMilestoneService {
                 project,
                 milestone,
                 "SUBMITTED",
-                "Expert đã nộp file " + step.getTitle() + ", chờ bạn duyệt",
+                "Chuyên gia đã nộp file " + step.getTitle() + ", chờ bạn duyệt",
                 getClientUserId(project)
         );
         return projectMilestoneMapper.toResponse(milestone);
@@ -145,7 +147,10 @@ public class ProjectMilestoneService {
         checkClientOwner(project, getCurrentClientProfile());
         ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
         if (projectMilestone.getStatus() != MilestoneStatus.WAITING_CLIENT_REVIEW) {
-            throw new GlobalException(400, "Milestone is not waiting client review");
+            throw new GlobalException(400, "Mốc tiến độ không ở trạng thái chờ khách hàng duyệt");
+        }
+        if (projectMilestone.getCurrentStep() == MilestoneStep.FINAL_CONFIRMATION) {
+            throw new GlobalException(400, "Mốc 3 là bước xác nhận cuối, không thể yêu cầu chỉnh sửa");
         }
         projectMilestone.setStatus(MilestoneStatus.REVISION_REQUESTED);
          ProjectMilestone saveProjectMilestone = projectMilestoneRepo.save(projectMilestone);
@@ -155,7 +160,7 @@ public class ProjectMilestoneService {
                 project,
                 saveProjectMilestone,
                 "REVISION_REQUESTED",
-                "Client yêu cầu chỉnh sửa lại " + saveProjectMilestone.getCurrentStep().getTitle(),
+                "Khách hàng yêu cầu chỉnh sửa lại " + saveProjectMilestone.getCurrentStep().getTitle(),
                 getExpertUserId(project)
         );
         return projectMilestoneMapper.toResponse(saveProjectMilestone);
@@ -170,7 +175,7 @@ public class ProjectMilestoneService {
         ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
 
         if(!projectMilestone.getStatus().equals(MilestoneStatus.WAITING_CLIENT_REVIEW)) {
-            throw new GlobalException(400, "Milestone is not waiting client review");
+            throw new GlobalException(400, "Mốc tiến độ không ở trạng thái chờ khách hàng duyệt");
         }
      MilestoneStep approvedStep = projectMilestone.getCurrentStep();
         LocalDateTime now = LocalDateTime.now();
@@ -184,13 +189,12 @@ public class ProjectMilestoneService {
 
             }
             case SOURCE_CODE -> {
-                projectMilestone.setStatus(MilestoneStatus.WAITING_EXPERT_SUBMIT);
+                projectMilestone.setStatus(MilestoneStatus.WAITING_CLIENT_REVIEW);
                 projectMilestone.setStep2ApprovedAt(now);
                 projectMilestone.setCurrentStep(MilestoneStep.FINAL_CONFIRMATION);
                 markLatestDeliverableReviewed(projectId,approvedStep);
             }
             case FINAL_CONFIRMATION -> {
-                markLatestDeliverableReviewed(projectId, approvedStep);
                 finalConfirm(project,projectMilestone);
             }
         }
@@ -201,8 +205,11 @@ public class ProjectMilestoneService {
                  "Dự án đã hoàn tất, tiền đã được giải ngân cho expert",
                  getExpertUserId(project));
      } else {
+         String approvalMessage = projectMilestone.getCurrentStep() == MilestoneStep.FINAL_CONFIRMATION
+                 ? "Khách hàng đã duyệt " + approvedStep.getTitle() + ", dự án đang chờ xác nhận hoàn tất"
+                 : "Khách hàng đã duyệt " + approvedStep.getTitle() + ", mời chuyên gia làm bước tiếp theo";
          publishMilestoneEvent(project, projectMilestone, "APPROVED",
-                 "Client đã duyệt " + approvedStep.getTitle() + ", mời expert làm bước tiếp theo",
+                 approvalMessage,
                  getExpertUserId(project));
      }
         return projectMilestoneMapper.toResponse(projectMilestone);
@@ -211,23 +218,23 @@ public class ProjectMilestoneService {
     //hoàn tất bước 3 -> released tiền cho expert
     private void finalConfirm(Project project,ProjectMilestone milestone ) {
         if (project.getProjectStatus() != ProjectStatus.ACTIVE) {
-            throw new GlobalException(400, "Project is not active");
+            throw new GlobalException(400, "Dự án chưa hoạt động");
         }
         if (milestone.getStep1ApprovedAt() == null || milestone.getStep2ApprovedAt() == null) {
-            throw new GlobalException(400, "Previous steps not approved");
+            throw new GlobalException(400, "Các bước trước chưa được duyệt");
         }
         if (milestone.getStatus() == MilestoneStatus.COMPLETED) {
-            throw new GlobalException(400, "Milestone already completed");
+            throw new GlobalException(400, "Mốc tiến độ đã hoàn thành");
         }
         if (milestone.getCurrentStep() != MilestoneStep.FINAL_CONFIRMATION) {
-            throw new GlobalException(400, "Milestone is not at final confirmation step");
+            throw new GlobalException(400, "Mốc tiến độ chưa ở bước xác nhận cuối");
         }
 
 
         ProjectEscrow projectEscrow = getEscrowByProjectId(project.getProjectId());
         //chặn trả tiền 2 lần
         if(!projectEscrow.getEscrowStatus().equals(EscrowStatus.HELD)) {
-           throw new GlobalException(400, "Escrow is not HELD");
+           throw new GlobalException(400, "Tiền ký quỹ chưa được giữ");
         }
         milestone.setFinalApprovedAt(LocalDateTime.now());
         milestone.setStatus(MilestoneStatus.COMPLETED);
@@ -250,6 +257,9 @@ public class ProjectMilestoneService {
         ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
         MilestoneStep deliverableStep = projectMilestone.getCurrentStep();
 
+        if (deliverableStep == MilestoneStep.FINAL_CONFIRMATION) {
+            deliverableStep = MilestoneStep.SOURCE_CODE;
+        }
         Deliverable deliverable = deliverableRepo.findTopByProjectIdAndStepOrderByVersionDesc(projectId, deliverableStep).orElseThrow(()->  new  GlobalException(404, "No deliverable yet"));
         return deliverableMapper.toResponse(deliverable);
     }
@@ -265,11 +275,11 @@ public class ProjectMilestoneService {
     @Transactional(readOnly = true)
     public DeliverableFileDownload downloadDeliverableFile(Long projectId, Long serviceFileId) {
         ServiceFile serviceFile = serviceFileRepo.findById(serviceFileId)
-                .orElseThrow(() -> new GlobalException(404, "Deliverable file not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy file bàn giao"));
 
         Deliverable deliverable = serviceFile.getDeliverable();
         if (deliverable == null || !projectId.equals(deliverable.getProjectId())) {
-            throw new GlobalException(404, "Deliverable file not found");
+            throw new GlobalException(404, "Không tìm thấy file bàn giao");
         }
 
         Project project = getProjectWithDetail(projectId);
@@ -277,13 +287,13 @@ public class ProjectMilestoneService {
 
         Path filePath = resolveLocalUploadPath(serviceFile.getProductFile());
         if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
-            throw new GlobalException(404, "Deliverable file not found on server");
+            throw new GlobalException(404, "Không tìm thấy file bàn giao trên máy chủ");
         }
 
         try {
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                throw new GlobalException(404, "Deliverable file is not readable");
+                throw new GlobalException(404, "Không thể đọc file bàn giao");
             }
 
             String contentType = Files.probeContentType(filePath);
@@ -296,7 +306,7 @@ public class ProjectMilestoneService {
         } catch (GlobalException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new GlobalException(500, "Cannot download deliverable file");
+            throw new GlobalException(500, "Không thể tải file bàn giao");
         }
     }
 
@@ -321,23 +331,23 @@ public class ProjectMilestoneService {
     // lấy project + querry profile , invi
     private Project getProjectWithDetail(Long projectId) {
         return projectRepo.findWithDetailByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dự án"));
     }
 
     // lấy milestone từ projectId
     private ProjectMilestone getMilestoneByProjectId(Long projectId){
-        return projectMilestoneRepo.findByProjectId(projectId).orElseThrow(() -> new GlobalException(404, "Milestone not found"));
+        return projectMilestoneRepo.findByProjectId(projectId).orElseThrow(() -> new GlobalException(404, "Không tìm thấy mốc tiến độ"));
     }
     //lấy escrow theo projectId
     private ProjectEscrow getEscrowByProjectId(Long projectId){
-        return projectEscrowRepo.findByProjectId(projectId).orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+        return projectEscrowRepo.findByProjectId(projectId).orElseThrow(() -> new GlobalException(404, "Không tìm thấy ký quỹ dự án"));
     }
 
     // user là expet thuộc project
     private void checkExpertOfProject(Project project, ExpertProfile expertProfile){
         if(!getExpertIdForProject(project).equals(expertProfile.getExpertProfileId()))
         {
-            throw new GlobalException(403, "You are not the expert of this project");
+            throw new GlobalException(403, "Bạn không phải chuyên gia của dự án này");
         }
     }
 
@@ -350,13 +360,13 @@ public class ProjectMilestoneService {
     private ClientProfile getCurrentClientProfile() {
         User user = currentUserService.getCurrentUser();
         return clientProfileRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(403, "Only client can use this API"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể dùng API này"));
     }
 
     //  user hiện tại là client chủ project
     private void checkClientOwner(Project project, ClientProfile clientProfile){
         if(!getClientIdForProject(project).equals(clientProfile.getClientProfileId())) {
-            throw new GlobalException(403, "You are not the client owner of this project");
+            throw new GlobalException(403, "Bạn không phải khách hàng sở hữu dự án này");
         }
     }
 
@@ -373,17 +383,17 @@ public class ProjectMilestoneService {
         Boolean isExpert = expertProfileRepo.findByUser(user).map(e -> e.getExpertProfileId().equals(getExpertIdForProject(project))).orElse(false);
         Boolean isClient = clientProfileRepo.findByUser(user).map(e -> e.getClientProfileId().equals(getClientIdForProject(project))).orElse(false);
         if (!isExpert && !isClient) {
-            throw new GlobalException(403, "You are not a participant of this project");
+            throw new GlobalException(403, "Bạn không phải thành viên của dự án này");
         }
     }
 
     private Path resolveLocalUploadPath(String productFile) {
         if (productFile == null || productFile.isBlank()) {
-            throw new GlobalException(404, "Deliverable file path is empty");
+            throw new GlobalException(404, "Đường dẫn file bàn giao đang trống");
         }
 
         if (productFile.matches("(?i)^https?://.*")) {
-            throw new GlobalException(400, "External deliverable file is not supported");
+            throw new GlobalException(400, "Không hỗ trợ file bàn giao bên ngoài hệ thống");
         }
 
         String relativePath = productFile.replace('\\', '/');
@@ -395,7 +405,7 @@ public class ProjectMilestoneService {
         Path filePath = Path.of(relativePath).toAbsolutePath().normalize();
 
         if (!filePath.startsWith(uploadsRoot)) {
-            throw new GlobalException(403, "Invalid deliverable file path");
+            throw new GlobalException(403, "Đường dẫn file bàn giao không hợp lệ");
         }
 
         return filePath;
@@ -448,7 +458,7 @@ public class ProjectMilestoneService {
                     notificationTypeForMilestoneEvent(eventType),
                     ReferenceType.PROJECT,
                     project.getProjectId(),
-                    "Project update",
+                    "Cập nhật dự án",
                     message
             );
         }

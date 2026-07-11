@@ -27,7 +27,7 @@ public class ExpertVerificationController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Expert certificate resubmitted successfully",
+                        "Gửi lại chứng chỉ chuyên gia thành công",
                         expertProfileService.resubmitCertificate(request)
                 )
         );

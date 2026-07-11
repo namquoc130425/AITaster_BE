@@ -145,7 +145,7 @@ public class SepayGateway {
             return Base64.getEncoder().encodeToString(digest);
 
         } catch (Exception e) {
-            throw new GlobalException(500, "Cannot sign SePay checkout form");
+            throw new GlobalException(500, "Không thể ký form thanh toán SePay");
         }
     }
 

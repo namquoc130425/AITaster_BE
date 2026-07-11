@@ -34,7 +34,7 @@ public class CategoryController {
         return ResponseEntity.ok(
                 APIResponse.response(
                         200,
-                        "Get categories with filter and pagination successfully",
+                        "Lấy và lọc danh mục thành công",
                         response
                 )
         );
@@ -45,21 +45,21 @@ public class CategoryController {
     public ResponseEntity<APIResponse<CategoryResponse>> createCategory(@RequestBody @Valid CategoryRequest request) {
         CategoryResponse response = categoryService.CreateCategory(request);
 
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Created",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Tạo danh mục thành công",response));
     }
 
 
     @GetMapping
     public ResponseEntity<APIResponse<List<CategoryResponse>>> getAll() {
         List<CategoryResponse> responses = categoryService.getAll();
-        return ResponseEntity.ok(APIResponse.response(201, "Get all Category successfully", responses));
+        return ResponseEntity.ok(APIResponse.response(201, "Lấy tất cả danh mục thành công", responses));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<CategoryResponse>> getById( @PathVariable Long id) {
 
         CategoryResponse response =  categoryService.getByCategoryId(id);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Get Category by id successfully",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Lấy danh mục theo mã thành công",response));
 
     }
 
@@ -67,12 +67,12 @@ public class CategoryController {
     public ResponseEntity<APIResponse<CategoryResponse>> update(@Valid @PathVariable Long id, @RequestBody CategoryRequest request
     ) {
         CategoryResponse response =  categoryService.UpdateCategory(id,request);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Update Category successfully",response));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Cập nhật danh mục thành công",response));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<APIResponse<CategoryResponse>> delete(@PathVariable Long id) {
         categoryService.DeleteCategory(id);
-        return ResponseEntity.status(201).body(APIResponse.response(201,"Deleted Category successfully",null));
+        return ResponseEntity.status(201).body(APIResponse.response(201,"Xóa danh mục thành công",null));
     }
 }

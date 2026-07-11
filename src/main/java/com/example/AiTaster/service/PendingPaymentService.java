@@ -171,11 +171,11 @@ public class PendingPaymentService {
 
     private void validatePendingAmount(BigDecimal amount) {
         if (amount == null) {
-            throw new GlobalException(400, "Amount must not be null");
+            throw new GlobalException(400, "Số tiền không được để trống");
         }
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Amount must be greater than zero");
+            throw new GlobalException(400, "Số tiền phải lớn hơn 0");
         }
     }
 }

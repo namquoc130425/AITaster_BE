@@ -56,14 +56,14 @@ public class ClientProfileService implements IClientProfile {
     @Override
     public ClientProfileResponse getByClientId(Long id) {
         ClientProfile profile = clientProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Không tìm thấy hồ sơ khách hàng"));
 
         return clientProfileMapper.toResponse(profile);
     }
 
     @Override
     public ClientProfileResponse getByUserId(Long userId) {
-        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+        ClientProfile profile = clientProfileRepo.findByUser_UserId(userId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Không tìm thấy hồ sơ khách hàng"));
 
         return clientProfileMapper.toResponse(profile);
     }
@@ -76,7 +76,7 @@ public class ClientProfileService implements IClientProfile {
 
         ClientProfile profile = clientProfileRepo.findById(id)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode()
-                        ,"Client profile "+ ErrorCode.NOT_FOUND.getMessage()));
+                        ,"Không tìm thấy hồ sơ khách hàng"));
 
         ClientProfile currentClientProfile = getCurrentClientProfile();
         checkClientOwner(profile, currentClientProfile);
@@ -95,7 +95,7 @@ public class ClientProfileService implements IClientProfile {
 
     @Override
     public void delete(Long clientProfileId) {
-       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Client profile"+ ErrorCode.NOT_FOUND.getMessage()));
+       ClientProfile profile = clientProfileRepo.findById(clientProfileId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Không tìm thấy hồ sơ khách hàng"));
 
         // muốn xóa profie của tk nào đó thì phải cắt quan hệ của User --- Profile . còn muốn xóa User mà đi kèm profile thì qua user làm
         User user = profile.getUser();
@@ -110,7 +110,7 @@ public class ClientProfileService implements IClientProfile {
 
     public ClientProfileResponse createForRegister(User savedUser, ClientRegisterRequest request) {
         if (clientProfileRepo.existsByUser_UserId(savedUser.getUserId())) {
-            throw new GlobalException("This user already has a client profile");
+            throw new GlobalException("Người dùng này đã có hồ sơ khách hàng");
         }
          // Mapper chuyển dữ liệu yêu cầu sang entity.
         ClientProfile profile = clientProfileMapper.registerToEntity(request);
@@ -126,12 +126,12 @@ public class ClientProfileService implements IClientProfile {
     public ClientProfile getCurrentClientProfile() {
         User currentUser = currentUserService.getCurrentUser();
         return clientProfileRepo.findByUser(currentUser)
-                .orElseThrow(() -> new GlobalException(403, "Only client can access this resource"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể truy cập tài nguyên này"));
     }
 
     private void checkClientOwner(ClientProfile profile, ClientProfile currentClientProfile) {
         if (!profile.getClientProfileId().equals(currentClientProfile.getClientProfileId())) {
-            throw new GlobalException(403, "You are not owner of this client profile");
+            throw new GlobalException(403, "Bạn không phải chủ sở hữu hồ sơ khách hàng này");
         }
     };
 }
