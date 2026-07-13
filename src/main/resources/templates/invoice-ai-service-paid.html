@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Hóa đơn AI Service</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px; color: #1f2937;">
+<div style="max-width: 640px; margin: auto; background: #ffffff; padding: 24px; border-radius: 8px;">
+    <h2 style="margin-top: 0; color: #111827;">Thanh toán AI Service thành công</h2>
+
+    <p>Xin chào <b th:text="${recipientName}">bạn</b>,</p>
+
+    <p>Cảm ơn bạn đã mua AI Service trên AITasker. Hệ thống đã ghi nhận thanh toán và phát hành hóa đơn cho giao dịch này.</p>
+
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; margin: 20px 0;">
+        <p style="margin: 6px 0;"><b>Mã hóa đơn:</b> <span th:text="${invoice.invoiceCode}">INV-20260713-ABC123</span></p>
+        <p style="margin: 6px 0;"><b>Dịch vụ:</b> <span th:text="${serviceName}">AI Service</span></p>
+        <p style="margin: 6px 0;"><b>Nội dung:</b> <span th:text="${invoice.description}">Thanh toán AI Service</span></p>
+        <p style="margin: 6px 0;"><b>Phương thức thanh toán:</b> <span th:text="${invoice.paymentMethod}">WALLET</span></p>
+        <p style="margin: 6px 0;"><b>Thời điểm thanh toán:</b> <span th:text="${invoice.paidAt}">2026-07-13 14:00</span></p>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Tạm tính</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;" th:text="${invoice.subtotalAmount + ' ' + invoice.currency}">100000 VND</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Phí nền tảng</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;" th:text="${invoice.platformFee + ' ' + invoice.currency}">10000 VND</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px 0; font-size: 16px;"><b>Tổng thanh toán</b></td>
+            <td style="padding: 12px 0; font-size: 16px; text-align: right;"><b th:text="${invoice.totalAmount + ' ' + invoice.currency}">110000 VND</b></td>
+        </tr>
+    </table>
+
+    <p style="margin-top: 24px;">Hóa đơn này đã được lưu trong tài khoản AITasker của bạn để tiện tra cứu và đối chiếu sau này.</p>
+
+    <p style="color: #6b7280; font-size: 13px; margin-top: 24px;">Nếu thông tin giao dịch chưa đúng hoặc bạn cần hỗ trợ thêm, vui lòng liên hệ đội ngũ AITasker.</p>
+</div>
+</body>
+</html>

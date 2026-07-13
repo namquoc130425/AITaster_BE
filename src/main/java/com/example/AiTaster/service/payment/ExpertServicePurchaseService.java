@@ -14,6 +14,8 @@ import com.example.AiTaster.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,6 +33,7 @@ public class ExpertServicePurchaseService {
     private final PaymentTransactionMapper paymentTransactionMapper;
     private final InvoiceService invoiceService;
     private final ExpertServicePurchaseEventService purchaseEventService;
+    private final InvoiceEmailService invoiceEmailService;
 
     // Client mua expert service bằng ví nội bộ.
     // Luồng: ví client -> ví expert; phí sàn được cộng vào ví admin.
@@ -66,7 +69,9 @@ public class ExpertServicePurchaseService {
 
         );
          // tạo hóa đơn khi transaction thành công
-          invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
+        // Tạo invoice AIService và gửi email invoice sau commit.
+        Invoices invoice = invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
+        runAfterCommit(() -> invoiceEmailService.enqueueAndSendForInvoice(invoice.getInvoiceId()));
         purchaseEventService.publishAfterPaymentSuccess(
                 clientUserId,
                 expertUserId,
@@ -80,6 +85,7 @@ public class ExpertServicePurchaseService {
         return paymentTransaction;
     }
 
+    // Tạo giao dịch SePay PENDING để client thanh toán AIService bên ngoài ví nội bộ.
     @Transactional
     public SepayPurchasePaymentResponse createServiceSepayPayment(Long serviceId) {
         User user = currentUserService.getCurrentUser();
@@ -118,5 +124,20 @@ public class ExpertServicePurchaseService {
         SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);
 
         return paymentTransactionMapper.toSepayPurchasePaymentResponse(paymentTransaction, checkoutForm);
+    }
+
+    // Chạy hành động sau khi transaction commit; nếu không có transaction thì chạy ngay để dễ test unit.
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 }

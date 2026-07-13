@@ -404,6 +404,8 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                     ErrorCode.DUPLICATE_EMAIL.getMessage()
             );
         }
+
+        // TODO: Hoàn thiện điều kiện kiểm tra bổ sung nếu cần; dòng nháp trước đó làm project không compile.
     }
 
     private void validateLoginUserStatus(User user) {
