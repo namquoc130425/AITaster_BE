@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Invoice Email Payment Test</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5f7fb;
+            --surface: #ffffff;
+            --surface-soft: #eef3f8;
+            --text: #172033;
+            --muted: #62708a;
+            --border: #d7dfeb;
+            --primary: #0f766e;
+            --primary-hover: #115e59;
+            --danger: #b42318;
+            --success: #067647;
+            --warning: #8a4b00;
+            --focus: #2563eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.5;
+        }
+
+        main {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 40px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 22px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.15;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+
+        p {
+            margin: 6px 0 0;
+            color: var(--muted);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        input {
+            width: 100%;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            color: var(--text);
+            background: #fff;
+            font: inherit;
+        }
+
+        input[readonly] {
+            background: var(--surface-soft);
+            color: var(--muted);
+        }
+
+        input:focus,
+        button:focus {
+            outline: 3px solid color-mix(in srgb, var(--focus) 24%, transparent);
+            outline-offset: 2px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        button {
+            min-height: 40px;
+            border: 0;
+            border-radius: 6px;
+            padding: 9px 14px;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        .status {
+            min-height: 44px;
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            background: var(--surface-soft);
+            color: var(--muted);
+            white-space: pre-wrap;
+        }
+
+        .status.success {
+            background: #ecfdf3;
+            color: var(--success);
+        }
+
+        .status.error {
+            background: #fef3f2;
+            color: var(--danger);
+        }
+
+        .status.warning {
+            background: #fff7e6;
+            color: var(--warning);
+        }
+
+        .note {
+            margin: 0 0 16px;
+            border-left: 4px solid var(--warning);
+        }
+
+        @media (max-width: 760px) {
+            header {
+                display: grid;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pill {
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <div>
+            <h1>Invoice Email Payment Test</h1>
+            <p>Local tool kiểm tra gửi email hóa đơn thanh toán.</p>
+        </div>
+        <div class="pill">Client: diennvtse184561@fpt.edu.vn</div>
+    </header>
+
+    <section class="panel note">
+        <strong>Local endpoint:</strong>
+        <span>Cần bật <code>app.invoice-email-test.enabled=true</code> khi chạy backend.</span>
+    </section>
+
+    <section class="grid" aria-label="Invoice email test actions">
+        <form class="panel stack" id="aiServiceForm">
+            <h2>AIService payment</h2>
+            <label>
+                Client email
+                <input value="diennvtse184561@fpt.edu.vn" readonly>
+            </label>
+            <label>
+                Invoice code
+                <input id="aiInvoiceCode" name="invoiceCode" autocomplete="off">
+            </label>
+            <label>
+                AIService name
+                <input id="serviceName" name="serviceName" value="AI Resume Builder" autocomplete="off">
+            </label>
+            <label>
+                Amount VND
+                <input id="aiAmount" name="amount" type="number" min="1000" step="1000" value="1000000">
+            </label>
+            <div class="actions">
+                <button type="submit" id="sendAiButton">Gửi invoice AIService</button>
+            </div>
+        </form>
+
+        <form class="panel stack" id="projectForm">
+            <h2>Project completion payment</h2>
+            <label>
+                Client email
+                <input value="diennvtse184561@fpt.edu.vn" readonly>
+            </label>
+            <label>
+                Expert email
+                <input value="ngodien2905@gmail.com" readonly>
+            </label>
+            <label>
+                Invoice code
+                <input id="projectInvoiceCode" name="invoiceCode" autocomplete="off">
+            </label>
+            <label>
+                Project title
+                <input id="projectTitle" name="projectTitle" value="AI Chatbot Project" autocomplete="off">
+            </label>
+            <label>
+                Amount VND
+                <input id="projectAmount" name="amount" type="number" min="1000" step="1000" value="2500000">
+            </label>
+            <div class="actions">
+                <button type="submit" id="sendProjectButton">Gửi invoice project</button>
+            </div>
+        </form>
+    </section>
+
+    <section id="status" class="status" role="status" aria-live="polite">Sẵn sàng gửi email test.</section>
+</main>
+
+<script>
+    const API_BASE = '/api/local-test/invoice-email';
+    const statusBox = document.querySelector('#status');
+    const aiServiceForm = document.querySelector('#aiServiceForm');
+    const projectForm = document.querySelector('#projectForm');
+    const sendAiButton = document.querySelector('#sendAiButton');
+    const sendProjectButton = document.querySelector('#sendProjectButton');
+
+    // Tạo mã invoice mặc định theo prefix để mỗi lần test dễ phân biệt trong inbox.
+    function buildInvoiceCode(prefix) {
+        const now = new Date();
+        const datePart = now.toISOString().slice(0, 10).replaceAll('-', '');
+        const timePart = String(now.getHours()).padStart(2, '0')
+            + String(now.getMinutes()).padStart(2, '0')
+            + String(now.getSeconds()).padStart(2, '0');
+        return `${prefix}-${datePart}-${timePart}`;
+    }
+
+    // Gán invoice code mới cho hai form khi mở trang.
+    function seedInvoiceCodes() {
+        document.querySelector('#aiInvoiceCode').value = buildInvoiceCode('LOCAL-AISERVICE');
+        document.querySelector('#projectInvoiceCode').value = buildInvoiceCode('LOCAL-PROJECT');
+    }
+
+    // Đổi trạng thái hiển thị để biết request đang gửi, thành công hay thất bại.
+    function setStatus(type, message) {
+        statusBox.className = `status ${type}`;
+        statusBox.textContent = message;
+    }
+
+    // Lấy dữ liệu từ form và chuẩn hóa amount sang number.
+    function readPayload(form) {
+        const data = new FormData(form);
+        return {
+            invoiceCode: data.get('invoiceCode'),
+            serviceName: data.get('serviceName'),
+            projectTitle: data.get('projectTitle'),
+            amount: Number(data.get('amount'))
+        };
+    }
+
+    // Gọi API local test để gửi email invoice.
+    async function sendInvoice(path, payload) {
+        const response = await fetch(`${API_BASE}${path}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const text = await response.text();
+        let body;
+        try {
+            body = text ? JSON.parse(text) : {};
+        } catch {
+            body = { message: text };
+        }
+
+        if (!response.ok) {
+            throw new Error(body.message || `Request failed with status ${response.status}`);
+        }
+
+        return body;
+    }
+
+    // Khóa nút trong lúc gửi để tránh bấm trùng nhiều email.
+    async function withBusy(button, action) {
+        button.disabled = true;
+        try {
+            return await action();
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    // Xử lý submit form AIService và gửi email invoice cho client.
+    aiServiceForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setStatus('warning', 'Đang gửi invoice AIService...');
+
+        try {
+            const result = await withBusy(sendAiButton, () => sendInvoice('/ai-service', readPayload(aiServiceForm)));
+            setStatus('success', `Đã gửi AIService invoice.\nInvoice: ${result.invoiceCode}\nClient: ${result.clientEmail}`);
+            document.querySelector('#aiInvoiceCode').value = buildInvoiceCode('LOCAL-AISERVICE');
+        } catch (error) {
+            setStatus('error', `Gửi AIService invoice thất bại.\n${error.message}`);
+        }
+    });
+
+    // Xử lý submit form project và gửi email invoice cho client cùng expert.
+    projectForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setStatus('warning', 'Đang gửi invoice project completion...');
+
+        try {
+            const result = await withBusy(sendProjectButton, () => sendInvoice('/project-completion', readPayload(projectForm)));
+            setStatus('success', `Đã gửi project invoice.\nInvoice: ${result.invoiceCode}\nClient: ${result.clientEmail}\nExpert: ${result.expertEmail}`);
+            document.querySelector('#projectInvoiceCode').value = buildInvoiceCode('LOCAL-PROJECT');
+        } catch (error) {
+            setStatus('error', `Gửi project invoice thất bại.\n${error.message}`);
+        }
+    });
+
+    seedInvoiceCodes();
+</script>
+</body>
+</html>
