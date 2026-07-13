@@ -4,6 +4,7 @@ import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
+import com.example.AiTaster.service.InvoiceEmailService;
 import com.example.AiTaster.service.InvoiceService;
 import com.example.AiTaster.service.MoneyMovementService;
 import com.example.AiTaster.service.NotificationService;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,8 +31,10 @@ public class ProjectEscrowPayoutService {
     private final RealtimeService realtimeService;
     private final NotificationService notificationService;
     private final InvoiceService invoiceService;
+    private final InvoiceEmailService invoiceEmailService;
 
 
+    // Release escrow cho expert, hoàn tất project, tạo invoice và gửi email invoice sau commit.
     @Transactional
     public ProjectEscrow releaseToExpert(Project project) {
         ProjectEscrow escrow = projectEscrowRepo.findByProjectIdForUpdate(project.getProjectId()).orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
@@ -77,7 +82,9 @@ public class ProjectEscrowPayoutService {
         projectRepo.save(project);
         //tạo hóa đơn
         ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
-        invoiceService.createForCompletedProject(project.getProjectId());
+        // Tạo invoice hoàn thành project và gửi email invoice cho client/expert sau commit.
+        Invoices invoice = invoiceService.createForCompletedProject(project.getProjectId());
+        runAfterCommit(() -> invoiceEmailService.enqueueAndSendForInvoice(invoice.getInvoiceId()));
         realtimeService.pushUserWalletEvent(
                 expertUser,
                 "PROJECT_ESCROW_RELEASED",
@@ -100,6 +107,7 @@ public class ProjectEscrowPayoutService {
 
         return savedEscrow;
     }
+    // Hoàn tiền escrow cho client khi project bị hủy hoặc không đủ điều kiện release.
     @Transactional
     public ProjectEscrow refundToClient(Project project) {
         ProjectEscrow escrow = projectEscrowRepo.findByProjectIdForUpdate(project.getProjectId()).orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
@@ -154,9 +162,25 @@ public class ProjectEscrowPayoutService {
     }
 
 
+    // Format số tiền theo kiểu Việt Nam để hiển thị trong realtime event và notification.
     private String formatMoney(BigDecimal amount) {
         BigDecimal safeAmount = amount != null ? amount : BigDecimal.ZERO;
         return NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"))
                 .format(safeAmount) + " VND";
+    }
+
+    // Chạy hành động sau khi transaction commit; nếu không có transaction thì chạy ngay để test đơn vị đơn giản.
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 }
