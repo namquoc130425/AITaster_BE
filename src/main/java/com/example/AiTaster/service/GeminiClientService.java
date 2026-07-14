@@ -73,8 +73,26 @@ public class GeminiClientService {
             Với yêu cầu mơ hồ/nhỏ, đề xuất trong khoảng 3.000.000 đến 10.000.000 VND.
             Với yêu cầu trung bình, đề xuất trong khoảng 10.000.000 đến 30.000.000 VND.
             Với yêu cầu phức tạp, đề xuất từ 30.000.000 VND trở lên.
-        17. Nếu người dùng đã nhập timeLine, phải giữ theo thời gian người dùng nhập.
-            Nếu người dùng chưa nhập timeLine hoặc timeLine là "chưa biết", hãy đề xuất thời gian thực hiện hợp lý.
+        17. Trường timeLine PHẢI trả về đúng một trong các format sau:
+        - "1 ngày" đến "7 ngày"
+        - "1 tuần" đến "3 tuần"
+        - "1 tháng" trở lên, ví dụ: "1 tháng", "2 tháng", "6 tháng"
+                
+        Quy tắc bắt buộc:
+        - Chỉ trả về số + đơn vị.
+        - Không viết thêm bất kỳ chữ nào khác.
+        - Không trả về khoảng như "1-2 tuần".
+        - Không trả về câu như "dự kiến 2 tuần".
+        - Không trả về đơn vị tiếng Anh.
+        - Đơn vị chỉ được là: "ngày", "tuần", "tháng".
+                
+        Nếu người dùng nhập timeLine:
+        - Nếu là 1-7 ngày, giữ dạng "N ngày".
+        - Nếu lớn hơn 7 ngày và tối đa 21 ngày, đổi sang tuần phù hợp: "1 tuần", "2 tuần", hoặc "3 tuần".
+        - Nếu lớn hơn 21 ngày, đổi sang tháng phù hợp: "1 tháng" trở lên.
+        - Nếu người dùng nhập tuần: chỉ cho phép "1 tuần", "2 tuần", "3 tuần"; nếu lớn hơn 3 tuần thì đổi sang tháng.
+        - Nếu người dùng nhập tháng: trả về "N tháng".
+        - Nếu người dùng chưa nhập hoặc ghi "chưa biết", hãy tự đề xuất một giá trị hợp lý theo đúng format trên.
         18. Nếu người dùng đã cung cấp thông tin cụ thể ở field nào, PHẢI giữ đúng ý chính người dùng
             đã nêu ở field đó — chỉ chỉnh câu chữ cho rõ ràng/chuyên nghiệp hơn, KHÔNG được thay thế
             bằng nội dung chung chung tự tạo.

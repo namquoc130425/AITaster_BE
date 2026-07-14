@@ -14,6 +14,7 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
+import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 
 import com.example.AiTaster.service.vector.SkillVectorSearchService;
@@ -35,6 +36,7 @@ public class JobPostAiService {
     private final ContentManagerService contentManagerService;
     private final ClientProfileRepo clientProfileRepo;
     private final SkillRepo skillRepo;
+    private final JobPostRepo jobPostRepo;
     private final SkillVectorSearchService skillVectorSearchService;
     private static final int MIN_CHARS_FOR_SEARCH = 45; // Ngưỡng ký tự tối thiểu
 
@@ -48,10 +50,9 @@ public class JobPostAiService {
                 .orElseThrow(() -> new GlobalException(403, "Only client can create job posts"));
         //lấy selected từ fe
         List<Skill> selectedSkills = getSelectedSkills(request.getSelectedSkillIds());
+        validateSearchTextLength(buildSearchableUserText(request, selectedSkills));
         //build search text
         String buildText = buildJobPostText(request, selectedSkills);
-
-        validateSearchTextLength(buildText);
         //Search skill candidate trong Qdrant và yêu cầu lấy 10 đứa gần nghĩa nhất
         List<VectorSkillResult> vectorResults = skillVectorSearchService.searchSkillResult(buildText, 10);
         //Nếu Qdrant không trả skill nào thì báo lỗi.
@@ -82,8 +83,9 @@ public class JobPostAiService {
 
         JobPost jobPost = jobPostMapper.toEntityJobPostDraft(aiResponse, clientProfile);
         jobPost.setSkills(skillToDb);
+        JobPost savedJobPost = jobPostRepo.save(jobPost);
 
-        return jobPostMapper.toResponse(jobPost);
+        return jobPostMapper.toResponse(savedJobPost);
     }
 
 
@@ -148,6 +150,19 @@ public class JobPostAiService {
                 jobPostAiRequest.getBudgets() != null ? jobPostAiRequest.getBudgets() : "",
                 valueOrEmpty(jobPostAiRequest.getTimeLine()),
                 textSelectedSkills
+        );
+    }
+
+    // Text thật do người dùng cung cấp, dùng riêng cho validation độ mỏng của input.
+    private String buildSearchableUserText(JobPostAiRequest jobPostAiRequest, List<Skill> selectedSkills) {
+        return String.join(" ",
+                valueOrEmpty(jobPostAiRequest.getTitle()),
+                valueOrEmpty(jobPostAiRequest.getRequirementDescription()),
+                valueOrEmpty(jobPostAiRequest.getBusinessGoal()),
+                valueOrEmpty(jobPostAiRequest.getMainFeatures()),
+                jobPostAiRequest.getBudgets() != null ? jobPostAiRequest.getBudgets().toPlainString() : "",
+                valueOrEmpty(jobPostAiRequest.getTimeLine()),
+                buildSelectedSkillText(selectedSkills)
         );
     }
 
