@@ -19,6 +19,7 @@ target/
 *.iml
 *.ipr
 *.yaml
+*.env
 
 ### NetBeans ###
 /nbproject/private/
