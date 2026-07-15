@@ -59,6 +59,7 @@ public interface ProjectMapper {
                 .milestoneStatus(milestone != null ? milestone.getStatus().name() : null)
                 .canPayWithSepay(isClientProject && projectStatus == ProjectStatus.WAITING_ESCROW)
                 .canOpenWorkspace(projectStatus == ProjectStatus.ACTIVE || projectStatus == ProjectStatus.DISPUTED)
+                .canOpenDispute(projectStatus == ProjectStatus.ACTIVE)
                 .canViewPaymentStatus(isClientProject)
                 .canViewDetails(true)
                 .canViewSummary(projectStatus == ProjectStatus.COMPLETED)

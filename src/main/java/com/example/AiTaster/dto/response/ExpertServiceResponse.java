@@ -18,6 +18,10 @@ import java.util.List;
 public class ExpertServiceResponse {
 
     Long serviceId;
+    Long expertProfileId;
+    Long expertUserId;
+    String expertName;
+    String expertEmail;
 
     String serviceName;
 

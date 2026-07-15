@@ -308,11 +308,12 @@ public class RealtimeService {
                 .getUser();
     }
 
-    public void pushAdminDisputeEvent(String eventType, Long disputeId, String message) {
+    public void pushAdminDisputeEvent(String eventType, Long disputeId, Long projectId, String message) {
         RealtimeEventResponse event = RealtimeEventResponse.builder()
                 .eventType(eventType)
                 .referenceType(ReferenceType.DISPUTE)
                 .referenceId(disputeId)
+                .projectId(projectId)
                 .message(message)
                 .at(LocalDateTime.now())
                 .build();
