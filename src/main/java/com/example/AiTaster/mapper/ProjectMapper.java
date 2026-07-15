@@ -58,7 +58,7 @@ public interface ProjectMapper {
                 .currentStepDescription(getCurrentStepDescription(projectStatus, milestone))
                 .milestoneStatus(milestone != null ? milestone.getStatus().name() : null)
                 .canPayWithSepay(isClientProject && projectStatus == ProjectStatus.WAITING_ESCROW)
-                .canOpenWorkspace(projectStatus == ProjectStatus.ACTIVE)
+                .canOpenWorkspace(projectStatus == ProjectStatus.ACTIVE || projectStatus == ProjectStatus.DISPUTED)
                 .canViewPaymentStatus(isClientProject)
                 .canViewDetails(true)
                 .canViewSummary(projectStatus == ProjectStatus.COMPLETED)
@@ -209,6 +209,7 @@ public interface ProjectMapper {
             case ACTIVE -> "HELD";
             case COMPLETED -> "RELEASED";
             case CANCELED -> "CANCELED";
+            case DISPUTED -> "DISPUTED";
         };
     }
 
@@ -226,6 +227,9 @@ public interface ProjectMapper {
         if (projectStatus == ProjectStatus.CANCELED) {
             return "CANCELED";
         }
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return "DISPUTED";
+        }
         if (milestone == null || milestone.getCurrentStep() == null) {
             return MilestoneStep.DOCUMENT.name();
         }
@@ -241,6 +245,9 @@ public interface ProjectMapper {
         }
         if (projectStatus == ProjectStatus.CANCELED) {
             return "Project canceled";
+        }
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return "Project under dispute";
         }
         if (milestone == null || milestone.getCurrentStep() == null) {
             return "Document";
@@ -258,6 +265,9 @@ public interface ProjectMapper {
         if (projectStatus == ProjectStatus.CANCELED) {
             return "This project is no longer active.";
         }
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return "Project work is paused while admin reviews the dispute.";
+        }
         if (milestone == null || milestone.getStatus() == null) {
             return "Project workspace is ready.";
         }
@@ -271,6 +281,14 @@ public interface ProjectMapper {
     }
 
     private List<ProjectStepResponse> buildSteps(ProjectStatus projectStatus, ProjectMilestone milestone) {
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return List.of(
+                    step(MilestoneStep.DOCUMENT, "LOCKED"),
+                    step(MilestoneStep.SOURCE_CODE, "LOCKED"),
+                    step(MilestoneStep.FINAL_CONFIRMATION, "LOCKED")
+            );
+        }
+
         if (projectStatus == ProjectStatus.CANCELED) {
             return List.of(
                     step(MilestoneStep.DOCUMENT, "LOCKED"),
@@ -335,4 +353,6 @@ public interface ProjectMapper {
                 .status(status)
                 .build();
     }
+
+
 }

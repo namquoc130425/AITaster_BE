@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +52,8 @@ class ExpertVerificationGuardTest {
     private ProposalPurchaseService proposalPurchaseService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private ExpertVerificationGuardService expertVerificationGuardService;
 
     @InjectMocks
     private ExpertApplicationService expertApplicationService;
@@ -95,6 +98,7 @@ class ExpertVerificationGuardTest {
 
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
+        mockUnverifiedExpertGuard(expertProfile);
 
         assertThatThrownBy(() -> expertApplicationService.applyJobPost(10L, request))
                 .isInstanceOf(GlobalException.class)
@@ -113,6 +117,7 @@ class ExpertVerificationGuardTest {
 
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
+        mockUnverifiedExpertGuard(expertProfile);
 
         assertThatThrownBy(() -> expertProductService.CreatService(request))
                 .isInstanceOf(GlobalException.class)
@@ -140,6 +145,7 @@ class ExpertVerificationGuardTest {
         when(invitationRepo.findWithDetailByInvitationId(10L)).thenReturn(Optional.of(invitation));
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
+        mockUnverifiedExpertGuard(expertProfile);
 
         assertThatThrownBy(() -> invitationService.acceptInvitation(10L, request))
                 .isInstanceOf(GlobalException.class)
@@ -160,5 +166,11 @@ class ExpertVerificationGuardTest {
                 .build();
         expertProfile.setVerification(verification);
         return expertProfile;
+    }
+
+    private void mockUnverifiedExpertGuard(ExpertProfile expertProfile) {
+        doThrow(new GlobalException(403, "Expert must be verified by admin before using this feature"))
+                .when(expertVerificationGuardService)
+                .ensureVerified(expertProfile);
     }
 }

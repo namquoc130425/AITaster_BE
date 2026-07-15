@@ -307,4 +307,19 @@ public class RealtimeService {
                 .getExpertProfile()
                 .getUser();
     }
+
+    public void pushAdminDisputeEvent(String eventType, Long disputeId, String message) {
+        RealtimeEventResponse event = RealtimeEventResponse.builder()
+                .eventType(eventType)
+                .referenceType(ReferenceType.DISPUTE)
+                .referenceId(disputeId)
+                .message(message)
+                .at(LocalDateTime.now())
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/admin/disputes", event);
+
+        userRepo.findByRole(Role.ADMIN)
+                .forEach(admin -> sendToUser(admin, "/queue/dashboard", event));
+    }
 }
