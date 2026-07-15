@@ -37,8 +37,9 @@ public class ProjectEscrowBalanceService {
         ProjectEscrow escrow = projectEscrowRepo.findByProjectEscrowIdForUpdate(escrowId)
                 .orElseThrow(() -> new GlobalException(404, "Project escrow not found: " + escrowId));
 
-        if (!EscrowStatus.HELD.equals(escrow.getEscrowStatus())) {
-            throw new GlobalException(400, "Escrow is not HELD");
+        if (!EscrowStatus.HELD.equals(escrow.getEscrowStatus())
+                && !EscrowStatus.DISPUTED.equals(escrow.getEscrowStatus())) {
+            throw new GlobalException(400, "Escrow cannot be withdrawn");
         }
 
         if (escrow.getHeldAmount().compareTo(amount) < 0) {

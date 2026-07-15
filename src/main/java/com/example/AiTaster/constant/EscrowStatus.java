@@ -6,5 +6,6 @@ public enum EscrowStatus {
     RELEASED,        // Đã trả tiền cho expert
     REFUNDED,        // Đã hoàn tiền client
     CANCELED,        // Project/payment hết hạn hoặc bị hủy
-    DISPUTED         // Có tranh chấp
+    DISPUTED,        // Có tranh chấp
+    RESOLVED           // đã giải quyết
 }

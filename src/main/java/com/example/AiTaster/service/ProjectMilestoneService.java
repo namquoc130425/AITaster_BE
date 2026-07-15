@@ -81,6 +81,7 @@ public class ProjectMilestoneService {
             throw new GlobalException(400, "File is required");
         }
         Project project = getProjectWithDetail(projectId);
+        ensureProjectNotDisputed(project);
         ExpertProfile expertProfile = getCurrentExpertProfile();
         checkExpertOfProject(project, expertProfile);
         if (project.getProjectStatus() != ProjectStatus.ACTIVE) {
@@ -142,6 +143,7 @@ public class ProjectMilestoneService {
     @Transactional
     public ProjectMilestoneResponse requestRevision(Long projectId) {
         Project project = getProjectWithDetail(projectId);
+        ensureProjectNotDisputed(project);
         checkClientOwner(project, getCurrentClientProfile());
         ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
         if (projectMilestone.getStatus() != MilestoneStatus.WAITING_CLIENT_REVIEW) {
@@ -166,6 +168,7 @@ public class ProjectMilestoneService {
  @Transactional
     public ProjectMilestoneResponse approve(Long projectId) {
         Project project = getProjectWithDetail(projectId);
+     ensureProjectNotDisputed(project);
      checkClientOwner(project, getCurrentClientProfile());
         ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
 
@@ -508,5 +511,11 @@ public class ProjectMilestoneService {
         }
 
         return NotificationType.PROJECT;
+    }
+
+    private void ensureProjectNotDisputed(Project project) {
+        if (project.getProjectStatus() == ProjectStatus.DISPUTED) {
+            throw new GlobalException(400, "Project is under dispute");
+        }
     }
 }
