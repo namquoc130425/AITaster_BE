@@ -74,6 +74,8 @@ public class SecurityConfig {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)   // chạy trước kiểm tra token , lấy user , set vào Authentication vào SecurityContext
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/invoice-email-payment-test.html").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/local-test/invoice-email/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/webhooks/sepay", "/api/webhooks/sepay/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/category", "/api/category/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/skill", "/api/skill/**").permitAll()

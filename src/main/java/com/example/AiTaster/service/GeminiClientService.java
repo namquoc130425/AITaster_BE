@@ -40,77 +40,118 @@ public class GeminiClientService {
     private String buildPrompt(JobPostAiRequest jobPostAiRequest, List<VectorSkillResult> vectorSkillResult) {
         String vectorSkillResultText = buildVectorSkillText(vectorSkillResult);
         String prompt = """
-            Bạn là trợ lý AI cho một nền tảng freelance marketplace chuyên về dịch vụ AI.
+        Bạn là trợ lý AI cho một nền tảng freelance marketplace chuyên về dịch vụ AI.
 
-            NHIỆM VỤ CỦA BẠN:
-            - Viết lại thông tin Job Post cho rõ ràng, chuyên nghiệp và dễ hiểu hơn.
-            - Chuẩn hóa nội dung người dùng nhập.
-            - Gợi ý danh sách kỹ năng cuối cùng phù hợp với Job Post.
-            - Tất cả nội dung trả về phải viết bằng TIẾNG VIỆT.
+        NHIỆM VỤ CỦA BẠN:
+        - Viết lại thông tin Job Post cho rõ ràng, chuyên nghiệp và dễ hiểu hơn.
+        - Chuẩn hóa nội dung người dùng nhập.
+        - Gợi ý danh sách kỹ năng cuối cùng phù hợp với Job Post.
+        - Tất cả nội dung trả về phải viết bằng TIẾNG VIỆT.
 
-            QUY TẮC RẤT QUAN TRỌNG:
-            1. Chỉ trả về JSON hợp lệ.
-            2. Không trả markdown.
-            3. Không giải thích bên ngoài JSON.
-            4. Không dùng tiếng Anh trong nội dung title, description, requirementDescription, businessGoal, mainFeatures, deliverables.
-            5. Không được bịa kỹ năng.
-            6. finalSkillIds chỉ được lấy từ danh sách Candidate skills from Qdrant.
-            7. finalSkillIds tối đa 5 kỹ năng.
-            8. Không trả skillId trùng nhau.
-            9. Ưu tiên kỹ năng có vectorScore cao hơn nếu kỹ năng đó phù hợp với nội dung Job Post.
-            10. Nếu kỹ năng không liên quan đến Job Post thì không chọn, dù vectorScore cao.
-            11. Nếu thông tin người dùng nhập còn mơ hồ, hãy suy luận ở mức tổng quát dựa trên title và candidate skills.
-            12. Không được bịa các yêu cầu quá cụ thể nếu người dùng chưa cung cấp.
-            13. Nếu người dùng nhập các câu như "chưa biết", "không biết", "chưa rõ", "không rõ", "chưa tìm hiểu", hãy viết lại bằng tiếng Việt theo hướng an toàn, ví dụ:
-                - "Khách hàng chưa cung cấp yêu cầu chi tiết, cần trao đổi thêm để làm rõ phạm vi công việc."
-                - "Mục tiêu kinh doanh chưa được mô tả cụ thể, cần làm rõ thêm trong bước trao đổi."
-                - "Các tính năng chính chưa được xác định rõ, có thể bắt đầu từ các chức năng chatbot cơ bản."
-            14. Nếu title đủ rõ, bạn được phép tạo bản nháp hợp lý từ title.
-            15. Không để field rỗng.
-            16. budgets phải giữ theo số tiền người dùng nhập.
-            17. timeLine phải giữ theo thời gian người dùng nhập.
+        QUY TẮC RẤT QUAN TRỌNG:
+        1. Chỉ trả về JSON hợp lệ.
+        2. Không trả markdown.
+        3. Không giải thích bên ngoài JSON.
+        4. Không dùng tiếng Anh trong nội dung title, description, requirementDescription, businessGoal, mainFeatures, deliverables.
+        5. Không được bịa kỹ năng.
+        6. finalSkillIds chỉ được lấy từ danh sách Candidate skills from Qdrant.
+        7. finalSkillIds tối đa 5 kỹ năng.
+        8. Không trả skillId trùng nhau.
+        9. Ưu tiên kỹ năng có vectorScore cao hơn nếu kỹ năng đó phù hợp với nội dung Job Post.
+        10. Nếu kỹ năng không liên quan đến Job Post thì không chọn, dù vectorScore cao.
+        11. Nếu thông tin người dùng nhập còn mơ hồ, hãy suy luận ở mức tổng quát dựa trên title và candidate skills.
+        12. Không được bịa các yêu cầu quá cụ thể nếu người dùng chưa cung cấp.
+        13. Nếu người dùng nhập các câu như "chưa biết", "không biết", "chưa rõ", "không rõ", "chưa tìm hiểu", hãy viết lại bằng tiếng Việt theo hướng an toàn, ví dụ:
+            - "Khách hàng chưa cung cấp yêu cầu chi tiết, cần trao đổi thêm để làm rõ phạm vi công việc."
+            - "Mục tiêu kinh doanh chưa được mô tả cụ thể, cần làm rõ thêm trong bước trao đổi."
+            - "Các tính năng chính chưa được xác định rõ, có thể bắt đầu từ các chức năng chatbot cơ bản."
+        14. Nếu title đủ rõ, bạn được phép tạo bản nháp hợp lý từ title.
+        15. Không để field rỗng.
+        16. Nếu người dùng đã nhập budgets là một số lớn hơn 0, phải giữ đúng số tiền đó.
+            Nếu người dùng chưa nhập budgets hoặc budgets là "chưa xác định", phải đề xuất một ngân sách hợp lý bằng VND
+            dựa trên title, phạm vi yêu cầu và candidate skills. Không trả 0, không trả null, không trả text.
+            Với yêu cầu mơ hồ/nhỏ, đề xuất trong khoảng 3.000.000 đến 10.000.000 VND.
+            Với yêu cầu trung bình, đề xuất trong khoảng 10.000.000 đến 30.000.000 VND.
+            Với yêu cầu phức tạp, đề xuất từ 30.000.000 VND trở lên.
+        17. Trường timeLine PHẢI trả về đúng một trong các format sau:
+        - "1 ngày" đến "7 ngày"
+        - "1 tuần" đến "3 tuần"
+        - "1 tháng" trở lên, ví dụ: "1 tháng", "2 tháng", "6 tháng"
+                
+        Quy tắc bắt buộc:
+        - Chỉ trả về số + đơn vị.
+        - Không viết thêm bất kỳ chữ nào khác.
+        - Không trả về khoảng như "1-2 tuần".
+        - Không trả về câu như "dự kiến 2 tuần".
+        - Không trả về đơn vị tiếng Anh.
+        - Đơn vị chỉ được là: "ngày", "tuần", "tháng".
+                
+        Nếu người dùng nhập timeLine:
+        - Nếu là 1-7 ngày, giữ dạng "N ngày".
+        - Nếu lớn hơn 7 ngày và tối đa 21 ngày, đổi sang tuần phù hợp: "1 tuần", "2 tuần", hoặc "3 tuần".
+        - Nếu lớn hơn 21 ngày, đổi sang tháng phù hợp: "1 tháng" trở lên.
+        - Nếu người dùng nhập tuần: chỉ cho phép "1 tuần", "2 tuần", "3 tuần"; nếu lớn hơn 3 tuần thì đổi sang tháng.
+        - Nếu người dùng nhập tháng: trả về "N tháng".
+        - Nếu người dùng chưa nhập hoặc ghi "chưa biết", hãy tự đề xuất một giá trị hợp lý theo đúng format trên.
+        18. Nếu người dùng đã cung cấp thông tin cụ thể ở field nào, PHẢI giữ đúng ý chính người dùng
+            đã nêu ở field đó — chỉ chỉnh câu chữ cho rõ ràng/chuyên nghiệp hơn, KHÔNG được thay thế
+            bằng nội dung chung chung tự tạo.
 
-            CÁCH XỬ LÝ KHI INPUT MƠ HỒ:
-            - Nếu requirementDescription là "chưa biết", hãy viết yêu cầu tổng quát, không quá chi tiết.
-            - Nếu businessGoal là "chưa biết", hãy viết mục tiêu chung dựa trên title.
-            - Nếu mainFeatures là "chưa biết", hãy đề xuất tính năng cơ bản ở mức an toàn.
-            - Không được nói chắc chắn rằng hệ thống có những tính năng phức tạp nếu người dùng chưa yêu cầu.
-            - Có thể dùng các cụm như "cần trao đổi thêm", "có thể bao gồm", "dự kiến", "ở mức cơ bản".
+        CÁCH XỬ LÝ KHI INPUT MƠ HỒ (field trống hoặc ghi "chưa biết"):
+        - Nếu requirementDescription là "chưa biết", hãy viết yêu cầu tổng quát, không quá chi tiết.
+- Nếu businessGoal là "chưa biết", hãy viết mục tiêu chung dựa trên title.
+        - Nếu mainFeatures là "chưa biết", hãy đề xuất tính năng cơ bản ở mức an toàn.
+        - Không được nói chắc chắn rằng hệ thống có những tính năng phức tạp nếu người dùng chưa yêu cầu.
+        - Có thể dùng các cụm như "cần trao đổi thêm", "có thể bao gồm", "dự kiến", "ở mức cơ bản".
 
-            Candidate skills from Qdrant:
-            %s
+        CÁCH XỬ LÝ KHI INPUT ĐÃ CÓ DỮ LIỆU THẬT (áp dụng rule 18):
+        - Nếu người dùng đã viết cụ thể (ví dụ: "tích hợp thanh toán qua Momo", "xử lý 1000 đơn hàng/ngày"),
+          PHẢI giữ nguyên các chi tiết này trong nội dung viết lại.
+        - Chỉ được chuẩn hóa ngữ pháp, câu chữ, cách trình bày — KHÔNG được lược bỏ, khái quát hóa,
+          hoặc thay thế chi tiết thật bằng câu chung chung.
+        - Nếu một field có dữ liệu thật còn field khác lại "chưa biết", chỉ áp dụng cách xử lý mơ hồ
+          cho riêng field đang thiếu, không ảnh hưởng đến field đã có dữ liệu thật.
 
-            User job post input:
-            title: %s
-            requirementDescription: %s
-            businessGoal: %s
-            mainFeatures: %s
-            budgets: %s
-            timeLine: %s
+        Candidate skills from Qdrant:
+        %s
 
-            Trả về đúng cấu trúc JSON sau:
-            {
-              "title": "string",
-              "description": "string",
-              "requirementDescription": "string",
-              "businessGoal": "string",
-              "mainFeatures": "string",
-              "deliverables": "string",
-              "budgets": 1000,
-              "timeLine": "string",
-              "finalSkillIds": [1, 2, 3]
-            }
-            """.formatted(
+        User job post input:
+        title: %s
+        requirementDescription: %s
+        businessGoal: %s
+        mainFeatures: %s
+        budgets: %s
+        timeLine: %s
+
+        Trả về đúng cấu trúc JSON sau:
+        {
+          "title": "string",
+          "description": "string",
+          "requirementDescription": "string",
+          "businessGoal": "string",
+          "mainFeatures": "string",
+          "deliverables": "string",
+          "budgets": 5000000,
+          "timeLine": "string",
+          "finalSkillIds": [1, 2, 3]
+        }
+        """.formatted(
                 vectorSkillResultText,
-                jobPostAiRequest.getTitle(),
-                jobPostAiRequest.getRequirementDescription(),
-                jobPostAiRequest.getBusinessGoal(),
-                jobPostAiRequest.getMainFeatures(),
-                jobPostAiRequest.getBudgets(),
-                jobPostAiRequest.getTimeLine()
+                jobPostAiRequest.getTitle(), // title luôn có giá trị thật, không cần default
+                valueOrDefault(jobPostAiRequest.getRequirementDescription()),
+                valueOrDefault(jobPostAiRequest.getBusinessGoal()),
+                valueOrDefault(jobPostAiRequest.getMainFeatures()),
+                jobPostAiRequest.getBudgets() != null ? jobPostAiRequest.getBudgets() : "chưa xác định",
+                valueOrDefault(jobPostAiRequest.getTimeLine())
         );
 
         return prompt;
+    }
+
+    // field trống thành "chưa biết"
+// nếu người dùng ko nhập gì cả thì sẽ xét là "chưa biêt" để thêm vào prompt khi field ko có dữ liệu, tránh null
+    private String valueOrDefault(String value) {
+        return (value == null || value.isBlank()) ? "chưa biết" : value;
     }
   // vì Qdrant trả về List nên từ List sẽ chuyển thành String để Ai đọc :)))
     private String buildVectorSkillText(List<VectorSkillResult> vectorSkillResult) {

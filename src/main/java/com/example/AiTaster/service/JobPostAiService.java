@@ -14,12 +14,14 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
+import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 
 import com.example.AiTaster.service.vector.SkillVectorSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,7 +36,9 @@ public class JobPostAiService {
     private final ContentManagerService contentManagerService;
     private final ClientProfileRepo clientProfileRepo;
     private final SkillRepo skillRepo;
+    private final JobPostRepo jobPostRepo;
     private final SkillVectorSearchService skillVectorSearchService;
+    private static final int MIN_CHARS_FOR_SEARCH = 45; // Ngưỡng ký tự tối thiểu
 
     public JobPostResponse creatJobPostByAi(JobPostAiRequest request) {
 
@@ -46,6 +50,7 @@ public class JobPostAiService {
                 .orElseThrow(() -> new GlobalException(403, "Only client can create job posts"));
         //lấy selected từ fe
         List<Skill> selectedSkills = getSelectedSkills(request.getSelectedSkillIds());
+        validateSearchTextLength(buildSearchableUserText(request, selectedSkills));
         //build search text
         String buildText = buildJobPostText(request, selectedSkills);
         //Search skill candidate trong Qdrant và yêu cầu lấy 10 đứa gần nghĩa nhất
@@ -78,8 +83,9 @@ public class JobPostAiService {
 
         JobPost jobPost = jobPostMapper.toEntityJobPostDraft(aiResponse, clientProfile);
         jobPost.setSkills(skillToDb);
+        JobPost savedJobPost = jobPostRepo.save(jobPost);
 
-        return jobPostMapper.toResponse(jobPost);
+        return jobPostMapper.toResponse(savedJobPost);
     }
 
 
@@ -129,23 +135,42 @@ public class JobPostAiService {
         String textSelectedSkills = buildSelectedSkillText(selectedSkills);
 
         return """
-                Job title: %s
-                Requirement description: %s
-                Business goal: %s
-                Main features: %s
-                Budget: %s
-                Timeline: %s
-                User selected skills: %s
-                """.formatted(
+            Job title: %s
+            Requirement description: %s
+            Business goal: %s
+            Main features: %s
+            Budget: %s
+            Timeline: %s
+            User selected skills: %s
+            """.formatted(
                 jobPostAiRequest.getTitle(),
-                jobPostAiRequest.getRequirementDescription(),
-                jobPostAiRequest.getBusinessGoal(),
-                jobPostAiRequest.getMainFeatures(),
-                jobPostAiRequest.getBudgets(),
-                jobPostAiRequest.getTimeLine(),
+                valueOrEmpty(jobPostAiRequest.getRequirementDescription()),
+                valueOrEmpty(jobPostAiRequest.getBusinessGoal()),
+                valueOrEmpty(jobPostAiRequest.getMainFeatures()),
+                jobPostAiRequest.getBudgets() != null ? jobPostAiRequest.getBudgets() : "",
+                valueOrEmpty(jobPostAiRequest.getTimeLine()),
                 textSelectedSkills
         );
     }
+
+    // Text thật do người dùng cung cấp, dùng riêng cho validation độ mỏng của input.
+    private String buildSearchableUserText(JobPostAiRequest jobPostAiRequest, List<Skill> selectedSkills) {
+        return String.join(" ",
+                valueOrEmpty(jobPostAiRequest.getTitle()),
+                valueOrEmpty(jobPostAiRequest.getRequirementDescription()),
+                valueOrEmpty(jobPostAiRequest.getBusinessGoal()),
+                valueOrEmpty(jobPostAiRequest.getMainFeatures()),
+                jobPostAiRequest.getBudgets() != null ? jobPostAiRequest.getBudgets().toPlainString() : "",
+                valueOrEmpty(jobPostAiRequest.getTimeLine()),
+                buildSelectedSkillText(selectedSkills)
+        );
+    }
+
+    // mục đích search Qdrant, field trống = chuỗi rỗng
+    private String valueOrEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
 
     // Hàm này biến List<Skill> user chọn thành một chuỗi text.
     private String buildSelectedSkillText(List<Skill> selectedSkills) {
@@ -291,26 +316,26 @@ public class JobPostAiService {
 
     // Kiểm tra nội dung user nhập có từ cấm hoặc prompt injection không.
     private void validateUserInputContent(JobPostAiRequest request) {
-
-        // Nếu dữ liệu yêu cầu null thì chặn trước.
         if (request == null) {
             throw new GlobalException(400, "Request is required");
         }
 
-        // Kiểm tra title.
+        // Title luôn bắt buộc
         contentManagerService.validateKeywordInput(request.getTitle());
 
-        // Kiểm tra mô tả yêu cầu.
-        contentManagerService.validateKeywordInput(request.getRequirementDescription());
+        // Field optional: chỉ kiểm tra từ cấm/prompt injection KHI có dữ liệu.
+        // Field trống thì bỏ qua hoàn toàn, không throw FIELD_REQUIRED nữa.
+        validateOptionalField(request.getRequirementDescription());
+        validateOptionalField(request.getBusinessGoal());
+        validateOptionalField(request.getMainFeatures());
+        validateOptionalField(request.getTimeLine());
+    }
 
-        // Check mục tiêu kinh doanh
-        contentManagerService.validateKeywordInput(request.getBusinessGoal());
-
-        // Check chức năng chính
-        contentManagerService.validateKeywordInput(request.getMainFeatures());
-
-        // Check timeline
-        contentManagerService.validateKeywordInput(request.getTimeLine());
+    //dùng chung cho mọi field optional
+    private void validateOptionalField(String value) {
+        if (value != null && !value.isBlank()) {
+            contentManagerService.validateKeywordInput(value);
+        }
     }
 
     // Validate dữ liệu Gemini trả về
@@ -340,6 +365,20 @@ public class JobPostAiService {
 
         if (aiResponse.getFinalSkillIds() == null || aiResponse.getFinalSkillIds().isEmpty()) {
             throw new GlobalException(500, "AI final skill ids are empty");
+        }
+
+        if (aiResponse.getBudgets() == null
+                || aiResponse.getBudgets().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new GlobalException(500, "AI budget suggestion is invalid");
+        }
+    }
+
+    private void validateSearchTextLength(String searchText) {
+        int length = searchText == null ? 0 : searchText.trim().length();
+        if (length < MIN_CHARS_FOR_SEARCH) {
+            throw new GlobalException(400,
+                    "Vui lòng mô tả chi tiết hơn (tối thiểu " + MIN_CHARS_FOR_SEARCH
+                            + " ký tự) để hệ thống gợi ý kỹ năng chính xác hơn");
         }
     }
 
