@@ -15,6 +15,8 @@ public interface IUserWalletService {
 
     UserWalletResponse getMyWallet();
 
+    UserWalletResponse getAdminWalletBalance();
+
     UserWalletResponse getWalletById(Long walletId);
 
     List<UserWalletResponse> getAllWallets();

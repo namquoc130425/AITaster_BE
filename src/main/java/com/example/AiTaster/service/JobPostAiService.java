@@ -38,7 +38,6 @@ public class JobPostAiService {
     private final SkillRepo skillRepo;
     private final JobPostRepo jobPostRepo;
     private final SkillVectorSearchService skillVectorSearchService;
-    private static final int MIN_CHARS_FOR_SEARCH = 45; // Ngưỡng ký tự tối thiểu
 
     public JobPostResponse creatJobPostByAi(JobPostAiRequest request) {
 
@@ -50,7 +49,6 @@ public class JobPostAiService {
                 .orElseThrow(() -> new GlobalException(403, "Only client can create job posts"));
         //lấy selected từ fe
         List<Skill> selectedSkills = getSelectedSkills(request.getSelectedSkillIds());
-        validateSearchTextLength(buildSearchableUserText(request, selectedSkills));
         //build search text
         String buildText = buildJobPostText(request, selectedSkills);
         //Search skill candidate trong Qdrant và yêu cầu lấy 10 đứa gần nghĩa nhất
@@ -150,19 +148,6 @@ public class JobPostAiService {
                 jobPostAiRequest.getBudgets() != null ? jobPostAiRequest.getBudgets() : "",
                 valueOrEmpty(jobPostAiRequest.getTimeLine()),
                 textSelectedSkills
-        );
-    }
-
-    // Text thật do người dùng cung cấp, dùng riêng cho validation độ mỏng của input.
-    private String buildSearchableUserText(JobPostAiRequest jobPostAiRequest, List<Skill> selectedSkills) {
-        return String.join(" ",
-                valueOrEmpty(jobPostAiRequest.getTitle()),
-                valueOrEmpty(jobPostAiRequest.getRequirementDescription()),
-                valueOrEmpty(jobPostAiRequest.getBusinessGoal()),
-                valueOrEmpty(jobPostAiRequest.getMainFeatures()),
-                jobPostAiRequest.getBudgets() != null ? jobPostAiRequest.getBudgets().toPlainString() : "",
-                valueOrEmpty(jobPostAiRequest.getTimeLine()),
-                buildSelectedSkillText(selectedSkills)
         );
     }
 
@@ -370,15 +355,6 @@ public class JobPostAiService {
         if (aiResponse.getBudgets() == null
                 || aiResponse.getBudgets().compareTo(BigDecimal.ZERO) <= 0) {
             throw new GlobalException(500, "AI budget suggestion is invalid");
-        }
-    }
-
-    private void validateSearchTextLength(String searchText) {
-        int length = searchText == null ? 0 : searchText.trim().length();
-        if (length < MIN_CHARS_FOR_SEARCH) {
-            throw new GlobalException(400,
-                    "Vui lòng mô tả chi tiết hơn (tối thiểu " + MIN_CHARS_FOR_SEARCH
-                            + " ký tự) để hệ thống gợi ý kỹ năng chính xác hơn");
         }
     }
 

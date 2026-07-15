@@ -19,5 +19,9 @@ public interface DisputeMapper {
     @Mapping(target = "escrowHeldAmount", source = "escrow.heldAmount")
     @Mapping(target = "createdAt", source = "dispute.createAt")
     @Mapping(target = "resolvedAt", source = "dispute.resolvedAt")
+    @Mapping(target = "escrowStatus", ignore = true)
+    @Mapping(target = "projectOutcome", ignore = true)
+    @Mapping(target = "project", ignore = true)
+    @Mapping(target = "deliverables", ignore = true)
     DisputeResponse toResponse(Dispute dispute, ProjectEscrow escrow);
 }

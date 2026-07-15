@@ -140,6 +140,40 @@ public class EmailService {
     }
 
     // Gửi email OTP xác thực tài khoản ngân hàng bằng template bank-account-otp.
+    public void sendWelcomeEmail(
+            String to,
+            String displayName,
+            String role
+    ) {
+        try {
+            Context context = new Context();
+            context.setVariable("displayName", safeDisplay(displayName, "there"));
+            context.setVariable("role", safeDisplay(role, "member"));
+
+            String htmlContent = templateEngine.process(
+                    "welcome-user",
+                    context
+            );
+
+            MimeMessage message = mailSender.createMimeMessage();
+
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    "UTF-8"
+            );
+
+            helper.setTo(to);
+            helper.setSubject("Welcome to AITasker");
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send welcome email", e);
+        }
+    }
+
     public void sendBankAccountOtpEmail(
             String to,
             String otp,

@@ -85,6 +85,30 @@ public class ProjectService {
                 .toList();
     }
 
+    public ProjectCardResponse getProject(Long projectId) {
+        User user = currentUserService.getCurrentUser();
+        ClientProfile clientProfile = clientProfileRepo.findByUser(user).orElse(null);
+        ExpertProfile expertProfile = expertProfileRepo.findByUser(user).orElse(null);
+
+        if (clientProfile == null && expertProfile == null) {
+            throw new GlobalException(403, "User has no client or expert profile");
+        }
+
+        Project project = projectRepo.findWithDetailByProjectId(projectId)
+                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+
+        checkProjectMember(project, clientProfile, expertProfile);
+
+        boolean isClientProject = clientProfile != null
+                && isClientProject(project, clientProfile.getClientProfileId());
+
+        return projectMapper.toCardResponse(
+                project,
+                projectMilestoneRepo.findByProjectId(project.getProjectId()).orElse(null),
+                isClientProject
+        );
+    }
+
     @Transactional
     public void deleteProject(Long projectId) {
         Project project = projectRepo.findWithDetailByProjectId(projectId)

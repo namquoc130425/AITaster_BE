@@ -64,6 +64,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 
 		<!-- 	Kết nối MySQL		-->
 		<!-- Nguồn: https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->

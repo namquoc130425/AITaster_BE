@@ -2,16 +2,19 @@ package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.NotificationType;
+import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.constant.ReferenceType;
 import com.example.AiTaster.dto.request.MessageRequest;
 import com.example.AiTaster.dto.response.MessageResponse;
 import com.example.AiTaster.dto.response.ReadReceiptResponse;
 import com.example.AiTaster.entity.Conversation;
 import com.example.AiTaster.entity.Message;
+import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.MessageMapper;
 import com.example.AiTaster.repository.MessageRepo;
+import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IMessageService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ public class MessageService implements IMessageService {
 
     private final MessageRepo messageRepo;
     private final UserRepo userRepo;
+    private final ProjectRepo projectRepo;
 
     private final ConversationService conversationService;
     private final CurrentUserService currentUserService;
@@ -114,6 +118,7 @@ public class MessageService implements IMessageService {
                 conversation,
                 sender
         );
+        ensureConversationCanReceiveMessage(conversation);
 
         /*
      * Chặn thêm ở tầng service:
@@ -462,6 +467,20 @@ public class MessageService implements IMessageService {
         throw new GlobalException(
                 ErrorCode.NOT_CONVERSATION_MEMBER
         );
+    }
+
+    private void ensureConversationCanReceiveMessage(Conversation conversation) {
+        Long projectId = conversation.getProjectId();
+
+        if (projectId == null) {
+            return;
+        }
+
+        Project project = projectRepo.findById(projectId).orElse(null);
+
+        if (project != null && ProjectStatus.DISPUTED.equals(project.getProjectStatus())) {
+            throw new GlobalException(400, "Messaging is paused while project is under dispute");
+        }
     }
 
     private String buildMessageNotificationContent(

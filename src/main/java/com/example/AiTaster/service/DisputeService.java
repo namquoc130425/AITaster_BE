@@ -10,7 +10,10 @@ import com.example.AiTaster.dto.response.DisputeResponse;
 import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
+import com.example.AiTaster.mapper.DeliverableMapper;
 import com.example.AiTaster.mapper.DisputeMapper;
+import com.example.AiTaster.mapper.MessageMapper;
+import com.example.AiTaster.mapper.ProjectMapper;
 import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.imp.IDisputeService;
 import com.example.AiTaster.specification.DisputeSpecification;
@@ -19,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,6 +35,7 @@ public class DisputeService implements IDisputeService {
     private final DisputeRepo disputeRepo;
     private final ProjectRepo projectRepo;
     private final ProjectEscrowRepo projectEscrowRepo;
+    private final ProjectMilestoneRepo projectMilestoneRepo;
     private final DeliverableRepo deliverableRepo;
     private final UserRepo userRepo;
     private final CurrentUserService currentUserService;
@@ -37,6 +43,11 @@ public class DisputeService implements IDisputeService {
     private final NotificationService notificationService;
     private final RealtimeService realtimeService;
     private final DisputeMapper disputeMapper;
+    private final ProjectMapper projectMapper;
+    private final DeliverableMapper deliverableMapper;
+    private final ConversationRepo conversationRepo;
+    private final MessageRepo messageRepo;
+    private final MessageMapper messageMapper;
 
     @Override
     @Transactional
@@ -100,10 +111,17 @@ public class DisputeService implements IDisputeService {
                 displayName(currentUser) + " opened a dispute for project: " + project.getTitle()
         );
 
-        realtimeService.pushProjectParticipants(project, "PROJECT_DISPUTED", "Project has been disputed");
-        realtimeService.pushAdminDisputeEvent("DISPUTE_CREATED", dispute.getDisputeId(), "New dispute created");
+        pushAfterCommit(() -> {
+            realtimeService.pushProjectParticipants(project, "PROJECT_DISPUTED", "Project has been disputed");
+            realtimeService.pushAdminDisputeEvent(
+                    "DISPUTE_CREATED",
+                    dispute.getDisputeId(),
+                    project.getProjectId(),
+                    "New dispute created"
+            );
+        });
 
-        return disputeMapper.toResponse(dispute, escrow);
+        return toResponse(dispute, escrow, currentUser);
     }
 
     @Override
@@ -125,10 +143,31 @@ public class DisputeService implements IDisputeService {
                     .findByProjectId(dispute.getProject().getProjectId())
                     .orElse(null);
 
-            return disputeMapper.toResponse(dispute, escrow);
+            return toResponse(dispute, escrow, null);
         });
 
         return PageResponse.fromPage(responsePage);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DisputeResponse> getMyDisputes() {
+        User currentUser = currentUserService.getCurrentUser();
+
+        return disputeRepo
+                .findByReporter_UserIdOrReportedAgainst_UserIdOrderByCreateAtDesc(
+                        currentUser.getUserId(),
+                        currentUser.getUserId()
+                )
+                .stream()
+                .map(dispute -> {
+                    ProjectEscrow escrow = projectEscrowRepo
+                            .findByProjectId(dispute.getProject().getProjectId())
+                            .orElse(null);
+
+                    return toResponse(dispute, escrow, currentUser);
+                })
+                .toList();
     }
 
     @Override
@@ -194,9 +233,16 @@ public class DisputeService implements IDisputeService {
                         saved.getDisputeId(), "Dispute rejected", "Admin rejected the dispute for project: " + project.getTitle());
                 notificationService.notify(expertUser, NotificationType.DISPUTE, ReferenceType.DISPUTE,
                         saved.getDisputeId(), "Dispute rejected", "Admin rejected the dispute for project: " + project.getTitle());
-                realtimeService.pushProjectParticipants(project, "DISPUTE_REJECTED", "Dispute was rejected by admin");
-                realtimeService.pushAdminDisputeEvent("DISPUTE_REJECTED", saved.getDisputeId(), "Dispute rejected");
-                return disputeMapper.toResponse(saved, escrow);
+                pushAfterCommit(() -> {
+                    realtimeService.pushProjectParticipants(project, "DISPUTE_REJECTED", "Dispute was rejected by admin");
+                    realtimeService.pushAdminDisputeEvent(
+                            "DISPUTE_REJECTED",
+                            saved.getDisputeId(),
+                            project.getProjectId(),
+                            "Dispute rejected"
+                    );
+                });
+                return toResponse(saved, escrow, null);
             }
         }
 
@@ -238,9 +284,7 @@ public class DisputeService implements IDisputeService {
         escrow.setHeldAmount(BigDecimal.ZERO);
         escrow.setEscrowStatus(resolveEscrowStatus(refund, release));
         project.setIsActive(false);
-        project.setProjectStatus(refund.compareTo(BigDecimal.ZERO) == 0
-                ? ProjectStatus.COMPLETED
-                : ProjectStatus.CANCELED);
+        project.setProjectStatus(ProjectStatus.CANCELED);
 
         projectRepo.save(project);
         projectEscrowRepo.save(escrow);
@@ -253,10 +297,80 @@ public class DisputeService implements IDisputeService {
         notificationService.notify(expertUser, NotificationType.DISPUTE, ReferenceType.DISPUTE,
                 saved.getDisputeId(), "Dispute resolved", "Admin resolved dispute for project: " + project.getTitle());
 
-        realtimeService.pushProjectParticipants(project, "DISPUTE_RESOLVED", "Dispute resolved by admin");
-        realtimeService.pushAdminDisputeEvent("DISPUTE_RESOLVED", saved.getDisputeId(), "Dispute resolved");
+        pushAfterCommit(() -> {
+            realtimeService.pushProjectParticipants(project, "DISPUTE_RESOLVED", "Dispute resolved by admin");
+            realtimeService.pushAdminDisputeEvent(
+                    "DISPUTE_RESOLVED",
+                    saved.getDisputeId(),
+                    project.getProjectId(),
+                    "Dispute resolved"
+            );
+        });
 
-        return disputeMapper.toResponse(saved, escrow);
+        return toResponse(saved, escrow, null);
+    }
+
+    private DisputeResponse toResponse(Dispute dispute, ProjectEscrow escrow, User viewer) {
+        DisputeResponse response = disputeMapper.toResponse(dispute, escrow);
+        Project project = dispute.getProject();
+
+        if (escrow != null) {
+            response.setEscrowStatus(escrow.getEscrowStatus());
+        }
+
+        if (project != null && project.getProjectId() != null) {
+            boolean isClientProject = viewer == null
+                    || viewer.getUserId().equals(getClientUser(project).getUserId());
+
+            response.setProject(projectMapper.toCardResponse(
+                    project,
+                    projectMilestoneRepo.findByProjectId(project.getProjectId()).orElse(null),
+                    isClientProject
+            ));
+            response.setDeliverables(deliverableRepo
+                    .findByProjectIdOrderBySubmittedAtDesc(project.getProjectId())
+                    .stream()
+                    .map(deliverableMapper::toResponse)
+                    .toList());
+            conversationRepo.findWithDetailByProjectId(project.getProjectId())
+                    .ifPresent(conversation -> {
+                        response.setConversationId(conversation.getConversationId());
+                        response.setMessages(messageRepo
+                                .findByConversationOrderBySendAtAsc(conversation)
+                                .stream()
+                                .map(messageMapper::toResponse)
+                                .toList());
+                    });
+        }
+
+        response.setProjectOutcome(resolveProjectOutcome(dispute));
+        return response;
+    }
+
+    private String resolveProjectOutcome(Dispute dispute) {
+        if (dispute.getDisputeStatus() == DisputeStatus.REJECTED) {
+            return "CONTINUE_PROJECT";
+        }
+
+        if (dispute.getDisputeStatus() == DisputeStatus.RESOLVED) {
+            return "CLOSE_PROJECT";
+        }
+
+        return "PENDING_ADMIN_REVIEW";
+    }
+
+    private void pushAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 
     private Project getProject(Long projectId) {

@@ -52,6 +52,7 @@ public class ProjectCardResponse {
 
     Boolean canPayWithSepay;
     Boolean canOpenWorkspace;
+    Boolean canOpenDispute;
     Boolean canViewPaymentStatus;
     Boolean canViewDetails;
     Boolean canViewSummary;

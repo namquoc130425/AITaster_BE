@@ -2,11 +2,13 @@ package com.example.AiTaster.dto.response;
 
 import com.example.AiTaster.constant.DisputeStatus;
 import com.example.AiTaster.constant.DisputeDecision;
+import com.example.AiTaster.constant.EscrowStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Data
@@ -35,10 +37,17 @@ public class DisputeResponse {
 
     DisputeStatus disputeStatus;
     DisputeDecision disputeDecision;
+    String projectOutcome;
 
     BigDecimal refundAmount;
     BigDecimal releaseAmount;
     BigDecimal escrowHeldAmount;
+    EscrowStatus escrowStatus;
+
+    ProjectCardResponse project;
+    List<DeliverableResponse> deliverables;
+    Long conversationId;
+    List<MessageResponse> messages;
 
     LocalDateTime createdAt;
     LocalDateTime resolvedAt;

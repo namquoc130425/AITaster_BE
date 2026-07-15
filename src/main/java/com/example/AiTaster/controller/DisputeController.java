@@ -12,12 +12,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/disputes")
@@ -50,6 +53,17 @@ public class DisputeController {
                         200,
                         "Filter disputes successfully",
                         disputeService.filterAdmin(request)
+                )
+        );
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<APIResponse<List<DisputeResponse>>> getMyDisputes() {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get dispute reports successfully",
+                        disputeService.getMyDisputes()
                 )
         );
     }

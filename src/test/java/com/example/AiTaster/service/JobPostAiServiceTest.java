@@ -62,7 +62,7 @@ class JobPostAiServiceTest {
     private JobPostAiService jobPostAiService;
 
     @Test
-    void creatJobPostByAi_rejectsThinActualInputBeforeVectorSearch() {
+    void creatJobPostByAi_allowsTitleOnlyInputAndReachesVectorSearch() {
         User user = User.builder().userId(10L).build();
         ClientProfile clientProfile = ClientProfile.builder().clientProfileId(20L).build();
         JobPostAiRequest request = new JobPostAiRequest();
@@ -70,12 +70,14 @@ class JobPostAiServiceTest {
 
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(clientProfileRepo.findByUser_UserId(10L)).thenReturn(Optional.of(clientProfile));
+        when(skillVectorSearchService.searchSkillResult(any(), any(Integer.class)))
+                .thenReturn(List.of());
 
         assertThatThrownBy(() -> jobPostAiService.creatJobPostByAi(request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessageContaining("45");
+                .hasMessageContaining("No suitable skills");
 
-        verify(skillVectorSearchService, never()).searchSkillResult(any(), any(Integer.class));
+        verify(skillVectorSearchService).searchSkillResult(any(), any(Integer.class));
         verify(geminiClientService, never()).generateJobPost(any(), any());
         verify(jobPostRepo, never()).save(any());
     }
