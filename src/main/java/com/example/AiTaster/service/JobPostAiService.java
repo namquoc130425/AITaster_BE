@@ -14,7 +14,6 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
-import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 
 import com.example.AiTaster.service.vector.SkillVectorSearchService;
@@ -36,7 +35,6 @@ public class JobPostAiService {
     private final ContentManagerService contentManagerService;
     private final ClientProfileRepo clientProfileRepo;
     private final SkillRepo skillRepo;
-    private final JobPostRepo jobPostRepo;
     private final SkillVectorSearchService skillVectorSearchService;
     private static final int MIN_CHARS_FOR_SEARCH = 45; // Ngưỡng ký tự tối thiểu
 
@@ -81,11 +79,10 @@ public class JobPostAiService {
         //Lấy Skill entity thật từ MySQL.
         List<Skill> skillToDb = getSkillBySkillId(finalSkillIds);
 
-        JobPost jobPost = jobPostMapper.toEntityJobPostDraft(aiResponse, clientProfile);
-        jobPost.setSkills(skillToDb);
-        JobPost savedJobPost = jobPostRepo.save(jobPost);
+        JobPost draftPreview = jobPostMapper.toEntityJobPostDraft(aiResponse, clientProfile);
+        draftPreview.setSkills(skillToDb);
 
-        return jobPostMapper.toResponse(savedJobPost);
+        return jobPostMapper.toResponse(draftPreview);
     }
 
 

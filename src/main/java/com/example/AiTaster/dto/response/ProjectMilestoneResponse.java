@@ -28,4 +28,8 @@ public class ProjectMilestoneResponse {
     LocalDateTime step2ApprovedAt;
 
     LocalDateTime finalApprovedAt;
+
+    boolean canApprove;
+
+    boolean canRequestRevision;
 }

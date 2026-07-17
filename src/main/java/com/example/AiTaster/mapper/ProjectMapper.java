@@ -101,7 +101,7 @@ public interface ProjectMapper {
                 .budget(invitation.getFinalOfferedPrice())
                 .timeline(invitation.getFinalTimeline())
                 .deadlineAt(null)
-                .paymentDeadlineAt(invitationStatus == InvitationStatus.ACCEPTED ? invitation.getExpiresAt() : null)
+                .paymentDeadlineAt(getInvitationPaymentDeadline(invitation))
                 .currentStepCode(getCurrentStepCode(invitationStatus))
                 .currentStepTitle(getCurrentStepTitle(invitationStatus))
                 .currentStepDescription(getCurrentStepDescription(invitationStatus))
@@ -128,6 +128,16 @@ public interface ProjectMapper {
             case REJECTED -> "REJECTED";
             case EXPIRED -> "EXPIRED";
         };
+    }
+
+    private java.time.LocalDateTime getInvitationPaymentDeadline(Invitation invitation) {
+        if (invitation == null
+                || invitation.getInvitationStatus() != InvitationStatus.ACCEPTED
+                || invitation.getRespondedAt() == null) {
+            return null;
+        }
+
+        return invitation.getRespondedAt().plusHours(24);
     }
 
     private String getEscrowStatus(InvitationStatus status) {

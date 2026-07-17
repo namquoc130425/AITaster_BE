@@ -3,6 +3,7 @@ package com.example.AiTaster.dto.response;
 import com.example.AiTaster.constant.DisputeStatus;
 import com.example.AiTaster.constant.DisputeDecision;
 import com.example.AiTaster.constant.EscrowStatus;
+import com.example.AiTaster.constant.MilestoneStep;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -24,6 +25,10 @@ public class DisputeResponse {
     String projectTitle;
 
     Long deliverableId;
+    MilestoneStep disputedStep;
+    String disputedStepTitle;
+    Integer disputedDeliverableVersion;
+    LocalDateTime disputedDeliverableSubmittedAt;
 
     Long reporterId;
     String reporterName;

@@ -4,6 +4,7 @@ import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.constant.ReferenceType;
+import com.example.AiTaster.constant.ConversationType;
 import com.example.AiTaster.dto.request.MessageRequest;
 import com.example.AiTaster.dto.response.MessageResponse;
 import com.example.AiTaster.dto.response.ReadReceiptResponse;
@@ -135,7 +136,9 @@ public class MessageService implements IMessageService {
                         .getUserId()
                         .equals(sender.getUserId());
 
-        if (!hasMessage && senderIsExpert) {
+        if (conversation.getConversationType() == ConversationType.APPLICATION
+                && !hasMessage
+                && senderIsExpert) {
             throw new GlobalException(
                     ErrorCode.CLIENT_MUST_SEND_FIRST_MESSAGE
             );
@@ -480,6 +483,10 @@ public class MessageService implements IMessageService {
 
         if (project != null && ProjectStatus.DISPUTED.equals(project.getProjectStatus())) {
             throw new GlobalException(400, "Messaging is paused while project is under dispute");
+        }
+
+        if (project != null && ProjectStatus.CANCELED.equals(project.getProjectStatus())) {
+            throw new GlobalException(400, "Messaging is closed because the project has been resolved");
         }
     }
 
