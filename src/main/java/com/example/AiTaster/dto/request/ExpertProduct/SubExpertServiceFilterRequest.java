@@ -17,6 +17,8 @@ public class SubExpertServiceFilterRequest {
 
     Long categoryId;
 
+    Long expertProfileId;
+
     List<Long> skillIds;
 
     BigDecimal feeFrom;

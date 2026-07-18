@@ -71,6 +71,8 @@ public enum ErrorCode {
     SERVICE_SKILL_REQUIRED("Skill is required", HttpStatus.BAD_REQUEST),
     SERVICE_CATEGORY_REQUIRED("Category is required", HttpStatus.BAD_REQUEST),
     SERVICE_FILE_REQUIRED("Document file and source file are required before review", HttpStatus.BAD_REQUEST),
+    RATING_INVALID("Rating must be an integer from 1 to 5", HttpStatus.BAD_REQUEST),
+    REVIEW_INVALID_SIZE("Review max 2000 characters", HttpStatus.BAD_REQUEST),
 
     SUPABASE_TOKEN_INVALID("Invalid Supabase token", HttpStatus.UNAUTHORIZED),
     SUPABASE_ACCOUNT_NOT_AUTHENTICATED("Supabase account is not authenticated", HttpStatus.UNAUTHORIZED),

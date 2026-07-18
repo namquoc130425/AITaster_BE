@@ -48,6 +48,8 @@ public class ExpertProfile {
 
     BigDecimal rating;
 
+    Integer ratingCount;
+
     Integer completedProjects;
 
     String portfolioUrl;
@@ -68,6 +70,10 @@ public class ExpertProfile {
         // expert mới đăng ký sẽ mặc định = 0.0
         if (rating == null) {
             rating = BigDecimal.ZERO;
+        }
+
+        if (ratingCount == null) {
+            ratingCount = 0;
         }
 
         // nếu chưa có project hoàn thành

@@ -5,12 +5,14 @@ import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ReferenceType;
 import com.example.AiTaster.constant.Role;
+import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.request.ResubmitExpertCertificateRequest;
 import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.dto.response.ExpertVerificationResponse;
+import com.example.AiTaster.dto.response.PublicExpertProfileResponse;
 import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.ExpertVerification;
 import com.example.AiTaster.entity.User;
@@ -20,6 +22,7 @@ import com.example.AiTaster.mapper.ExpertProfileMapper;
 import com.example.AiTaster.mapper.ExpertVerificationMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ExpertProfileRepo;
+import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.ExpertVerificationRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IExpertProfile;
@@ -52,6 +55,8 @@ public class ExpertProfileService implements IExpertProfile {
     ExpertVerificationMapper expertVerificationMapper;
 @Autowired
     NotificationService notificationService;
+@Autowired
+    ExpertServiceRepo expertServiceRepo;
 
 
     @Override
@@ -75,6 +80,46 @@ public class ExpertProfileService implements IExpertProfile {
         ExpertProfile profile = expertProfileRepo.findByUser_UserId(userId)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
         return expertProfileMapper.toResponse(profile);
+    }
+
+    @Transactional
+    public PublicExpertProfileResponse getPublicProfile(Long expertProfileId) {
+        ExpertProfile profile = expertProfileRepo.findByExpertProfileId(expertProfileId)
+                .orElseThrow(() -> new GlobalException(404, "Expert profile not found"));
+
+        ExpertVerificationStatus verificationStatus = profile.getVerification() != null
+                ? profile.getVerification().getVerificationStatus()
+                : null;
+
+        if (!ExpertVerificationStatus.VERIFIED.equals(verificationStatus)) {
+            throw new GlobalException(404, "Expert profile not found");
+        }
+
+        ExpertProfileResponse profileResponse = expertProfileMapper.toResponse(profile);
+        User user = profile.getUser();
+
+        return PublicExpertProfileResponse.builder()
+                .expertProfileId(profile.getExpertProfileId())
+                .expertUserId(user != null ? user.getUserId() : null)
+                .expertName(user != null ? user.getFullName() : null)
+                .username(user != null ? user.getUsername() : null)
+                .avatarUrl(user != null ? user.getAvatarUrl() : null)
+                .bio(profile.getBio())
+                .category(profileResponse.getCategory())
+                .skills(profileResponse.getSkills())
+                .yearOfExperience(profile.getYearOfExperience())
+                .portfolioUrl(profile.getPortfolioUrl())
+                .rating(profile.getRating())
+                .ratingCount(profile.getRatingCount())
+                .completedProjects(profile.getCompletedProjects())
+                .openAiServiceCount(expertServiceRepo.countByExpertProfile_ExpertProfileIdAndServiceStatus(
+                        profile.getExpertProfileId(),
+                        ServiceStatus.OPEN
+                ))
+                .verificationStatus(verificationStatus)
+                .createAt(profile.getCreateAt())
+                .updateAt(profile.getUpdateAt())
+                .build();
     }
 
     @Override

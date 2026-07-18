@@ -22,6 +22,7 @@ public class ExpertServiceResponse {
     Long expertUserId;
     String expertName;
     String expertEmail;
+    String expertAvatarUrl;
 
     String serviceName;
 
@@ -48,6 +49,10 @@ public class ExpertServiceResponse {
     String reviewedByName;
 
     Integer reviewCount;
+
+    BigDecimal rating;
+
+    Integer ratingCount;
 
     CategoryResponse category;
 

@@ -4,6 +4,7 @@ import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
+import com.example.AiTaster.dto.response.PublicExpertProfileResponse;
 import com.example.AiTaster.service.ExpertProfileService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -25,6 +26,12 @@ public class ExpertProfileController {
     public ResponseEntity<APIResponse<List<ExpertProfileResponse>>> getAll() {
         List<ExpertProfileResponse> responses = expertProfileService.getAll();
         return ResponseEntity.ok(APIResponse.response(201, "Get all client successfully", responses));
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<APIResponse<PublicExpertProfileResponse>> getPublicProfile(@PathVariable Long id) {
+        PublicExpertProfileResponse response = expertProfileService.getPublicProfile(id);
+        return ResponseEntity.ok(APIResponse.response(200, "Get public expert profile successfully", response));
     }
 
     @GetMapping("/{id}")
