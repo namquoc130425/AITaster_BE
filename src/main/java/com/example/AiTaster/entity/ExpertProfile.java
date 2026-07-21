@@ -32,9 +32,17 @@ public class ExpertProfile {
     @Column(columnDefinition = "TEXT")
     String bio;
 
-    String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    Category category;
 
-    String skills;
+    @ManyToMany
+    @JoinTable(
+            name = "expert_profile_skill",
+            joinColumns = @JoinColumn(name = "expert_profile_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    List<Skill> skills;
 
     Integer yearOfExperience;
 
@@ -50,6 +58,12 @@ public class ExpertProfile {
     @UpdateTimestamp
     LocalDateTime updateAt;
 
+<<<<<<< HEAD
+=======
+    @OneToOne(mappedBy = "expertProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    ExpertVerification verification;
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     @PrePersist
     public void prePersist(){

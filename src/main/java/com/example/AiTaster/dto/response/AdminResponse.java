@@ -17,6 +17,11 @@ public class AdminResponse {
 
     Long userId;
 
+<<<<<<< HEAD
+=======
+    String username;
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     String email;
 
     String fullName;
@@ -32,4 +37,8 @@ public class AdminResponse {
     LocalDateTime createAt;
 
     LocalDateTime updateAt;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384

@@ -1,6 +1,9 @@
 package com.example.AiTaster.dto.request;
 
+<<<<<<< HEAD
 import com.example.AiTaster.constant.Role;
+=======
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -8,7 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -39,12 +42,22 @@ public class ExpertRegisterRequest {
      @Size(max = 1000, message = "bio max 1000 characters")
      String bio;
 
+<<<<<<< HEAD
      @NotBlank(message = "FIELD_REQUIRED")
      String category;
 
      @NotBlank(message = "FIELD_REQUIRED")
      @Size(max = 1000, message = "skills max 1000 characters")
      String skills;
+=======
+     @NotNull(message = "FIELD_REQUIRED")
+     @JsonAlias({"selectedCategoryId", "category"})
+     Long categoryId;
+
+     @NotEmpty(message = "FIELD_REQUIRED")
+     @JsonAlias({"selectedSkillIds", "skills"})
+     List<Long> skillIds;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 
      @JsonAlias("yearOfExperience")
@@ -62,5 +75,7 @@ public class ExpertRegisterRequest {
 
      String portfolioUrl;
 
+     @NotBlank(message = "certificateUrl is required")
+     String certificateUrl;
 
 }

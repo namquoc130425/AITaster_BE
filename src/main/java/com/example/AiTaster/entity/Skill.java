@@ -38,4 +38,12 @@ public class Skill {
 
     @ManyToMany(mappedBy = "skills")
     List<ExpertService>  expertServices;
+<<<<<<< HEAD
+=======
+
+    @ManyToMany(mappedBy = "skills")
+    List<ExpertProfile> expertProfiles;
+
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

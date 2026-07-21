@@ -19,13 +19,25 @@ public class MessageResponse {
 
     Long senderId;
     String senderName;
+<<<<<<< HEAD
 
     Long receiverId;
     String receiverName;
+=======
+    String senderAvatarUrl;
+
+    Long receiverId;
+    String receiverName;
+    String receiverAvatarUrl;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     String content;
 
     Boolean isRead;
 
     LocalDateTime sendAt;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384

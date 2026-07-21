@@ -46,9 +46,17 @@ public class ProjectPaymentService implements IProjectPayment {
         ClientProfile clientProfile = findClientProfileByCurrentUser(currentUser);
         Invitation invitation = findInvitation(invitationId);
         checkInvitationOwnerClient(invitation, clientProfile);
+<<<<<<< HEAD
         ensureInvitationCanBePaid(invitation);
 
 
+=======
+        if (projectRepo.existsByInvitation(invitation)) {
+            throw new GlobalException(400, "Project already exists for this invitation");
+        }
+        ensureInvitationCanBePaid(invitation);
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         // Nếu đã có pending SePay còn hạn thì dùng lại, nếu không thì tạo mới.
         PaymentTransaction paymentTransaction = pendingPaymentService.createPendingPaymentTransaction(
                 currentUser.getUserId(),
@@ -115,15 +123,35 @@ public class ProjectPaymentService implements IProjectPayment {
         invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
         invitationRepo.save(invitation);
 
+<<<<<<< HEAD
         paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
                 PaymentReferenceType.INVITATION,
                 invitation.getInvitationId(),
                 TransactionType.PROJECT_ESCROW_DEPOSIT,
+=======
+        expirePendingInvitationSepayPayment(
+                invitation,
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 invitation.getExpertApplication()
                         .getJobpost()
                         .getClientProfile()
                         .getUser()
+<<<<<<< HEAD
                         .getUserId(),
+=======
+                        .getUserId()
+        );
+    }
+
+  // khi projecr được tạo ,tiền đã được giữ
+  // pendding Sepay cũ của invitation phải được chuyển qua EXPIRED ( trường hợp người dùng tạo sepay nhưng hong thanh toán và thanh toán bằng ví )
+    private void expirePendingInvitationSepayPayment(Invitation invitation, Long senderId) {
+        paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
+                PaymentReferenceType.INVITATION,
+                invitation.getInvitationId(),
+                TransactionType.PROJECT_ESCROW_DEPOSIT,
+                senderId,
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 PaymentStatus.PENDING,
                 PaymentMethod.SEPAY
         ).ifPresent(payment -> {
@@ -145,11 +173,18 @@ public class ProjectPaymentService implements IProjectPayment {
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
 
         checkInvitationOwnerClient(invitation, clientProfile);
+<<<<<<< HEAD
         ensureInvitationCanBePaid(invitation);
 
         if (projectRepo.existsByInvitation(invitation)) {
             throw new GlobalException(400, "Project already exists for this invitation");
         }
+=======
+        if (projectRepo.existsByInvitation(invitation)) {
+            throw new GlobalException(400, "Project already exists for this invitation");
+        }
+        ensureInvitationCanBePaid(invitation);
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
         Project project = createProjectByInvitation(invitation);
         ProjectEscrow escrow = createProjectEscrow(project);
@@ -193,6 +228,10 @@ public class ProjectPaymentService implements IProjectPayment {
 
         projectRepo.save(project);
         projectEscrowRepo.save(escrow);
+<<<<<<< HEAD
+=======
+        expirePendingInvitationSepayPayment(invitation, currentUser.getUserId());
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         realtimeService.pushUserWalletEvent(
                 currentUser,
                 "PROJECT_ESCROW_PAID_BY_WALLET",

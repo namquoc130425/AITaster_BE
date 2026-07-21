@@ -24,15 +24,32 @@ public class ConversationResponse {
 
     Long clientId;
     String clientName;
+<<<<<<< HEAD
 
     Long expertId;
     String expertName;
 
     ConversationType conversationType;
 
+=======
+    String clientAvatarUrl;
+
+    Long expertId;
+    String expertName;
+    String expertAvatarUrl;
+
+    ConversationType conversationType;
+
+    Long unreadCount;
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     LocalDateTime convertedToProjectAt;
 
     LocalDateTime createAt;
 
     LocalDateTime updateAt;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384

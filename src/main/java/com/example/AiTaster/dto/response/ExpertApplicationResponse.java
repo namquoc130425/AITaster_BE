@@ -20,6 +20,10 @@ public class ExpertApplicationResponse {
     Long expertProfileId;
 
     String expertName;
+<<<<<<< HEAD
+=======
+    String expertAvatarUrl;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     BigDecimal expectedPrice;
 

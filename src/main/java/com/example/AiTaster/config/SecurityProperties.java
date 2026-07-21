@@ -15,6 +15,6 @@ import java.util.List;
 @Setter
 @ConfigurationProperties(prefix = "app.security")
 @FieldDefaults(level = AccessLevel.PUBLIC)
-public class SecurityProperties {
+public class SecurityProperties { //tạo danh sách publicEndpoints để lưu trữ các endpoint công khai
     List<String> publicEndpoints = new ArrayList<>();
 }

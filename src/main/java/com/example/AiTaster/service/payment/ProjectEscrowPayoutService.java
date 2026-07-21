@@ -4,7 +4,13 @@ import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
+<<<<<<< HEAD
 import com.example.AiTaster.service.MoneyMovementService;
+=======
+import com.example.AiTaster.service.InvoiceService;
+import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.NotificationService;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+<<<<<<< HEAD
+=======
+import java.text.NumberFormat;
+import java.util.Locale;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 
 @Service
@@ -22,7 +33,12 @@ public class ProjectEscrowPayoutService {
     private final MoneyMovementService moneyMovementService;
     private final ProjectRepo projectRepo;
     private final RealtimeService realtimeService;
+<<<<<<< HEAD
 
+=======
+    private final NotificationService notificationService;
+    private final InvoiceService invoiceService;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 
     @Transactional
@@ -70,19 +86,40 @@ public class ProjectEscrowPayoutService {
         project.setIsActive(false);
 
         projectRepo.save(project);
+<<<<<<< HEAD
 
         ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
+=======
+        //tạo hóa đơn
+        ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
+        invoiceService.createForCompletedProject(project.getProjectId());
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         realtimeService.pushUserWalletEvent(
                 expertUser,
                 "PROJECT_ESCROW_RELEASED",
                 null,
+<<<<<<< HEAD
                 "Project escrow released"
+=======
+                "Project escrow released: " + formatMoney(expertAmount)
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         );
         realtimeService.pushProjectParticipants(
                 project,
                 "PROJECT_COMPLETED",
                 "Project completed"
         );
+<<<<<<< HEAD
+=======
+        notificationService.notify(
+                expertUser,
+                NotificationType.ESCROW,
+                ReferenceType.PROJECT,
+                project.getProjectId(),
+                "Project payment received",
+                "You received " + formatMoney(expertAmount) + " for project: " + project.getTitle()
+        );
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
         return savedEscrow;
     }
@@ -140,4 +177,12 @@ public class ProjectEscrowPayoutService {
     }
 
 
+<<<<<<< HEAD
+=======
+    private String formatMoney(BigDecimal amount) {
+        BigDecimal safeAmount = amount != null ? amount : BigDecimal.ZERO;
+        return NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"))
+                .format(safeAmount) + " VND";
+    }
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

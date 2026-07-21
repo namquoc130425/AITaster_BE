@@ -14,6 +14,10 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
+<<<<<<< HEAD
+=======
+import com.example.AiTaster.repository.ExpertApplicationRepo;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.service.imp.IJobPost;
@@ -37,6 +41,10 @@ public class JobPostService implements IJobPost {
     private final CurrentUserService currentUserService;
     private final ContentManagerService  contentManagerService;
     private final SkillRepo skillRepo;
+<<<<<<< HEAD
+=======
+    private final ExpertApplicationRepo expertApplicationRepo;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     //client tự tạo jobpost với status là Draft mà không dùng AI
     public JobPostResponse createJobPost(JobPostRequest jobPostRequest) {
@@ -87,7 +95,15 @@ public class JobPostService implements IJobPost {
                 JobpostStatus.CLOSED,
                 InvitationStatus.ACCEPTED
         );
+<<<<<<< HEAD
         return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile).stream().map(jobPostMapper::toResponse).toList();
+=======
+        return jobPostRepo.findByClientProfileOrderByCreateAtDesc(clientProfile)
+                .stream()
+                .filter(jobPost -> jobPost.getJobPostStatus() != JobpostStatus.CANCELED)
+                .map(this::toMyJobPostResponse)
+                .toList();
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
     //lấy danh sách job của client có status Opend hiện tại
@@ -111,6 +127,15 @@ public class JobPostService implements IJobPost {
         return PageResponse.fromPage(responsePage);
     }
 
+<<<<<<< HEAD
+=======
+    private JobPostResponse toMyJobPostResponse(JobPost jobPost) {
+        JobPostResponse response = jobPostMapper.toResponse(jobPost);
+        response.setApplicationCount(expertApplicationRepo.countByJobpost(jobPost));
+        return response;
+    }
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     @Override
     public void DeleteJobPost(Long id) {
@@ -120,7 +145,12 @@ public class JobPostService implements IJobPost {
 
         checkJobPostByClientId(jobPost, clientProfile);
 
+<<<<<<< HEAD
         jobPostRepo.delete(jobPost);
+=======
+        jobPost.setJobPostStatus(JobpostStatus.CANCELED);
+        jobPostRepo.save(jobPost);
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 
     }
@@ -143,6 +173,27 @@ public class JobPostService implements IJobPost {
     }
 
 
+<<<<<<< HEAD
+=======
+    public JobPostResponse changeJobPostStatus(Long id, JobpostStatus jobPostStatus) {
+        if (jobPostStatus == null) {
+            throw new GlobalException(400, "Job post status is required");
+        }
+
+        ClientProfile clientProfile = getCurrentClientProfile();
+
+        JobPost jobPost = findJobPostById(id);
+
+        checkJobPostByClientId(jobPost, clientProfile);
+
+        jobPost.setJobPostStatus(jobPostStatus);
+
+        JobPost savedJobPost = jobPostRepo.save(jobPost);
+
+        return toMyJobPostResponse(savedJobPost);
+    }
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     public JobPost findJobPostById(Long jobPostId) {
         return jobPostRepo.findJobPostByjobPostId(jobPostId).orElseThrow(() -> new GlobalException("Không tìm thấy job post với id: " + jobPostId));
     }
@@ -150,7 +201,12 @@ public class JobPostService implements IJobPost {
     // lấy profile của user đang nhập hiện tại mà ko cần front end truyền id vào
     public ClientProfile getCurrentClientProfile() {
         User currentUser = currentUserService.getCurrentUser();
+<<<<<<< HEAD
         return clientProfileRepo.findByUser(currentUser).orElseThrow(() -> new GlobalException("Client Profile Not Found"));
+=======
+        return clientProfileRepo.findByUser(currentUser)
+                .orElseThrow(() -> new GlobalException(403, "Only client can access job posts"));
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
     // hàm check jobPost thuộc về client Profile nào

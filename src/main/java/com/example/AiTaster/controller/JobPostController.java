@@ -12,6 +12,10 @@ import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.service.JobPostAiService;
 import com.example.AiTaster.service.JobPostService;
+<<<<<<< HEAD
+=======
+import com.example.AiTaster.constant.JobpostStatus;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -90,4 +94,22 @@ public class JobPostController {
         return ResponseEntity.ok(APIResponse.response(200, "Hide Job Post successfully", jobPostResponse));
     }
 
+<<<<<<< HEAD
+=======
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<APIResponse<JobPostResponse>> changeJobPostStatus(
+            @PathVariable Long id,
+            @RequestParam JobpostStatus jobPostStatus
+    ) {
+        JobPostResponse jobPostResponse = jobPostService.changeJobPostStatus(id, jobPostStatus);
+        return ResponseEntity.ok(APIResponse.response(200, "Change job post status successfully", jobPostResponse));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<APIResponse<Void>> deleteJobPost(@PathVariable @Valid Long id) {
+        jobPostService.DeleteJobPost(id);
+        return ResponseEntity.ok(APIResponse.response(200, "Delete job post successfully", null));
+    }
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

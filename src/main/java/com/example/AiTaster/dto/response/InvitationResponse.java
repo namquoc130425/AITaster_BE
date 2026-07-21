@@ -56,9 +56,17 @@ public class InvitationResponse {
 
     InvitationStatus invitationStatus;
 
+<<<<<<< HEAD
     LocalDateTime expiresAt;
 
     LocalDateTime respondedAt;
+=======
+    LocalDateTime expiresAt;   // Hạn expert phải phản hồi invitation khi status = PENDING.
+
+    LocalDateTime respondedAt;   // Thời điểm expert accept/reject invitation.
+
+    LocalDateTime paymentDeadline; // Hạn thanh toán, tính bằng respondedAt + 24h khi status = ACCEPTED.
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     LocalDateTime createAt;
 

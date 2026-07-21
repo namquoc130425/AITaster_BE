@@ -11,6 +11,7 @@ import com.example.AiTaster.entity.Invitation;
 import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.ProjectMilestone;
+<<<<<<< HEAD
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +20,16 @@ import java.util.List;
 public class ProjectMapper {
 
     public ProjectCardResponse toCardResponse(
+=======
+import org.mapstruct.Mapper;
+
+import java.util.List;
+
+@Mapper(componentModel = "spring")
+public interface ProjectMapper {
+
+    default ProjectCardResponse toCardResponse(
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
             Project project,
             ProjectMilestone milestone,
             boolean isClientProject
@@ -45,8 +56,15 @@ public class ProjectMapper {
                 .escrowStatus(getEscrowStatus(projectStatus))
                 .paymentStatus(getPaymentStatus(projectStatus))
                 .clientName(jobPost.getClientProfile().getContactName())
+<<<<<<< HEAD
                 .companyName(jobPost.getClientProfile().getCompanyName())
                 .expertName(application.getExpertProfile().getUser().getFullName())
+=======
+                .clientAvatarUrl(jobPost.getClientProfile().getUser().getAvatarUrl())
+                .companyName(jobPost.getClientProfile().getCompanyName())
+                .expertName(application.getExpertProfile().getUser().getFullName())
+                .expertAvatarUrl(application.getExpertProfile().getUser().getAvatarUrl())
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 .budget(project.getAgreedPrice())
                 .timeline(project.getTimeline())
                 .deadlineAt(project.getDeadlineAt())
@@ -69,7 +87,11 @@ public class ProjectMapper {
                 .build();
     }
 
+<<<<<<< HEAD
     public ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject) {
+=======
+    default ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject) {
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         ExpertApplication application = invitation.getExpertApplication();
         JobPost jobPost = application.getJobpost();
         InvitationStatus invitationStatus = invitation.getInvitationStatus();
@@ -91,8 +113,15 @@ public class ProjectMapper {
                 .escrowStatus(getEscrowStatus(invitationStatus))
                 .paymentStatus(getPaymentStatus(invitationStatus))
                 .clientName(jobPost.getClientProfile().getContactName())
+<<<<<<< HEAD
                 .companyName(jobPost.getClientProfile().getCompanyName())
                 .expertName(application.getExpertProfile().getUser().getFullName())
+=======
+                .clientAvatarUrl(jobPost.getClientProfile().getUser().getAvatarUrl())
+                .companyName(jobPost.getClientProfile().getCompanyName())
+                .expertName(application.getExpertProfile().getUser().getFullName())
+                .expertAvatarUrl(application.getExpertProfile().getUser().getAvatarUrl())
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 .budget(invitation.getFinalOfferedPrice())
                 .timeline(invitation.getFinalTimeline())
                 .deadlineAt(null)

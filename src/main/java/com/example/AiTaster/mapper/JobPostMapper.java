@@ -45,6 +45,10 @@ public interface JobPostMapper {
     // Chuyển job post sang dữ liệu trả về.
     @Mapping(target = "clientId",source = "clientProfile")
     @Mapping(target = "skills",source = "skills")
+<<<<<<< HEAD
+=======
+    @Mapping(target = "applicationCount", ignore = true)
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     JobPostResponse toResponse(JobPost jobPost);
 

@@ -29,6 +29,11 @@ public class ExpertServicePurchaseService {
     private final PendingPaymentService pendingPaymentService;
     private final SepayGateway sepayGateway;
     private final PaymentTransactionMapper paymentTransactionMapper;
+<<<<<<< HEAD
+=======
+    private final InvoiceService invoiceService;
+    private final ExpertServicePurchaseEventService purchaseEventService;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     // Client mua expert service bằng ví nội bộ.
     // Luồng: ví client -> ví expert; phí sàn được cộng vào ví admin.
@@ -49,10 +54,16 @@ public class ExpertServicePurchaseService {
 
         BigDecimal amount = expertService.getServiceFee();
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
+<<<<<<< HEAD
 
         // Chuyển tiền nội bộ: ví client -> ví expert.
         // MoneyMovementService tự throw lỗi nếu ví client không đủ tiền.
         return moneyMovementService.moneyTransactionManagement(
+=======
+        // Chuyển tiền nội bộ: ví client -> ví expert.
+        // MoneyMovementService tự throw lỗi nếu ví client không đủ tiền
+        PaymentTransaction paymentTransaction = moneyMovementService.moneyTransactionManagement(
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 clientUserId,
                 expertUserId,
                 TransactionType.EXPERT_SERVICE_PURCHASE,
@@ -64,6 +75,22 @@ public class ExpertServicePurchaseService {
                 null
 
         );
+<<<<<<< HEAD
+=======
+         // tạo hóa đơn khi transaction thành công
+          invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
+        purchaseEventService.publishAfterPaymentSuccess(
+                clientUserId,
+                expertUserId,
+                expertService.getServiceId(),
+                expertService.getServiceName(),
+                paymentTransaction.getSourceWalletId(),
+                paymentTransaction.getTargetWalletId(),
+                balanceAmount
+        );
+
+        return paymentTransaction;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
     @Transactional

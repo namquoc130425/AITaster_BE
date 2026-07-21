@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
@@ -25,6 +27,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 )
 @OpenAPIDefinition(info = @Info(title = "AITasker SWAGGER", version = "1.0"))
 @EnableConfigurationProperties(QdrantProperties.class)
+<<<<<<< HEAD
+=======
+@EnableScheduling
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 public class Application {
 
 	public static void main(String[] args) {

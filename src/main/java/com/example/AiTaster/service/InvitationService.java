@@ -38,7 +38,11 @@ public class InvitationService implements Iinvitation {
     private final NotificationService notificationService;
     private final RealtimeService realtimeService;
     private final ProjectRepo projectRepo;
+<<<<<<< HEAD
     private final ProjectEscrowRepo projectEscrowRepo;
+=======
+    private final ExpertVerificationGuardService expertVerificationGuardService;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 
   // đẩy dữ liệu lên form cho client xem
@@ -120,12 +124,21 @@ public class InvitationService implements Iinvitation {
     @Override
     public InvitationResponse getInvitationDetail(Long invitationId) {
         Invitation invitation = getInvitationWithDetail(invitationId);
+<<<<<<< HEAD
+=======
+        refreshInvitationTimeoutStatus(invitation); // Check timeout bằng giờ server trước khi trả về FE.
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         expireIfNeeded(invitation);
         if(isCurrentInvitedExpert(invitation)) {
             return invitationMapper.toResponseInvitation(invitation);
         }
+<<<<<<< HEAD
         ClientProfile clientProfile = getCurrentClientProfile();
         checkInvitationOwnerClient(invitation,clientProfile);
+=======
+        ClientProfile clientProfile = getCurrentClientProfile();  // Nếu không phải expert thì kiểm tra client.
+        checkInvitationOwnerClient(invitation,clientProfile);   // Chỉ client chủ job được xem.
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         return invitationMapper.toResponseInvitation(invitation);
     }
     @Transactional
@@ -138,6 +151,10 @@ public class InvitationService implements Iinvitation {
 
         ExpertProfile expertProfile = getCurrentExpertProfile();
 
+<<<<<<< HEAD
+=======
+        ensureExpertVerified(expertProfile);
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         checkInvitedExpert(invitation,expertProfile);
         ensurePendingAndNotExpired(invitation);
 
@@ -159,10 +176,13 @@ public class InvitationService implements Iinvitation {
                 "INVITATION_ACCEPTED",
                 "Invitation accepted"
         );
+<<<<<<< HEAD
 //     //tạo project
 //     Project newproject =   createProjectByExpertAcceptInvitation(saveInvitation);
 //     // tạo project
 //     createProjectEscrow(newproject);
+=======
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
         return invitationMapper.toResponseInvitation(saveInvitation);
     }
@@ -221,12 +241,15 @@ public class InvitationService implements Iinvitation {
         invitationRepo.saveAll(expiredInvitations);
     }
 
+<<<<<<< HEAD
 
 
 
 
 
 
+=======
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     // Nếu invitation đang PENDING nhưng quá hạn thì đổi sang EXPIRED.
     //kiểm tra thời gian hết hạn của lời mời có nằm trước thời điểm hiện tại hay không
     private void expireIfNeeded(Invitation invitation) {
@@ -319,6 +342,10 @@ public class InvitationService implements Iinvitation {
         User user = currentUserService.getCurrentUser();
         return expertProfileRepo.findByUser(user).map(expertProfile -> invitation.getExpertApplication().getExpertProfile().getExpertProfileId().equals(expertProfile.getExpertProfileId())).orElse(false);
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     // kiểm tra có phải expert này là chủ lời mời không
     private void checkInvitedExpert(Invitation invitation,ExpertProfile expertProfile) {
         Long invitationExpertId = invitation.getExpertApplication().getExpertProfile().getExpertProfileId();
@@ -364,9 +391,35 @@ public class InvitationService implements Iinvitation {
         return invitationRepo.findWithDetailByInvitationId(invitationId)
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
     }
+<<<<<<< HEAD
 //
 //
 //
 //
+=======
+
+    private void refreshInvitationTimeoutStatus(Invitation invitation) {
+        LocalDateTime now = LocalDateTime.now();
+        if (InvitationStatus.PENDING.equals(invitation.getInvitationStatus())
+                && invitation.getExpiresAt().isBefore(now)) {
+            invitation.setInvitationStatus(InvitationStatus.EXPIRED); // Expert không phản hồi đúng hạn.
+            invitation.setRespondedAt(null); // Hết hạn PENDING thì không có thời điểm phản hồi.
+            invitationRepo.save(invitation); // Lưu status mới vào DB.
+            return;
+        }
+        if (InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())
+                && invitation.getRespondedAt() != null
+                && invitation.getRespondedAt().plusHours(24).isBefore(now)
+                && !projectRepo.existsByInvitation(invitation)) {
+            invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED); // Client không thanh toán đúng hạn.
+            invitationRepo.save(invitation); // Lưu status mới vào DB.
+        }
+    }
+
+    // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho nhận dự án từ Client.
+    private void ensureExpertVerified(ExpertProfile expertProfile) {
+        expertVerificationGuardService.ensureVerified(expertProfile);
+    }
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 }

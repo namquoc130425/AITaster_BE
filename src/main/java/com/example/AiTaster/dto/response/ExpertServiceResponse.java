@@ -1,6 +1,7 @@
 package com.example.AiTaster.dto.response;
 
 import com.example.AiTaster.constant.ServiceStatus;
+<<<<<<< HEAD
 import com.example.AiTaster.entity.Category;
 import com.example.AiTaster.entity.ServiceFile;
 import com.example.AiTaster.entity.Skill;
@@ -14,11 +15,26 @@ import lombok.experimental.FieldDefaults;
 import java.math.BigDecimal;
 import java.util.List;
 
+=======
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
+@Setter
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+<<<<<<< HEAD
 @Data
+=======
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 public class ExpertServiceResponse {
 
     Long serviceId;
@@ -37,9 +53,32 @@ public class ExpertServiceResponse {
 
     ServiceStatus serviceStatus;
 
+<<<<<<< HEAD
+=======
+    String rejectionReason;
+
+    LocalDateTime submittedAt;
+
+    LocalDateTime reviewedAt;
+
+    Long reviewedById;
+
+    String reviewedByName;
+
+    Integer reviewCount;
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     CategoryResponse category;
 
     List<SkillResponse> skills;
 
     ServiceFileResponse serviceFileResponse;
+<<<<<<< HEAD
+=======
+    Long paymentTransactionId;
+
+    LocalDateTime receivedAt;
+
+    InvoiceResponse invoice;
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

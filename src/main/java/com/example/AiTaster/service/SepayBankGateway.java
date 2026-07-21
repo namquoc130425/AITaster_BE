@@ -22,9 +22,12 @@ import java.util.Map;
 public class SepayBankGateway {
     private final ObjectMapper objectMapper;
 
+<<<<<<< HEAD
     @Value("${app.sepay.bank-account-verify-url:}")
     private String bankAccountVerifyUrl;
 
+=======
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     @Value("${app.sepay.payout-url:}")
     private String payoutUrl;
 
@@ -33,6 +36,7 @@ public class SepayBankGateway {
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
+<<<<<<< HEAD
     public SepayBankAccountVerification verifyBankAccount(
             String bankCode,
             String accountNumber,
@@ -68,6 +72,8 @@ public class SepayBankGateway {
                 .build();
     }
 
+=======
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     public SepayPayoutResult createPayout(
             String bankCode,
             String accountNumber,
@@ -188,6 +194,7 @@ public class SepayBankGateway {
 
     @Data
     @Builder
+<<<<<<< HEAD
     public static class SepayBankAccountVerification {
         boolean valid;
         String accountHolderName;
@@ -197,6 +204,8 @@ public class SepayBankGateway {
 
     @Data
     @Builder
+=======
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     public static class SepayPayoutResult {
         String providerName;
         String providerTransactionCode;

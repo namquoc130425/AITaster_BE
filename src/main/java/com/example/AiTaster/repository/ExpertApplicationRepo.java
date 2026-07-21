@@ -19,6 +19,11 @@ public interface ExpertApplicationRepo extends JpaRepository<ExpertApplication, 
 
     boolean existsByJobpostAndExpertProfile(JobPost jobpost, ExpertProfile expertProfile);
 
+<<<<<<< HEAD
+=======
+    long countByJobpost(JobPost jobpost);
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     List<ExpertApplication> findByJobpost(JobPost jobpost);
 
     List<ExpertApplication> findByExpertProfile(ExpertProfile expertProfile);

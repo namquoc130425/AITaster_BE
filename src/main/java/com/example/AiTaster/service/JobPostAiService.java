@@ -42,7 +42,12 @@ public class JobPostAiService {
 
         User currentUser = currentUserService.getCurrentUser();
 
+<<<<<<< HEAD
         ClientProfile clientProfile = clientProfileRepo.findByUser_UserId(currentUser.getUserId()).orElseThrow(() -> new GlobalException("Client Profile not found"));
+=======
+        ClientProfile clientProfile = clientProfileRepo.findByUser_UserId(currentUser.getUserId())
+                .orElseThrow(() -> new GlobalException(403, "Only client can create job posts"));
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         //lấy selected từ fe
         List<Skill> selectedSkills = getSelectedSkills(request.getSelectedSkillIds());
         //build search text

@@ -94,7 +94,11 @@ public class ConversationService implements IConversationService {
         Message savedMessage = messageRepo.save(firstMessage);
 
         ConversationResponse conversationResponse =
+<<<<<<< HEAD
                 conversationMapper.toResponse(savedConversation);
+=======
+                toResponse(savedConversation, currentUser);
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
         MessageResponse messageResponse =
                 messageMapper.toResponse(savedMessage);
@@ -126,7 +130,11 @@ public class ConversationService implements IConversationService {
         return conversationRepo
                 .findByClientOrExpertOrderByUpdateAtDesc(currentUser, currentUser)
                 .stream()
+<<<<<<< HEAD
                 .map(conversationMapper::toResponse)
+=======
+                .map(conversation -> toResponse(conversation, currentUser))
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 .toList();
     }
 
@@ -138,7 +146,11 @@ public class ConversationService implements IConversationService {
 
         checkConversationMember(conversation, currentUser);
 
+<<<<<<< HEAD
         return conversationMapper.toResponse(conversation);
+=======
+        return toResponse(conversation, currentUser);
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
     @Transactional
@@ -154,7 +166,11 @@ public class ConversationService implements IConversationService {
 
         checkConversationMember(conversation, currentUser);
 
+<<<<<<< HEAD
         return conversationMapper.toResponse(conversation);
+=======
+        return toResponse(conversation, currentUser);
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
     public Conversation getConversationEntity(Long conversationId) {
@@ -251,6 +267,20 @@ public class ConversationService implements IConversationService {
         return conversationRepo.save(conversation);
     }
 
+<<<<<<< HEAD
+=======
+    private ConversationResponse toResponse(Conversation conversation, User currentUser) {
+        ConversationResponse response = conversationMapper.toResponse(conversation);
+        response.setUnreadCount(
+                messageRepo.countByConversationAndReceiverAndIsReadFalse(
+                        conversation,
+                        currentUser
+                )
+        );
+        return response;
+    }
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     private void checkProjectMember(Project project, User user) {
         Long currentUserId = user.getUserId();
         Long clientUserId = project.getInvitation()

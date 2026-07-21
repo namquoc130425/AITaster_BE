@@ -62,6 +62,17 @@ WHERE pt.paymentReferenceType = :paymentReferenceType
             PaymentStatus paymentStatus
     );
 
+<<<<<<< HEAD
+=======
+    boolean existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+            Long senderId,
+            TransactionType transactionType,
+            PaymentReferenceType paymentReferenceType,
+            PaymentStatus paymentStatus,
+            Long referenceId
+    );
+
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     @Query("""
             SELECT pt
             FROM PaymentTransaction pt
@@ -75,5 +86,17 @@ WHERE pt.paymentReferenceType = :paymentReferenceType
             @Param("userId") Long userId,
             @Param("walletId") Long walletId
     );
+<<<<<<< HEAD
 }
 
+=======
+
+    List<PaymentTransaction> findByPaymentReferenceTypeAndReferenceIdInAndTransactionTypeAndPaymentStatusAndPaymentMethod(
+            PaymentReferenceType paymentReferenceType,
+            List<Long> referenceIds,
+            TransactionType transactionType,
+            PaymentStatus paymentStatus,
+            PaymentMethod paymentMethod
+    );
+}
+>>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
