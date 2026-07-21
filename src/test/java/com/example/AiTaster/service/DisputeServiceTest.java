@@ -154,7 +154,7 @@ class DisputeServiceTest {
                 eq(30L),
                 eq(70L),
                 eq(BigDecimal.ZERO),
-                eq(expertAmount),
+                eq(heldAmount),
                 eq(expertAmount),
                 eq(platformFee),
                 eq(DisputeDecision.RELEASE_EXPERT)
@@ -187,6 +187,119 @@ class DisputeServiceTest {
         assertThat(escrow.getPlatformFee()).isEqualByComparingTo(platformFee);
         assertThat(escrow.getExpertAmount()).isEqualByComparingTo(expertAmount);
         assertThat(response.getReleaseAmount()).isEqualByComparingTo(expertAmount);
+        assertThat(response.getEscrowPlatformFee()).isEqualByComparingTo(platformFee);
+        verify(invoiceEmailService).enqueueAndSendForInvoice(80L);
+    }
+
+    @Test
+    void resolveSplitCreatesInvoiceWithGrossReleaseAndStoresExpertNetAmount() {
+        BigDecimal heldAmount = BigDecimal.valueOf(10_000);
+        BigDecimal refundAmount = BigDecimal.valueOf(4_000);
+        BigDecimal releaseGrossAmount = BigDecimal.valueOf(6_000);
+        BigDecimal expertNetAmount = BigDecimal.valueOf(5_400);
+        BigDecimal platformFee = BigDecimal.valueOf(600);
+
+        User admin = User.builder().userId(1L).role(Role.ADMIN).build();
+        User client = User.builder().userId(10L).build();
+        User expert = User.builder().userId(20L).build();
+        Project project = buildProject(client, expert);
+        ProjectEscrow escrow = ProjectEscrow.builder()
+                .projectEscrowId(40L)
+                .projectId(30L)
+                .heldAmount(heldAmount)
+                .platformFee(BigDecimal.ZERO)
+                .expertAmount(BigDecimal.ZERO)
+                .escrowStatus(EscrowStatus.DISPUTED)
+                .build();
+        Dispute dispute = Dispute.builder()
+                .disputeId(50L)
+                .project(project)
+                .reporter(client)
+                .reportedAgainst(expert)
+                .reason("Need admin review")
+                .disputeStatus(DisputeStatus.OPEN)
+                .build();
+        PaymentTransaction releasePayment = PaymentTransaction.builder()
+                .paymentTransactionId(70L)
+                .build();
+        PaymentTransaction refundPayment = PaymentTransaction.builder()
+                .paymentTransactionId(71L)
+                .build();
+        Invoices invoice = new Invoices();
+        invoice.setInvoiceId(80L);
+
+        when(currentUserService.getCurrentUser()).thenReturn(admin);
+        when(disputeRepo.findByDisputeId(50L)).thenReturn(Optional.of(dispute));
+        when(projectRepo.findWithDetailByProjectId(30L)).thenReturn(Optional.of(project));
+        when(projectEscrowRepo.findByProjectIdForUpdate(30L)).thenReturn(Optional.of(escrow));
+        when(moneyMovementService.calculateFee(releaseGrossAmount)).thenReturn(expertNetAmount);
+        when(moneyMovementService.moneyTransactionManagement(
+                eq(40L),
+                eq(20L),
+                eq(TransactionType.PROJECT_ESCROW_RELEASE),
+                eq(30L),
+                eq(PaymentReferenceType.PROJECT),
+                anyString(),
+                eq(releaseGrossAmount),
+                eq(expertNetAmount),
+                isNull()
+        )).thenReturn(releasePayment);
+        when(moneyMovementService.moneyTransactionManagement(
+                eq(40L),
+                eq(10L),
+                eq(TransactionType.PROJECT_ESCROW_REFUND),
+                eq(30L),
+                eq(PaymentReferenceType.PROJECT),
+                anyString(),
+                eq(refundAmount),
+                eq(refundAmount),
+                isNull()
+        )).thenReturn(refundPayment);
+        when(projectRepo.save(project)).thenReturn(project);
+        when(projectEscrowRepo.save(escrow)).thenReturn(escrow);
+        when(disputeRepo.save(dispute)).thenReturn(dispute);
+        when(invoiceService.createForResolvedDispute(
+                eq(30L),
+                eq(70L),
+                eq(refundAmount),
+                eq(releaseGrossAmount),
+                eq(expertNetAmount),
+                eq(platformFee),
+                eq(DisputeDecision.SPLIT)
+        )).thenReturn(invoice);
+        when(disputeMapper.toResponse(any(Dispute.class), eq(escrow))).thenAnswer(invocation -> {
+            Dispute savedDispute = invocation.getArgument(0);
+            ProjectEscrow savedEscrow = invocation.getArgument(1);
+
+            return DisputeResponse.builder()
+                    .disputeId(savedDispute.getDisputeId())
+                    .refundAmount(savedDispute.getRefundAmount())
+                    .releaseAmount(savedDispute.getReleaseAmount())
+                    .escrowHeldAmount(savedEscrow.getHeldAmount())
+                    .escrowPlatformFee(savedEscrow.getPlatformFee())
+                    .escrowExpertAmount(savedEscrow.getExpertAmount())
+                    .build();
+        });
+        when(projectMilestoneRepo.findByProjectId(30L)).thenReturn(Optional.empty());
+        when(deliverableRepo.findByProjectIdOrderBySubmittedAtDesc(30L)).thenReturn(List.of());
+        when(conversationRepo.findWithDetailByProjectId(30L)).thenReturn(Optional.empty());
+        when(invoiceRepo.findByProjectEscrowId(40L)).thenReturn(Optional.empty());
+
+        DisputeResponse response = disputeService.resolve(
+                50L,
+                new ResolveDisputeRequest(
+                        DisputeDecision.SPLIT,
+                        refundAmount,
+                        releaseGrossAmount,
+                        "split"
+                )
+        );
+
+        assertThat(dispute.getRefundAmount()).isEqualByComparingTo(refundAmount);
+        assertThat(dispute.getReleaseAmount()).isEqualByComparingTo(expertNetAmount);
+        assertThat(escrow.getPlatformFee()).isEqualByComparingTo(platformFee);
+        assertThat(escrow.getExpertAmount()).isEqualByComparingTo(expertNetAmount);
+        assertThat(response.getReleaseAmount()).isEqualByComparingTo(expertNetAmount);
         assertThat(response.getEscrowPlatformFee()).isEqualByComparingTo(platformFee);
         verify(invoiceEmailService).enqueueAndSendForInvoice(80L);
     }

@@ -99,7 +99,7 @@ public class MoneyMovementService {
                 .orElseThrow(() -> new GlobalException(404, "Admin user not found"));
 
         UserWallet adminWallet = userWalletRepo.findByUserForUpdate(adminUser)
-                .orElseThrow(() -> new GlobalException(404, "Admin wallet not found"));
+                .orElseGet(() -> createActiveWallet(adminUser));
 
         moneyTransactionManagement(
                 null,
@@ -281,7 +281,11 @@ public class MoneyMovementService {
         }
 
         UserWallet wallet = userWalletRepo.findByUserIdForUpdate(toId)
-                .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + toId));
+                .orElseGet(() -> createActiveWalletForUserId(toId));
+
+        if (wallet.getStatus() == null) {
+            wallet.setStatus(UserWalletStatus.ACTIVE);
+        }
 
         if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
             throw new GlobalException(400, "Wallet is not active");
@@ -289,6 +293,25 @@ public class MoneyMovementService {
 
         wallet.setBalance(wallet.getBalance().add(amount));
         return userWalletRepo.save(wallet).getUserWalletId();
+    }
+
+    private UserWallet createActiveWalletForUserId(Long userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new GlobalException(404, "User not found for wallet: " + userId));
+
+        return createActiveWallet(user);
+    }
+
+    private UserWallet createActiveWallet(User user) {
+        return userWalletRepo.save(UserWallet.builder()
+                .user(user)
+                .balance(BigDecimal.ZERO)
+                .frozenBalance(BigDecimal.ZERO)
+                .currency("VND")
+                .status(UserWalletStatus.ACTIVE)
+                .requestWithdrawal(false)
+                .amountRequestWithdrawal(BigDecimal.ZERO)
+                .build());
     }
     // Hàm này giúp transaction biết đang liên quan tới escrow nào.
     private Long resolveProjectEscrowId(TransactionType transactionType, Long fromId, Long toId) {
