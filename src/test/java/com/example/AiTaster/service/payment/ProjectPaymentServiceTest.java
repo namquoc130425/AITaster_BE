@@ -25,6 +25,7 @@ import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.service.ConversationService;
 import com.example.AiTaster.service.CurrentUserService;
 import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.NotificationService;
 import com.example.AiTaster.service.PendingPaymentService;
 import com.example.AiTaster.service.PlatformFeeCalculator;
 import com.example.AiTaster.service.ProjectMilestoneService;
@@ -92,6 +93,9 @@ class ProjectPaymentServiceTest {
 
     @Mock
     private RealtimeService realtimeService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private ProjectPaymentService projectPaymentService;
@@ -260,6 +264,7 @@ class ProjectPaymentServiceTest {
 
         assertThat(pendingSepayPayment.getPaymentStatus()).isEqualTo(PaymentStatus.EXPIRED);
         verify(paymentTransactionRepo).save(pendingSepayPayment);
+        verify(notificationService).notifyProjectWorkspaceReady(any(Project.class));
     }
 
     private Invitation acceptedInvitation(ClientProfile clientProfile, LocalDateTime respondedAt) {

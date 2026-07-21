@@ -1,8 +1,6 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.dto.request.JobPostAiRequest;
-import com.example.AiTaster.dto.request.JobPostRequest;
-
 import com.example.AiTaster.dto.response.Ai.GeminiJobPostResponse;
 import com.example.AiTaster.dto.response.Ai.VectorSkillResult;
 import com.example.AiTaster.dto.response.JobPostResponse;
@@ -36,7 +34,7 @@ public class JobPostAiService {
     private final ClientProfileRepo clientProfileRepo;
     private final SkillRepo skillRepo;
     private final SkillVectorSearchService skillVectorSearchService;
-    private static final int MIN_CHARS_FOR_SEARCH = 45; // Ngưỡng ký tự tối thiểu
+    private static final int MIN_CHARS_FOR_SEARCH = 45;
 
     public JobPostResponse creatJobPostByAi(JobPostAiRequest request) {
 

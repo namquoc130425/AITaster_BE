@@ -12,6 +12,7 @@ import com.example.AiTaster.entity.*;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.DeliverableMapper;
 import com.example.AiTaster.mapper.DisputeMapper;
+import com.example.AiTaster.mapper.InvoiceMapper;
 import com.example.AiTaster.mapper.MessageMapper;
 import com.example.AiTaster.mapper.ProjectMapper;
 import com.example.AiTaster.repository.*;
@@ -42,11 +43,15 @@ public class DisputeService implements IDisputeService {
     private final MoneyMovementService moneyMovementService;
     private final NotificationService notificationService;
     private final RealtimeService realtimeService;
+    private final InvoiceService invoiceService;
+    private final InvoiceEmailService invoiceEmailService;
     private final DisputeMapper disputeMapper;
     private final ProjectMapper projectMapper;
     private final DeliverableMapper deliverableMapper;
+    private final InvoiceMapper invoiceMapper;
     private final ConversationRepo conversationRepo;
     private final MessageRepo messageRepo;
+    private final InvoicesRepo invoiceRepo;
     private final MessageMapper messageMapper;
 
     @Override
@@ -246,8 +251,16 @@ public class DisputeService implements IDisputeService {
             }
         }
 
+        PaymentTransaction releasePayment = null;
+        PaymentTransaction refundPayment = null;
+        BigDecimal resolvedPlatformFee = BigDecimal.ZERO;
+        BigDecimal resolvedExpertAmount = BigDecimal.ZERO;
+
         if (release.compareTo(BigDecimal.ZERO) > 0) {
-            moneyMovementService.moneyTransactionManagement(
+            resolvedExpertAmount = moneyMovementService.calculateFee(release);
+            resolvedPlatformFee = release.subtract(resolvedExpertAmount);
+
+            releasePayment = moneyMovementService.moneyTransactionManagement(
                     escrow.getProjectEscrowId(),
                     expertUser.getUserId(),
                     TransactionType.PROJECT_ESCROW_RELEASE,
@@ -255,13 +268,13 @@ public class DisputeService implements IDisputeService {
                     PaymentReferenceType.PROJECT,
                     "Dispute release to expert - project " + project.getProjectId(),
                     release,
-                    release,
+                    resolvedExpertAmount,
                     null
             );
         }
 
         if (refund.compareTo(BigDecimal.ZERO) > 0) {
-            moneyMovementService.moneyTransactionManagement(
+            refundPayment = moneyMovementService.moneyTransactionManagement(
                     escrow.getProjectEscrowId(),
                     clientUser.getUserId(),
                     TransactionType.PROJECT_ESCROW_REFUND,
@@ -277,11 +290,13 @@ public class DisputeService implements IDisputeService {
         dispute.setDisputeStatus(DisputeStatus.RESOLVED);
         dispute.setDisputeDecision(request.getDecision());
         dispute.setRefundAmount(refund);
-        dispute.setReleaseAmount(release);
+        dispute.setReleaseAmount(resolvedExpertAmount);
         dispute.setResponse(request.getResponse());
         dispute.setResolvedAt(LocalDateTime.now());
 
         escrow.setHeldAmount(BigDecimal.ZERO);
+        escrow.setPlatformFee(resolvedPlatformFee);
+        escrow.setExpertAmount(resolvedExpertAmount);
         escrow.setEscrowStatus(resolveEscrowStatus(refund, release));
         project.setIsActive(false);
         project.setProjectStatus(ProjectStatus.CANCELED);
@@ -290,6 +305,25 @@ public class DisputeService implements IDisputeService {
         projectEscrowRepo.save(escrow);
 
         Dispute saved = disputeRepo.save(dispute);
+
+        Long invoicePaymentId = releasePayment != null
+                ? releasePayment.getPaymentTransactionId()
+                : refundPayment != null
+                ? refundPayment.getPaymentTransactionId()
+                : null;
+
+        if (invoicePaymentId != null) {
+            Invoices invoice = invoiceService.createForResolvedDispute(
+                    project.getProjectId(),
+                    invoicePaymentId,
+                    refund,
+                    resolvedExpertAmount,
+                    resolvedExpertAmount,
+                    resolvedPlatformFee,
+                    request.getDecision()
+            );
+            pushAfterCommit(() -> invoiceEmailService.enqueueAndSendForInvoice(invoice.getInvoiceId()));
+        }
 
         notificationService.notify(clientUser, NotificationType.DISPUTE, ReferenceType.DISPUTE,
                 saved.getDisputeId(), "Dispute resolved", "Admin resolved dispute for project: " + project.getTitle());
@@ -316,6 +350,10 @@ public class DisputeService implements IDisputeService {
 
         if (escrow != null) {
             response.setEscrowStatus(escrow.getEscrowStatus());
+            if (dispute.getDisputeStatus() == DisputeStatus.RESOLVED) {
+                invoiceRepo.findByProjectEscrowId(escrow.getProjectEscrowId())
+                        .ifPresent(invoice -> response.setInvoice(invoiceMapper.toInvoiceResponse(invoice)));
+            }
         }
 
         if (project != null && project.getProjectId() != null) {

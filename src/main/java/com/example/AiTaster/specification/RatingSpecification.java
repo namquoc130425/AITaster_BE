@@ -25,21 +25,21 @@ public class RatingSpecification {
                 predicates.add(cb.equal(root.get("targetType"), request.getTargetType()));
             }
 
-            if (request.getExpertServiceId() != null) {
+            if (request.getExpertServiceId() != null && request.getExpertServiceId() > 0) {
                 predicates.add(cb.equal(
                         root.get("expertService").get("serviceId"),
                         request.getExpertServiceId()
                 ));
             }
 
-            if (request.getExpertProfileId() != null) {
+            if (request.getExpertProfileId() != null && request.getExpertProfileId() > 0) {
                 predicates.add(cb.equal(
                         root.get("expertProfile").get("expertProfileId"),
                         request.getExpertProfileId()
                 ));
             }
 
-            if (request.getProjectId() != null) {
+            if (request.getProjectId() != null && request.getProjectId() > 0) {
                 predicates.add(cb.equal(
                         root.get("project").get("projectId"),
                         request.getProjectId()

@@ -22,12 +22,15 @@ public interface DisputeMapper {
     @Mapping(target = "reportedAgainstId", source = "dispute.reportedAgainst.userId")
     @Mapping(target = "reportedAgainstName", source = "dispute.reportedAgainst.fullName")
     @Mapping(target = "escrowHeldAmount", source = "escrow.heldAmount")
+    @Mapping(target = "escrowPlatformFee", source = "escrow.platformFee")
+    @Mapping(target = "escrowExpertAmount", source = "escrow.expertAmount")
     @Mapping(target = "createdAt", source = "dispute.createAt")
     @Mapping(target = "resolvedAt", source = "dispute.resolvedAt")
     @Mapping(target = "escrowStatus", ignore = true)
     @Mapping(target = "projectOutcome", ignore = true)
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "deliverables", ignore = true)
+    @Mapping(target = "invoice", ignore = true)
     DisputeResponse toResponse(Dispute dispute, ProjectEscrow escrow);
 
     default String getDisputedStepTitle(Deliverable deliverable) {

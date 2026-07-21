@@ -47,10 +47,13 @@ public class DisputeResponse {
     BigDecimal refundAmount;
     BigDecimal releaseAmount;
     BigDecimal escrowHeldAmount;
+    BigDecimal escrowPlatformFee;
+    BigDecimal escrowExpertAmount;
     EscrowStatus escrowStatus;
 
     ProjectCardResponse project;
     List<DeliverableResponse> deliverables;
+    InvoiceResponse invoice;
     Long conversationId;
     List<MessageResponse> messages;
 

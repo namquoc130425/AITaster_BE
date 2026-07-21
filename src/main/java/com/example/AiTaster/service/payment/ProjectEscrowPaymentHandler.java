@@ -13,6 +13,7 @@ import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.service.ConversationService;
 import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.NotificationService;
 import com.example.AiTaster.service.PlatformFeeCalculator;
 import com.example.AiTaster.service.ProjectMilestoneService;
 import com.example.AiTaster.service.RealtimeService;
@@ -33,6 +34,7 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
     private  final MoneyMovementService moneyMovementService;
     private final ConversationService conversationService;
     private final RealtimeService realtimeService;
+    private final NotificationService notificationService;
     @Override
     public boolean supports(PaymentTransaction payment) {
         return PaymentMethod.SEPAY.equals(payment.getPaymentMethod())
@@ -96,6 +98,7 @@ public class ProjectEscrowPaymentHandler implements SepayPaymentHandler {
                 "PROJECT_CREATED",
                 "Project created"
         );
+        notificationService.notifyProjectWorkspaceReady(newProject);
     }
     private ProjectEscrow createProjectEscrow(Project project) {
         if (projectEscrowRepo.existsByProjectId(project.getProjectId())) {

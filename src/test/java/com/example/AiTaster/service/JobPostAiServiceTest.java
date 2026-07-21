@@ -11,7 +11,6 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
-import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.SkillRepo;
 import com.example.AiTaster.service.vector.SkillVectorSearchService;
 import org.junit.jupiter.api.Test;
@@ -27,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,11 +55,25 @@ class JobPostAiServiceTest {
     @Mock
     private SkillVectorSearchService skillVectorSearchService;
 
-    @Mock
-    private JobPostRepo jobPostRepo;
-
     @InjectMocks
     private JobPostAiService jobPostAiService;
+
+    @Test
+    void creatJobPostByAi_rejectsInvalidTitleBeforeVectorSearch() {
+        JobPostAiRequest request = new JobPostAiRequest();
+        request.setTitle(" ");
+
+        doThrow(new GlobalException(400, "Cannot be blank"))
+                .when(contentManagerService)
+                .validateKeywordInput(" ");
+
+        assertThatThrownBy(() -> jobPostAiService.creatJobPostByAi(request))
+                .isInstanceOf(GlobalException.class)
+                .hasMessageContaining("Cannot be blank");
+
+        verify(skillVectorSearchService, never()).searchSkillResult(any(), any(Integer.class));
+        verify(geminiClientService, never()).generateJobPost(any(), any());
+    }
 
     @Test
     void creatJobPostByAi_rejectsThinActualInputBeforeVectorSearch() {
@@ -77,11 +91,10 @@ class JobPostAiServiceTest {
 
         verify(skillVectorSearchService, never()).searchSkillResult(any(), any(Integer.class));
         verify(geminiClientService, never()).generateJobPost(any(), any());
-        verify(jobPostRepo, never()).save(any());
     }
 
     @Test
-    void creatJobPostByAi_savesGeneratedDraftBeforeReturningResponse() {
+    void creatJobPostByAi_returnsGeneratedDraftPreview() {
         User user = User.builder().userId(10L).build();
         ClientProfile clientProfile = ClientProfile.builder().clientProfileId(20L).build();
         Skill skill = Skill.builder()
@@ -108,9 +121,7 @@ class JobPostAiServiceTest {
                 List.of(1L)
         );
         JobPost mappedJobPost = JobPost.builder().title(aiResponse.getTitle()).build();
-        JobPost savedJobPost = JobPost.builder().jobPostId(99L).title(aiResponse.getTitle()).build();
         JobPostResponse expectedResponse = JobPostResponse.builder()
-                .jobPostId(99L)
                 .title(aiResponse.getTitle())
                 .build();
 
@@ -125,13 +136,11 @@ class JobPostAiServiceTest {
                         .build()));
         when(geminiClientService.generateJobPost(any(), any())).thenReturn(aiResponse);
         when(jobPostMapper.toEntityJobPostDraft(aiResponse, clientProfile)).thenReturn(mappedJobPost);
-        when(jobPostRepo.save(mappedJobPost)).thenReturn(savedJobPost);
-        when(jobPostMapper.toResponse(savedJobPost)).thenReturn(expectedResponse);
+        when(jobPostMapper.toResponse(mappedJobPost)).thenReturn(expectedResponse);
 
         JobPostResponse response = jobPostAiService.creatJobPostByAi(request);
 
         assertThat(response).isSameAs(expectedResponse);
-        verify(jobPostRepo).save(mappedJobPost);
-        verify(jobPostMapper).toResponse(savedJobPost);
+        verify(jobPostMapper).toResponse(mappedJobPost);
     }
 }

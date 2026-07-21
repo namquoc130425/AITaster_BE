@@ -5,6 +5,7 @@ import com.example.AiTaster.dto.response.APIResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +14,16 @@ import java.util.List;
 @ControllerAdvice  // Áp dụng cho tất cả controller trong hệ thống.
 @Slf4j
 public class GlobalExceptionHander {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<APIResponse<Object>> handleAccessDenied(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(APIResponse.response(
+                        HttpStatus.FORBIDDEN.value(),
+                        "You do not have permission to perform this action",
+                        null
+                ));
+    }
+
     // Bắt lỗi nghiệp vụ do mình tự throw.
     @ExceptionHandler(GlobalException.class)
     public ResponseEntity<APIResponse <Object>> handlerGlobal(GlobalException exception) {
