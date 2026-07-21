@@ -123,7 +123,9 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
     @Autowired
     SupabaseService supabaseService;
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
+    @Autowired
+    EmailService emailService;
+
     @Transactional
     public ClientProfileResponse registerClient(ClientRegisterRequest request) {
         validateRegister(request.getEmail(), request.getPhone());
@@ -171,6 +173,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         userRepo.save(user);
 >>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         userWalletService.createdUserWallet(user);
+        sendWelcomeEmail(user);
 
         return clientProfileMapper.toResponse(clientProfile);
     }
@@ -229,6 +232,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         user.setExpertProfile(expertProfile);
         userRepo.save(user);
         userWalletService.createdUserWallet(user);
+        sendWelcomeEmail(user);
 
         return expertProfileMapper.toResponse(expertProfile);
     }
@@ -370,6 +374,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
         User savedUser = userRepo.save(user);
         userWalletService.createdUserWallet(savedUser);
+        sendWelcomeEmail(savedUser);
 
         return userMapper.toResponser(savedUser);
     }
@@ -441,6 +446,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         User savedUser = userRepo.save(user);
 
         userWalletService.createdUserWallet(savedUser);
+        sendWelcomeEmail(savedUser);
 
         String accessToken =
                 tokenService.generateAccessToken(savedUser);
@@ -512,6 +518,7 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         User savedUser = userRepo.save(user);
 
         userWalletService.createdUserWallet(savedUser);
+        sendWelcomeEmail(savedUser);
 
         String accessToken =
                 tokenService.generateAccessToken(savedUser);
@@ -526,6 +533,34 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                 accessToken,
                 refreshToken
         );
+    }
+
+    private void sendWelcomeEmail(User user) {
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
+            return;
+        }
+
+        try {
+            emailService.sendWelcomeEmail(
+                    user.getEmail(),
+                    getDisplayName(user),
+                    user.getRole() == null ? null : user.getRole().name()
+            );
+        } catch (RuntimeException e) {
+            log.warn("Could not send welcome email to {}", user.getEmail(), e);
+        }
+    }
+
+    private String getDisplayName(User user) {
+        if (user.getFullName() != null && !user.getFullName().isBlank()) {
+            return user.getFullName();
+        }
+
+        if (user.getUsername() != null && !user.getUsername().isBlank()) {
+            return user.getUsername();
+        }
+
+        return user.getEmail();
     }
 
     private void validateRegister(String email, String phone) {
@@ -543,6 +578,8 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
                     ErrorCode.DUPLICATE_EMAIL.getMessage()
             );
         }
+
+        // TODO: Hoàn thiện điều kiện kiểm tra bổ sung nếu cần; dòng nháp trước đó làm project không compile.
     }
 
 <<<<<<< HEAD

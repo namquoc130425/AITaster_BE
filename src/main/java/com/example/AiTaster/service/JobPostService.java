@@ -44,7 +44,7 @@ public class JobPostService implements IJobPost {
 <<<<<<< HEAD
 =======
     private final ExpertApplicationRepo expertApplicationRepo;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
+    private static final int TITLE_MIN_WORDS = 10;
 
     //client tự tạo jobpost với status là Draft mà không dùng AI
     public JobPostResponse createJobPost(JobPostRequest jobPostRequest) {
@@ -226,6 +226,7 @@ public class JobPostService implements IJobPost {
 
         // Check title
         contentManagerService.validateKeywordInput(request.getTitle());
+        validateTitleWordCount(request.getTitle());
 
         // Check mô tả yêu cầu
         contentManagerService.validateKeywordInput(request.getRequirementDescription());
@@ -259,6 +260,20 @@ public class JobPostService implements IJobPost {
         if (duplicated) {
             throw new GlobalException(409, "Duplicate job post request. Please do not submit the same job post twice");
         }
+    }
+
+    private void validateTitleWordCount(String title) {
+        if (countWords(title) < TITLE_MIN_WORDS) {
+            throw new GlobalException(400, "Job title must contain at least " + TITLE_MIN_WORDS + " words");
+        }
+    }
+
+    private int countWords(String value) {
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+
+        return value.trim().split("\\s+").length;
     }
 
     private String normalizeText(String value) {

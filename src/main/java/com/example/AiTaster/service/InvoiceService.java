@@ -136,6 +136,56 @@ public class InvoiceService {
                 });
     }
 
+    @Transactional
+    public Invoices createForResolvedDispute(
+            Long projectId,
+            Long paymentTransactionId,
+            BigDecimal refundAmount,
+            BigDecimal releaseAmount,
+            BigDecimal expertAmount,
+            BigDecimal platformFee,
+            DisputeDecision decision
+    ) {
+        Project project = projectRepo.findWithDetailByProjectId(projectId)
+                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+
+        ProjectEscrow escrow = projectEscrowRepo.findByProjectId(projectId)
+                .orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+
+        PaymentTransaction payment = paymentTransactionRepo.findById(paymentTransactionId)
+                .orElseThrow(() -> new GlobalException(404, "Payment transaction not found"));
+
+        if (!PaymentStatus.SUCCESS.equals(payment.getPaymentStatus())) {
+            throw new GlobalException(400, "Payment is not success");
+        }
+
+        return invoiceRepo.findByProjectEscrowId(escrow.getProjectEscrowId())
+                .orElseGet(() -> {
+                    Invoices invoice = invoiceMapper.toProjectCompletionInvoice(project, escrow, payment);
+
+                    BigDecimal safeRefund = defaultZero(refundAmount);
+                    BigDecimal safeRelease = defaultZero(releaseAmount);
+                    BigDecimal safeExpertAmount = defaultZero(expertAmount);
+                    BigDecimal safePlatformFee = defaultZero(platformFee);
+
+                    invoice.setInvoiceCode(generateInvoiceCode());
+                    invoice.setInvoiceType(InvoiceType.DISPUTE_RESOLUTION);
+                    invoice.setInvoiceStatus(InvoiceStatus.PAID);
+                    invoice.setSubtotalAmount(safeExpertAmount);
+                    invoice.setPlatformFee(safePlatformFee);
+                    invoice.setTaxAmount(BigDecimal.ZERO);
+                    invoice.setDiscountAmount(safeRefund);
+                    invoice.setTotalAmount(safeRelease);
+                    invoice.setDescription("Invoice for dispute resolution "
+                            + (decision == null ? "" : decision.name())
+                            + " - project: " + project.getTitle());
+                    invoice.setPaidAt(payment.getPaidAt() != null ? payment.getPaidAt() : LocalDateTime.now());
+                    invoice.setCreatedAt(LocalDateTime.now());
+
+                    return invoiceRepo.save(invoice);
+                });
+    }
+
     public List<InvoiceResponse> getMyInvoices(InvoiceType invoiceType) {
         User currentUser = currentUserService.getCurrentUser();
 

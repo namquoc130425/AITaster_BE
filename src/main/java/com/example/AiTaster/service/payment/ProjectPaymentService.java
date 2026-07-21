@@ -36,6 +36,7 @@ public class ProjectPaymentService implements IProjectPayment {
     private final MoneyMovementService moneyMovementService;
     private final ConversationService conversationService;
     private final RealtimeService realtimeService;
+    private final NotificationService notificationService;
 
     @Transactional
     @Override
@@ -243,6 +244,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 "PROJECT_CREATED",
                 "Project created"
         );
+        notificationService.notifyProjectWorkspaceReady(project);
 
         return paymentTransactionMapper.toInvitationPaymentResponse(
                 paymentTransaction,

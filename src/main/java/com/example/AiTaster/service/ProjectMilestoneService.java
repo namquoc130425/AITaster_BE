@@ -74,11 +74,13 @@ public class ProjectMilestoneService {
 
      // Lấy trạng thái milestone hiện tại của project
     // Trả currentStep, status, các mốc thời gian đã duyệt.
-    @Transactional(readOnly = true)
+    @Transactional
     public ProjectMilestoneResponse getMilestone(Long projectId) {
         Project project = getProjectWithDetail(projectId);
         checkCurrentUser(project); // chỉ người trong project mới xem được
-        return projectMilestoneMapper.toResponse(getMilestoneByProjectId(projectId));
+        return projectMilestoneMapper.toResponse(
+                normalizeFinalConfirmationReviewState(getMilestoneByProjectId(projectId))
+        );
     }
 
     //expert nop file cho mốc Document hoặc source_code
@@ -90,6 +92,7 @@ public class ProjectMilestoneService {
             throw new GlobalException(400, "File is required");
         }
         Project project = getProjectWithDetail(projectId);
+        ensureProjectNotDisputed(project);
         ExpertProfile expertProfile = getCurrentExpertProfile();
         checkExpertOfProject(project, expertProfile);
         if (project.getProjectStatus() != ProjectStatus.ACTIVE) {
@@ -99,21 +102,13 @@ public class ProjectMilestoneService {
         if (escrow.getEscrowStatus() != EscrowStatus.HELD) {
             throw new GlobalException(400, "Escrow is not held");
         }
-        ProjectMilestone milestone = getMilestoneByProjectId(projectId);
+        ProjectMilestone milestone = normalizeFinalConfirmationReviewState(getMilestoneByProjectId(projectId));
         if (milestone.getStatus() == MilestoneStatus.COMPLETED) {
             throw new GlobalException(400, "Milestone already completed");
         }
 
         MilestoneStep step = milestone.getCurrentStep();
-<<<<<<< HEAD
-        // Mốc 3 không cần expert nộp file
-        if (step == MilestoneStep.FINAL_CONFIRMATION) {
-            throw new GlobalException(400, "Final confirmation does not require submit");
-=======
-        if (step == MilestoneStep.FINAL_CONFIRMATION) {
-            throw new GlobalException(400, "Mốc 3 là bước xác nhận cuối, không cần nộp file");
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
-        }
+        // Expert must submit a deliverable for every active milestone, including final confirmation.
         // Chỉ được nộp khi đang chờ expert nộp, hoặc client yêu cầu làm lại
         if (milestone.getStatus() != MilestoneStatus.WAITING_EXPERT_SUBMIT
                 && milestone.getStatus() != MilestoneStatus.REVISION_REQUESTED) {
@@ -159,30 +154,28 @@ public class ProjectMilestoneService {
     @Transactional
     public ProjectMilestoneResponse requestRevision(Long projectId) {
         Project project = getProjectWithDetail(projectId);
+        ensureProjectNotDisputed(project);
         checkClientOwner(project, getCurrentClientProfile());
-        ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
+        ProjectMilestone projectMilestone = normalizeFinalConfirmationReviewState(getMilestoneByProjectId(projectId));
         if (projectMilestone.getStatus() != MilestoneStatus.WAITING_CLIENT_REVIEW) {
             throw new GlobalException(400, "Milestone is not waiting client review");
         }
-<<<<<<< HEAD
-        // Mốc 3 không có gì để làm lại
-        if (projectMilestone.getCurrentStep() == MilestoneStep.FINAL_CONFIRMATION) {
-            throw new GlobalException(400, "Final confirmation cannot be revised");
-        }projectMilestone.setStatus(MilestoneStatus.REVISION_REQUESTED);
-=======
-        if (projectMilestone.getCurrentStep() == MilestoneStep.FINAL_CONFIRMATION) {
-            throw new GlobalException(400, "Mốc 3 là bước xác nhận cuối, không thể yêu cầu chỉnh sửa");
+        MilestoneStep reviewedStep = projectMilestone.getCurrentStep();
+        MilestoneStep revisionStep = reviewedStep == MilestoneStep.FINAL_CONFIRMATION
+                ? MilestoneStep.SOURCE_CODE
+                : reviewedStep;
+        if (reviewedStep == MilestoneStep.FINAL_CONFIRMATION) {
+            projectMilestone.setCurrentStep(revisionStep);
         }
         projectMilestone.setStatus(MilestoneStatus.REVISION_REQUESTED);
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
-         ProjectMilestone saveProjectMilestone = projectMilestoneRepo.save(projectMilestone);
-        markLatestDeliverableReviewed(projectId, saveProjectMilestone.getCurrentStep()); // đánh dấu đã xem và yêu cầu làm lại
+          ProjectMilestone saveProjectMilestone = projectMilestoneRepo.save(projectMilestone);
+        markLatestDeliverableReviewed(projectId, revisionStep); // đánh dấu đã xem và yêu cầu làm lại
         // báo EXPERT phải làm lại
         publishMilestoneEvent(
                 project,
                 saveProjectMilestone,
                 "REVISION_REQUESTED",
-                "Client yêu cầu chỉnh sửa lại " + saveProjectMilestone.getCurrentStep().getTitle(),
+                "Client yêu cầu chỉnh sửa lại " + revisionStep.getTitle(),
                 getExpertUserId(project)
         );
         return projectMilestoneMapper.toResponse(saveProjectMilestone);
@@ -193,8 +186,9 @@ public class ProjectMilestoneService {
  @Transactional
     public ProjectMilestoneResponse approve(Long projectId) {
         Project project = getProjectWithDetail(projectId);
+     ensureProjectNotDisputed(project);
      checkClientOwner(project, getCurrentClientProfile());
-        ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
+        ProjectMilestone projectMilestone = normalizeFinalConfirmationReviewState(getMilestoneByProjectId(projectId));
 
         if(!projectMilestone.getStatus().equals(MilestoneStatus.WAITING_CLIENT_REVIEW)) {
             throw new GlobalException(400, "Milestone is not waiting client review");
@@ -217,6 +211,7 @@ public class ProjectMilestoneService {
                 markLatestDeliverableReviewed(projectId,approvedStep);
             }
             case FINAL_CONFIRMATION -> {
+                markLatestDeliverableReviewed(projectId, approvedStep);
                 finalConfirm(project,projectMilestone);
             }
         }
@@ -227,16 +222,8 @@ public class ProjectMilestoneService {
                  "Dự án đã hoàn tất, tiền đã được giải ngân cho expert",
                  getExpertUserId(project));
      } else {
-<<<<<<< HEAD
          publishMilestoneEvent(project, projectMilestone, "APPROVED",
                  "Client đã duyệt " + approvedStep.getTitle() + ", mời expert làm bước tiếp theo",
-=======
-         String approvalMessage = projectMilestone.getCurrentStep() == MilestoneStep.FINAL_CONFIRMATION
-                 ? "Khách hàng đã duyệt " + approvedStep.getTitle() + ", dự án đang chờ xác nhận hoàn tất"
-                 : "Client đã duyệt " + approvedStep.getTitle() + ", mời expert làm bước tiếp theo";
-         publishMilestoneEvent(project, projectMilestone, "APPROVED",
-                 approvalMessage,
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                  getExpertUserId(project));
      }
         return projectMilestoneMapper.toResponse(projectMilestone);
@@ -284,9 +271,6 @@ public class ProjectMilestoneService {
         ProjectMilestone projectMilestone = getMilestoneByProjectId(projectId);
         MilestoneStep deliverableStep = projectMilestone.getCurrentStep();
 
-        if (deliverableStep == MilestoneStep.FINAL_CONFIRMATION) {
-            deliverableStep = MilestoneStep.SOURCE_CODE;
-        }
         Deliverable deliverable = deliverableRepo.findTopByProjectIdAndStepOrderByVersionDesc(projectId, deliverableStep).orElseThrow(()->  new  GlobalException(404, "No deliverable yet"));
         return deliverableMapper.toResponse(deliverable);
     }
@@ -369,6 +353,18 @@ public class ProjectMilestoneService {
         return projectMilestoneRepo.findByProjectId(projectId).orElseThrow(() -> new GlobalException(404, "Milestone not found"));
     }
     //lấy escrow theo projectId
+    private ProjectMilestone normalizeFinalConfirmationReviewState(ProjectMilestone milestone) {
+        if (milestone.getCurrentStep() == MilestoneStep.FINAL_CONFIRMATION
+                && milestone.getStatus() == MilestoneStatus.WAITING_EXPERT_SUBMIT
+                && milestone.getStep2ApprovedAt() != null
+                && milestone.getFinalApprovedAt() == null) {
+            milestone.setStatus(MilestoneStatus.WAITING_CLIENT_REVIEW);
+            return projectMilestoneRepo.save(milestone);
+        }
+
+        return milestone;
+    }
+
     private ProjectEscrow getEscrowByProjectId(Long projectId){
         return projectEscrowRepo.findByProjectId(projectId).orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
     }
@@ -551,5 +547,11 @@ public class ProjectMilestoneService {
         }
 
         return NotificationType.PROJECT;
+    }
+
+    private void ensureProjectNotDisputed(Project project) {
+        if (project.getProjectStatus() == ProjectStatus.DISPUTED) {
+            throw new GlobalException(400, "Project is under dispute");
+        }
     }
 }

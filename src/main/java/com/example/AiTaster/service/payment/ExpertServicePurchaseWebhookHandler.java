@@ -3,17 +3,19 @@ package com.example.AiTaster.service.payment;
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.dto.request.SepayWebhookRequest;
 import com.example.AiTaster.entity.ExpertService;
+import com.example.AiTaster.entity.Invoices;
 import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
-<<<<<<< HEAD
-=======
+import com.example.AiTaster.service.InvoiceEmailService;
 import com.example.AiTaster.service.InvoiceService;
 >>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.example.AiTaster.service.MoneyMovementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,19 +30,26 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
 =======
     private final InvoiceService invoiceService;
     private final ExpertServicePurchaseEventService purchaseEventService;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
+    private final InvoiceEmailService invoiceEmailService;
 
 
+    // Kiểm tra payment này có thuộc luồng SePay mua AIService hay không.
     @Override
     public boolean supports(PaymentTransaction payment) {
         return PaymentMethod.SEPAY.equals(payment.getPaymentMethod()) && PaymentReferenceType.EXPERT_SERVICE.equals(payment.getPaymentReferenceType()) && TransactionType.EXPERT_SERVICE_PURCHASE.equals(payment.getTransactionType());
     }
 
+    // Xử lý webhook SePay thành công, chuyển tiền, tạo invoice và gửi email invoice sau commit.
     @Override
     public void handle(PaymentTransaction payment, SepayWebhookRequest request, String providerTransactionCode, String providerContent, LocalDateTime paidAt) {
         ExpertService expertService = expertServiceRepo.findById(payment.getExpertServiceId()).orElseThrow(() -> new GlobalException(404, "Expert service not found"));
 
         if (!ServiceStatus.OPEN.equals(expertService.getServiceStatus())) {
+            markFailed(payment, providerTransactionCode, providerContent);
+            return;
+        }
+
+        if (hasSuccessfulPurchase(payment.getSenderId(), expertService.getServiceId())) {
             markFailed(payment, providerTransactionCode, providerContent);
             return;
         }
@@ -85,9 +94,9 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
         successTransaction.setPaidAt(paidAt);
 
         paymentTransactionRepo.save(successTransaction);
-<<<<<<< HEAD
-=======
-        invoiceService.createForPaidAiService(successTransaction.getPaymentTransactionId());
+        // Tạo invoice AIService và gửi email invoice sau commit.
+        Invoices invoice = invoiceService.createForPaidAiService(successTransaction.getPaymentTransactionId());
+        runAfterCommit(() -> invoiceEmailService.enqueueAndSendForInvoice(invoice.getInvoiceId()));
         purchaseEventService.publishAfterPaymentSuccess(
                 payment.getSenderId(),
                 expertUserId,
@@ -101,6 +110,18 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
     }
 
 
+    // Đánh dấu payment thất bại khi service không còn mở để bán.
+    private boolean hasSuccessfulPurchase(Long clientUserId, Long serviceId) {
+        return paymentTransactionRepo
+                .existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+                        clientUserId,
+                        TransactionType.EXPERT_SERVICE_PURCHASE,
+                        PaymentReferenceType.EXPERT_SERVICE,
+                        PaymentStatus.SUCCESS,
+                        serviceId
+                );
+    }
+
     private void markFailed(
             PaymentTransaction payment,
             String providerTransactionCode,
@@ -110,6 +131,21 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
         payment.setProviderTransactionCode(providerTransactionCode);
         payment.setProviderContent(providerContent);
         paymentTransactionRepo.save(payment);
+    }
+
+    // Chạy gửi email sau commit; trong unit test không mở transaction thì chạy ngay.
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 }
 

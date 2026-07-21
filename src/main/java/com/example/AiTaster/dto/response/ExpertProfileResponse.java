@@ -30,6 +30,7 @@ public class ExpertProfileResponse {
     Integer yearOfExperience;
     String portfolioUrl;
     BigDecimal rating;
+    Integer ratingCount;
     Integer completedProjects;
     LocalDateTime createAt;
     LocalDateTime updateAt;

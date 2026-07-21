@@ -76,7 +76,17 @@ public class SecurityConfig {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER).permitAll()
-                        .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/invoice-email-payment-test.html").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/local-test/invoice-email/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/webhooks/sepay", "/api/webhooks/sepay/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/category", "/api/category/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/skill", "/api/skill/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/expert-profiles/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/expert-Service/public/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/expert-Service/public/filter").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/ratings/filter").permitAll()
+                        .requestMatchers(ADMIN).hasRole("ADMIN")
+                        .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll() // chuyển qua mảng tring
                         .anyRequest().authenticated()
                 )
 

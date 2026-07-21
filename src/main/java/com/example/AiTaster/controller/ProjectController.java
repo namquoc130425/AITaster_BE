@@ -31,6 +31,19 @@ public class ProjectController {
         );
     }
 
+    @GetMapping("/{projectId}")
+    public ResponseEntity<APIResponse<ProjectCardResponse>> getProject(
+            @PathVariable Long projectId
+    ) {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get project successfully",
+                        projectService.getProject(projectId)
+                )
+        );
+    }
+
     @DeleteMapping("/{projectId}")
     public ResponseEntity<APIResponse<Void>> deleteProject(
             @PathVariable Long projectId

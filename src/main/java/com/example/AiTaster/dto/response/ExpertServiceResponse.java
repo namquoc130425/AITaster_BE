@@ -38,6 +38,11 @@ import java.util.List;
 public class ExpertServiceResponse {
 
     Long serviceId;
+    Long expertProfileId;
+    Long expertUserId;
+    String expertName;
+    String expertEmail;
+    String expertAvatarUrl;
 
     String serviceName;
 
@@ -67,7 +72,10 @@ public class ExpertServiceResponse {
 
     Integer reviewCount;
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
+    BigDecimal rating;
+
+    Integer ratingCount;
+
     CategoryResponse category;
 
     List<SkillResponse> skills;

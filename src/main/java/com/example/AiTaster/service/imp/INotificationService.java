@@ -51,6 +51,8 @@ public interface INotificationService {
 
     void notifyInvitationRejected(Invitation invitation);
 
+    void notifyProjectWorkspaceReady(Project project);
+
     void notifyAdminNewReport(Report report);
 
     void notifyReporterReportResolved(Report report);
@@ -68,5 +70,4 @@ public interface INotificationService {
     void notifyExpertAiServiceAccepted(ExpertService expertService);
 
     void notifyExpertAiServiceRejected(ExpertService expertService);
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

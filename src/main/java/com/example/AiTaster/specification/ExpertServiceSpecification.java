@@ -53,6 +53,9 @@ public static Specification<ExpertService> filter(ExpertServiceFillerRequest req
             if(filter.getCategoryId() != null ) {
                 predicates.add(cb.equal(root.get("category").get("categoryId"),filter.getCategoryId()));
             }
+            if(filter.getExpertProfileId() != null) {
+                predicates.add(cb.equal(root.get("expertProfile").get("expertProfileId"), filter.getExpertProfileId()));
+            }
             // Lọc theo skill.
             // Vì expert service có nhiều skill nên phải dùng join.
             //INNER JOIN: Chỉ lấy dữ liệu khớp ở cả 2 bảng.

@@ -62,7 +62,11 @@ public class ExpertService {
 
     Integer reviewCount;
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
+    @Column(precision = 3, scale = 2)
+    BigDecimal rating;
+
+    Integer ratingCount;
+
     @CreationTimestamp
     LocalDateTime createAt;
 
@@ -121,6 +125,14 @@ public class ExpertService {
 
         if (reviewCount == null) {
             reviewCount = 0;
+        }
+
+        if (rating == null) {
+            rating = BigDecimal.ZERO;
+        }
+
+        if (ratingCount == null) {
+            ratingCount = 0;
         }
     }
 >>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384

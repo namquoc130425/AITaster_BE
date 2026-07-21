@@ -4,17 +4,20 @@ import com.example.AiTaster.constant.ErrorCode;
 <<<<<<< HEAD
 =======
 import com.example.AiTaster.constant.NotificationType;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
+import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.constant.ReferenceType;
+import com.example.AiTaster.constant.ConversationType;
 import com.example.AiTaster.dto.request.MessageRequest;
 import com.example.AiTaster.dto.response.MessageResponse;
 import com.example.AiTaster.dto.response.ReadReceiptResponse;
 import com.example.AiTaster.entity.Conversation;
 import com.example.AiTaster.entity.Message;
+import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.MessageMapper;
 import com.example.AiTaster.repository.MessageRepo;
+import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IMessageService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class MessageService implements IMessageService {
 
     private final MessageRepo messageRepo;
     private final UserRepo userRepo;
+    private final ProjectRepo projectRepo;
 
     private final ConversationService conversationService;
     private final CurrentUserService currentUserService;
@@ -120,6 +124,7 @@ public class MessageService implements IMessageService {
                 conversation,
                 sender
         );
+        ensureConversationCanReceiveMessage(conversation);
 
         /*
      * Chặn thêm ở tầng service:
@@ -136,7 +141,9 @@ public class MessageService implements IMessageService {
                         .getUserId()
                         .equals(sender.getUserId());
 
-        if (!hasMessage && senderIsExpert) {
+        if (conversation.getConversationType() == ConversationType.APPLICATION
+                && !hasMessage
+                && senderIsExpert) {
             throw new GlobalException(
                     ErrorCode.CLIENT_MUST_SEND_FIRST_MESSAGE
             );
@@ -474,6 +481,24 @@ public class MessageService implements IMessageService {
     }
 <<<<<<< HEAD
 =======
+
+    private void ensureConversationCanReceiveMessage(Conversation conversation) {
+        Long projectId = conversation.getProjectId();
+
+        if (projectId == null) {
+            return;
+        }
+
+        Project project = projectRepo.findById(projectId).orElse(null);
+
+        if (project != null && ProjectStatus.DISPUTED.equals(project.getProjectStatus())) {
+            throw new GlobalException(400, "Messaging is paused while project is under dispute");
+        }
+
+        if (project != null && ProjectStatus.CANCELED.equals(project.getProjectStatus())) {
+            throw new GlobalException(400, "Messaging is closed because the project has been resolved");
+        }
+    }
 
     private String buildMessageNotificationContent(
             User sender,

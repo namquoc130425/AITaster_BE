@@ -35,6 +35,11 @@ public interface ExpertServiceMapper {
 
 
     @Mapping(target = "serviceFileResponse",source = "serviceFile")
+    @Mapping(target = "expertProfileId", source = "expertProfile.expertProfileId")
+    @Mapping(target = "expertUserId", source = "expertProfile.user.userId")
+    @Mapping(target = "expertName", source = "expertProfile.user.fullName")
+    @Mapping(target = "expertEmail", source = "expertProfile.user.email")
+    @Mapping(target = "expertAvatarUrl", source = "expertProfile.user.avatarUrl")
     ExpertServiceResponse toResponse(ExpertService expertService);
     @Mapping(target = "expertProfile", ignore = true)
     @Mapping(target = "category", ignore = true)

@@ -1,6 +1,7 @@
 package com.example.AiTaster.service.payment;
 
 import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.dto.response.SepayCheckoutFormResponse;
@@ -10,10 +11,13 @@ import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.PaymentTransactionMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
 import com.example.AiTaster.repository.ExpertServiceRepo;
+import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,12 +32,13 @@ public class ExpertServicePurchaseService {
     private final PlatformFeeCalculator platformFeeCalculator;
     private final PendingPaymentService pendingPaymentService;
     private final SepayGateway sepayGateway;
+    private final PaymentTransactionRepo paymentTransactionRepo;
     private final PaymentTransactionMapper paymentTransactionMapper;
 <<<<<<< HEAD
 =======
     private final InvoiceService invoiceService;
     private final ExpertServicePurchaseEventService purchaseEventService;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
+    private final InvoiceEmailService invoiceEmailService;
 
     // Client mua expert service bằng ví nội bộ.
     // Luồng: ví client -> ví expert; phí sàn được cộng vào ví admin.
@@ -48,6 +53,8 @@ public class ExpertServicePurchaseService {
             throw new GlobalException(400, "Service is not available");
         }
         Long clientUserId = clientProfile.getUser().getUserId();
+        ensureServiceNotPurchased(clientUserId, serviceId);
+
         // expertService -> expertProfile -> user.
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
@@ -78,7 +85,9 @@ public class ExpertServicePurchaseService {
 <<<<<<< HEAD
 =======
          // tạo hóa đơn khi transaction thành công
-          invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
+        // Tạo invoice AIService và gửi email invoice sau commit.
+        Invoices invoice = invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
+        runAfterCommit(() -> invoiceEmailService.enqueueAndSendForInvoice(invoice.getInvoiceId()));
         purchaseEventService.publishAfterPaymentSuccess(
                 clientUserId,
                 expertUserId,
@@ -93,6 +102,7 @@ public class ExpertServicePurchaseService {
 >>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
+    // Tạo giao dịch SePay PENDING để client thanh toán AIService bên ngoài ví nội bộ.
     @Transactional
     public SepayPurchasePaymentResponse createServiceSepayPayment(Long serviceId) {
         User user = currentUserService.getCurrentUser();
@@ -110,6 +120,8 @@ public class ExpertServicePurchaseService {
         BigDecimal amount = expertService.getServiceFee();
 
         Long clientUserId = clientProfile.getUser().getUserId();
+        ensureServiceNotPurchased(clientUserId, serviceId);
+
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
         // Tạo pending SePay transaction. Chưa đổi số dư ví cho đến khi webhook success.
@@ -131,5 +143,35 @@ public class ExpertServicePurchaseService {
         SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);
 
         return paymentTransactionMapper.toSepayPurchasePaymentResponse(paymentTransaction, checkoutForm);
+    }
+
+    private void ensureServiceNotPurchased(Long clientUserId, Long serviceId) {
+        boolean alreadyPurchased = paymentTransactionRepo
+                .existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+                        clientUserId,
+                        TransactionType.EXPERT_SERVICE_PURCHASE,
+                        PaymentReferenceType.EXPERT_SERVICE,
+                        PaymentStatus.SUCCESS,
+                        serviceId
+                );
+
+        if (alreadyPurchased) {
+            throw new GlobalException(409, "You already purchased this AI service");
+        }
+    }
+
+    // Chạy hành động sau khi transaction commit; nếu không có transaction thì chạy ngay để dễ test unit.
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 }

@@ -425,6 +425,53 @@ public class NotificationService implements INotificationService {
         );
     }
 
+    @Override
+    public void notifyProjectWorkspaceReady(Project project) {
+        if (project == null
+                || project.getProjectId() == null
+                || project.getInvitation() == null
+                || project.getInvitation().getExpertApplication() == null
+                || project.getInvitation().getExpertApplication().getJobpost() == null
+                || project.getInvitation().getExpertApplication().getJobpost().getClientProfile() == null
+                || project.getInvitation().getExpertApplication().getJobpost().getClientProfile().getUser() == null
+                || project.getInvitation().getExpertApplication().getExpertProfile() == null
+                || project.getInvitation().getExpertApplication().getExpertProfile().getUser() == null) {
+            return;
+        }
+
+        User clientUser = project.getInvitation()
+                .getExpertApplication()
+                .getJobpost()
+                .getClientProfile()
+                .getUser();
+
+        User expertUser = project.getInvitation()
+                .getExpertApplication()
+                .getExpertProfile()
+                .getUser();
+
+        String projectTitle = safeText(project.getTitle(), "dự án");
+        String title = "Project workspace is ready";
+        String content = "Escrow payment completed. Open workspace for: " + projectTitle;
+
+        notify(
+                clientUser,
+                NotificationType.PROJECT,
+                ReferenceType.PROJECT,
+                project.getProjectId(),
+                title,
+                content
+        );
+        notify(
+                expertUser,
+                NotificationType.PROJECT,
+                ReferenceType.PROJECT,
+                project.getProjectId(),
+                title,
+                content
+        );
+    }
+
     /*
      * Report:
      * User tạo report -> admin nhận notification.

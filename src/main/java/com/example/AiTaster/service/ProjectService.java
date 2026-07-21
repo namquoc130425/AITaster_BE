@@ -1,18 +1,15 @@
 package com.example.AiTaster.service;
 
-import com.example.AiTaster.constant.InvitationStatus;
 import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.dto.response.ProjectCardResponse;
 import com.example.AiTaster.entity.ClientProfile;
 import com.example.AiTaster.entity.ExpertProfile;
-import com.example.AiTaster.entity.Invitation;
 import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.ProjectMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
 import com.example.AiTaster.repository.ExpertProfileRepo;
-import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.ProjectMilestoneRepo;
 import com.example.AiTaster.repository.ProjectRepo;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +29,6 @@ public class ProjectService {
     private final ExpertProfileRepo expertProfileRepo;
     private final ProjectRepo projectRepo;
     private final ProjectMilestoneRepo projectMilestoneRepo;
-    private final InvitationRepo invitationRepo;
     private final ProjectMapper projectMapper;
     private final RealtimeService realtimeService;
 
@@ -60,29 +56,36 @@ public class ProjectService {
                 ))
                 .toList());
 
-        List<Invitation> invitations = invitationRepo.findMyProjectInvitationsWithoutProject(
-                clientProfileId,
-                expertProfileId,
-                List.of(
-                        InvitationStatus.PENDING,
-                        InvitationStatus.ACCEPTED,
-                        InvitationStatus.PAYMENT_EXPIRED
-                ),
-                keyword
-        );
-        responses.addAll(invitations.stream()
-                .map(invitation -> projectMapper.toInvitationCardResponse(
-                        invitation,
-                        isClientInvitation(invitation, clientProfileId)
-                ))
-                .toList());
-
         return responses.stream()
                 .sorted(Comparator.comparing(
                         ProjectCardResponse::getCreateAt,
                         Comparator.nullsLast(LocalDateTime::compareTo)
                 ).reversed())
                 .toList();
+    }
+
+    public ProjectCardResponse getProject(Long projectId) {
+        User user = currentUserService.getCurrentUser();
+        ClientProfile clientProfile = clientProfileRepo.findByUser(user).orElse(null);
+        ExpertProfile expertProfile = expertProfileRepo.findByUser(user).orElse(null);
+
+        if (clientProfile == null && expertProfile == null) {
+            throw new GlobalException(403, "User has no client or expert profile");
+        }
+
+        Project project = projectRepo.findWithDetailByProjectId(projectId)
+                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+
+        checkProjectMember(project, clientProfile, expertProfile);
+
+        boolean isClientProject = clientProfile != null
+                && isClientProject(project, clientProfile.getClientProfileId());
+
+        return projectMapper.toCardResponse(
+                project,
+                projectMilestoneRepo.findByProjectId(project.getProjectId()).orElse(null),
+                isClientProject
+        );
     }
 
     @Transactional
@@ -119,20 +122,6 @@ public class ProjectService {
         }
 
         Long ownerClientId = project.getInvitation()
-                .getExpertApplication()
-                .getJobpost()
-                .getClientProfile()
-                .getClientProfileId();
-
-        return clientProfileId.equals(ownerClientId);
-    }
-
-    private boolean isClientInvitation(Invitation invitation, Long clientProfileId) {
-        if (clientProfileId == null) {
-            return false;
-        }
-
-        Long ownerClientId = invitation
                 .getExpertApplication()
                 .getJobpost()
                 .getClientProfile()

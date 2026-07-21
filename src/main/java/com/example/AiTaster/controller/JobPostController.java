@@ -15,8 +15,6 @@ import com.example.AiTaster.service.JobPostService;
 <<<<<<< HEAD
 =======
 import com.example.AiTaster.constant.JobpostStatus;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,16 +43,9 @@ public class JobPostController {
     }
 
     @PostMapping("/ai/draft")
-    public ResponseEntity<APIResponse<JobPostResponse>> createJobPostByAI(@RequestBody @Valid JobPostAiRequest jobPostAiRequest) throws JsonProcessingException {
-        try {
-            JobPostResponse jobPostResponse = jobPostAiService.creatJobPostByAi(jobPostAiRequest);
-            return ResponseEntity.ok(APIResponse.response(201, "Create job post with AI successfully", jobPostResponse));
-
-        } catch (Exception e) {
-            // Trả về lỗi dạng JSON, không throw
-            return ResponseEntity.badRequest().body(APIResponse.response(400, e.getMessage(), null));
-        }
-
+    public ResponseEntity<APIResponse<JobPostResponse>> createJobPostByAI(@RequestBody @Valid JobPostAiRequest jobPostAiRequest) {
+        JobPostResponse jobPostResponse = jobPostAiService.creatJobPostByAi(jobPostAiRequest);
+        return ResponseEntity.ok(APIResponse.response(201, "Create job post with AI successfully", jobPostResponse));
     }
 
     @PostMapping("/client/draft")
