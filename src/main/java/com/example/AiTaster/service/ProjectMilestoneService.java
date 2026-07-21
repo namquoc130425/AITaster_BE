@@ -11,21 +11,15 @@ import com.example.AiTaster.mapper.ProjectMilestoneMapper;
 import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.payment.ProjectEscrowPayoutService;
 import lombok.RequiredArgsConstructor;
-<<<<<<< HEAD
-=======
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-<<<<<<< HEAD
-=======
 import java.nio.file.Files;
 import java.nio.file.Path;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -48,8 +42,6 @@ public class ProjectMilestoneService {
     private final ProjectEscrowPayoutService projectEscrowPayoutService;
     private final RealtimeService realtimeService;
     private final NotificationService notificationService;
-<<<<<<< HEAD
-=======
 
     public record DeliverableFileDownload(
             Resource resource,
@@ -57,7 +49,6 @@ public class ProjectMilestoneService {
             String contentType,
             long contentLength
     ) {}
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     // tạo milestone cho project ngay
     @Transactional
     public ProjectMilestone createMilestoneForProject(Project project) {
@@ -283,8 +274,6 @@ public class ProjectMilestoneService {
         return deliverableRepo.findByProjectIdOrderBySubmittedAtDesc(projectId).stream().map(deliverableMapper ::toResponse).toList();
     }
 
-<<<<<<< HEAD
-=======
     @Transactional(readOnly = true)
     public DeliverableFileDownload downloadDeliverableFile(Long projectId, Long serviceFileId) {
         ServiceFile serviceFile = serviceFileRepo.findById(serviceFileId)
@@ -323,7 +312,6 @@ public class ProjectMilestoneService {
         }
     }
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     // client xem sản phẩm bàn giao mới nhất thì set time vào
     private void markLatestDeliverableReviewed(Long projectId, MilestoneStep step) {
@@ -412,8 +400,6 @@ public class ProjectMilestoneService {
             throw new GlobalException(403, "You are not a participant of this project");
         }
     }
-<<<<<<< HEAD
-=======
 
     private Path resolveLocalUploadPath(String productFile) {
         if (productFile == null || productFile.isBlank()) {
@@ -450,7 +436,6 @@ public class ProjectMilestoneService {
 
         return fileName.isBlank() ? "deliverable-file" : fileName;
     }
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     // tạo form thông báo milestone tới cả 2 người trong project + 1 topic riêng cho người nhận
     private void publishMilestoneEvent(
             Project project,

@@ -74,15 +74,9 @@ HandlerExceptionResolver handlerException;
         }
         if(token != null) {
             try{
-<<<<<<< HEAD
-               User user = tokenService.verifyAccessToken(token);
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-=======
                User user = tokenService.verifyAccessToken(token);         // kiểm tra token từ người dùng
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());  // tạo 1 đối tượng Authentication để biết ai gữi request ,đăng nhập chưa,role hoặc permission gì (phần quyền)
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken); // sau này có thể lấy user đang đăng nhập bằng cách gọi SecurityContextHolder.getContext().getAuthentication().getPrincipal()
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
             } catch (GlobalException e) {
                 SecurityContextHolder.clearContext();
                 handlerExceptionResolver.resolveException(request, response, null, e);

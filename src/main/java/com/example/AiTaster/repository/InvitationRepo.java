@@ -121,8 +121,6 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
             "expertApplication.expertProfile.user"
     })
     Optional<Invitation> findWithDetailByInvitationId(Long invitationId);
-<<<<<<< HEAD
-=======
 
     @Query("""
             SELECT i
@@ -142,5 +140,4 @@ public interface InvitationRepo extends JpaRepository<Invitation, Long> {
     );
     // tìm Invitation Acception , đã hóa hạn thạnh toán , nhưng chưa tạo project . Nếu đã có project thì nghĩa là đã thanh toán rồi ,
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

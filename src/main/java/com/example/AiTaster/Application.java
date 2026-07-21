@@ -26,10 +26,7 @@ import java.util.TimeZone;
 )
 @OpenAPIDefinition(info = @Info(title = "AITasker SWAGGER", version = "1.0"))
 @EnableConfigurationProperties(QdrantProperties.class)
-<<<<<<< HEAD
-=======
 @EnableScheduling
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 public class Application {
 
 	private static final String VIETNAM_TIME_ZONE = "Asia/Ho_Chi_Minh";

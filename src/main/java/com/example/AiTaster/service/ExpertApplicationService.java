@@ -35,19 +35,13 @@ private final ProposalUnlockRepo proposalUnlockRepo;
 private final JobPostRepo jobPostRepo;
 private final ProposalPurchaseService proposalPurchaseService;
 private final NotificationService notificationService;
-<<<<<<< HEAD
-=======
 private final ExpertVerificationGuardService expertVerificationGuardService;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     @Override
     public ExpertApplicationResponse applyJobPost(Long jobPostId, ExpertApplicationRequest request) {
         validateApplicationInput(request);
         ExpertProfile expertProfile = getCurrentExpertProfile();
-<<<<<<< HEAD
-=======
         ensureExpertVerified(expertProfile);
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId)
                 .orElseThrow(() -> new GlobalException("JobPost not found"));
 
@@ -237,12 +231,9 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
         contentManagerService.validateKeywordInput(request.getDetailContent());
     }
 
-<<<<<<< HEAD
-=======
     // Hàm kiểm tra chứng chỉ Expert đã được admin chấp nhận trước khi cho dùng nghiệp vụ kinh doanh.
     private void ensureExpertVerified(ExpertProfile expertProfile) {
         expertVerificationGuardService.ensureVerified(expertProfile);
     }
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 }

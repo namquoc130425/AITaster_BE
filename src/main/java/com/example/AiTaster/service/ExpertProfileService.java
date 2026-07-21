@@ -1,10 +1,6 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
-<<<<<<< HEAD
-import com.example.AiTaster.dto.request.ExpertProfileRequest;
-import com.example.AiTaster.dto.request.ExpertRegisterRequest;
-=======
 import com.example.AiTaster.constant.ExpertVerificationStatus;
 import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ReferenceType;
@@ -13,7 +9,6 @@ import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.request.ResubmitExpertCertificateRequest;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.example.AiTaster.dto.response.CurrentUserResponse;
 import com.example.AiTaster.dto.response.ExpertProfileResponse;
 import com.example.AiTaster.dto.response.ExpertVerificationResponse;
@@ -24,16 +19,11 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.CurrentUserResponseMapper;
 import com.example.AiTaster.mapper.ExpertProfileMapper;
-<<<<<<< HEAD
-import com.example.AiTaster.mapper.UserMapper;
-import com.example.AiTaster.repository.ExpertProfileRepo;
-=======
 import com.example.AiTaster.mapper.ExpertVerificationMapper;
 import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ExpertProfileRepo;
 import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.ExpertVerificationRepo;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IExpertProfile;
 import jakarta.transaction.Transactional;
@@ -57,8 +47,6 @@ public class ExpertProfileService implements IExpertProfile {
 
 @Autowired
     UserMapper userMapper;
-<<<<<<< HEAD
-=======
 @Autowired
     CurrentUserService currentUserService;
 @Autowired
@@ -156,14 +144,6 @@ public class ExpertProfileService implements IExpertProfile {
     public CurrentUserResponse update(Long id, ExpertProfileRequest request) {
         ExpertProfile profile = expertProfileRepo.findByExpertProfileId(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
         User user = profile.getUser();
-<<<<<<< HEAD
-
-        expertProfileMapper.updateEntity(request,profile);
-        userMapper.updateUserFromExpertProfileRequest(request, user);
-        ExpertProfile updateProfile = expertProfileRepo.save(profile);
-
-        return currentUserResponseMapper.toResponse(updateProfile.getUser());
-=======
 
         expertProfileMapper.updateEntity(request,profile);
         userMapper.updateUserFromExpertProfileRequest(request, user);
@@ -203,7 +183,6 @@ public class ExpertProfileService implements IExpertProfile {
         );
 
         return expertVerificationMapper.toResponse(saved);
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
 

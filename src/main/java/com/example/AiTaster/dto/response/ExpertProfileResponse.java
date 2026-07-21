@@ -20,13 +20,8 @@ import java.util.List;
 public class ExpertProfileResponse {
     Long expertProfileId;
     String bio;
-<<<<<<< HEAD
-    String category;
-    String skills;
-=======
     CategoryResponse category;
     List<SkillResponse> skills;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     Integer yearOfExperience;
     String portfolioUrl;
     BigDecimal rating;

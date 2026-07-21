@@ -21,10 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-<<<<<<< HEAD
-=======
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 public class ExpertApplication {
 
     @Id

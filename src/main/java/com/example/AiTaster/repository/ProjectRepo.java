@@ -2,10 +2,7 @@ package com.example.AiTaster.repository;
 
 import com.example.AiTaster.entity.Invitation;
 import com.example.AiTaster.entity.Project;
-<<<<<<< HEAD
-=======
 import com.example.AiTaster.constant.ProjectStatus;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,11 +13,8 @@ import java.util.Optional;
 
 public interface ProjectRepo extends JpaRepository<Project, Long> {
 
-<<<<<<< HEAD
-=======
     long countByProjectStatus(ProjectStatus projectStatus);
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     boolean existsByInvitation(Invitation invitation);
 
     Optional<Project> findByProjectId(Long projectId);

@@ -1,9 +1,5 @@
 package com.example.AiTaster.dto.request;
 
-<<<<<<< HEAD
-import com.example.AiTaster.constant.Role;
-=======
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -42,14 +38,6 @@ public class ExpertRegisterRequest {
      @Size(max = 1000, message = "bio max 1000 characters")
      String bio;
 
-<<<<<<< HEAD
-     @NotBlank(message = "FIELD_REQUIRED")
-     String category;
-
-     @NotBlank(message = "FIELD_REQUIRED")
-     @Size(max = 1000, message = "skills max 1000 characters")
-     String skills;
-=======
      @NotNull(message = "FIELD_REQUIRED")
      @JsonAlias({"selectedCategoryId", "category"})
      Long categoryId;
@@ -57,7 +45,6 @@ public class ExpertRegisterRequest {
      @NotEmpty(message = "FIELD_REQUIRED")
      @JsonAlias({"selectedSkillIds", "skills"})
      List<Long> skillIds;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 
      @JsonAlias("yearOfExperience")

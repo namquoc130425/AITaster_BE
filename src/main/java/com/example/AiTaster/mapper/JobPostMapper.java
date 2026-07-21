@@ -48,10 +48,7 @@ public interface JobPostMapper {
     @Mapping(target = "clientName", source = "clientProfile.user.fullName")
     @Mapping(target = "clientEmail", source = "clientProfile.user.email")
     @Mapping(target = "skills",source = "skills")
-<<<<<<< HEAD
-=======
     @Mapping(target = "applicationCount", ignore = true)
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     JobPostResponse toResponse(JobPost jobPost);
 

@@ -126,11 +126,7 @@ public class ClientProfileService implements IClientProfile {
     public ClientProfile getCurrentClientProfile() {
         User currentUser = currentUserService.getCurrentUser();
         return clientProfileRepo.findByUser(currentUser)
-<<<<<<< HEAD
-                .orElseThrow(() -> new GlobalException("Client Profile Not Found"));
-=======
                 .orElseThrow(() -> new GlobalException(403, "Only client can access this resource"));
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
     private void checkClientOwner(ClientProfile profile, ClientProfile currentClientProfile) {

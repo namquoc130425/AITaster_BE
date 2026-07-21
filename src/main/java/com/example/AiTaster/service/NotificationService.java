@@ -556,8 +556,6 @@ public class NotificationService implements INotificationService {
         );
     }
 
-<<<<<<< HEAD
-=======
     @Override
     public void notifyAdminAiServiceCreated(ExpertService expertService) {
         if (expertService == null) {
@@ -683,7 +681,6 @@ public class NotificationService implements INotificationService {
                 .getUser();
     }
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     private Notification getNotification(
             Long notificationId
     ) {

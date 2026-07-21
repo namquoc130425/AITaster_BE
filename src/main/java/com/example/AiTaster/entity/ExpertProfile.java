@@ -60,12 +60,9 @@ public class ExpertProfile {
     @UpdateTimestamp
     LocalDateTime updateAt;
 
-<<<<<<< HEAD
-=======
     @OneToOne(mappedBy = "expertProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     ExpertVerification verification;
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     @PrePersist
     public void prePersist(){

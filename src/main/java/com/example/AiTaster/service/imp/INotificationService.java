@@ -2,14 +2,7 @@ package com.example.AiTaster.service.imp;
 
 import com.example.AiTaster.dto.response.NotificationResponse;
 import com.example.AiTaster.dto.response.UnreadNotificationCountResponse;
-<<<<<<< HEAD
-import com.example.AiTaster.entity.ExpertApplication;
-import com.example.AiTaster.entity.Invitation;
-import com.example.AiTaster.entity.Report;
-import com.example.AiTaster.entity.User;
-=======
 import com.example.AiTaster.entity.*;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 import java.util.List;
 
@@ -58,8 +51,6 @@ public interface INotificationService {
     void notifyReporterReportResolved(Report report);
 
     void notifyReporterReportRejected(Report report);
-<<<<<<< HEAD
-=======
 
     void notifyAdminAiServiceCreated(ExpertService expertService);
 

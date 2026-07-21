@@ -7,10 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-<<<<<<< HEAD
-=======
 import java.time.LocalDateTime;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import java.util.List;
 import java.util.Optional;
 
@@ -36,8 +33,6 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
 
     List<User> findByFullNameContainingIgnoreCase(String keyword);
 
-<<<<<<< HEAD
-=======
     long countByRole(Role role);
 
     long countByUserStatus(UserStatus userStatus);
@@ -53,5 +48,4 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
             LocalDateTime createAt
     );
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

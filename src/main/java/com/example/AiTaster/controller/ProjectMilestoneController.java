@@ -5,20 +5,14 @@ import com.example.AiTaster.dto.response.ProjectMilestoneResponse;
 import com.example.AiTaster.service.ProjectMilestoneService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
-<<<<<<< HEAD
-=======
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-<<<<<<< HEAD
-=======
 import java.nio.charset.StandardCharsets;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import java.util.List;
 @RestController
 @RequestMapping("/api/projects")
@@ -65,8 +59,6 @@ public class ProjectMilestoneController {
         return ResponseEntity.ok(APIResponse.response(200, "Get deliverables successfully",
                 projectMilestoneService.findDeliverables(projectId)));
     }
-<<<<<<< HEAD
-=======
 
     @GetMapping("/{projectId}/deliverables/files/{serviceFileId}/download")
     public ResponseEntity<Resource> downloadDeliverableFile(
@@ -88,5 +80,4 @@ public class ProjectMilestoneController {
                 )
                 .body(download.resource());
     }
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }

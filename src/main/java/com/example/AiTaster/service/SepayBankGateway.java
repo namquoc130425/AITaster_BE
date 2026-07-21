@@ -22,12 +22,6 @@ import java.util.Map;
 public class SepayBankGateway {
     private final ObjectMapper objectMapper;
 
-<<<<<<< HEAD
-    @Value("${app.sepay.bank-account-verify-url:}")
-    private String bankAccountVerifyUrl;
-
-=======
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     @Value("${app.sepay.payout-url:}")
     private String payoutUrl;
 
@@ -36,44 +30,6 @@ public class SepayBankGateway {
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
-<<<<<<< HEAD
-    public SepayBankAccountVerification verifyBankAccount(
-            String bankCode,
-            String accountNumber,
-            String accountHolderName
-    ) {
-        if (isBlank(bankAccountVerifyUrl) || isBlank(apiKey)) {
-            return SepayBankAccountVerification.builder()
-                    .valid(true)
-                    .accountHolderName(accountHolderName)
-                    .providerName("SEPAY_LOCAL_SANDBOX")
-                    .rawResponse("SePay bank verify endpoint is not configured")
-                    .build();
-        }
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("bankCode", bankCode);
-        payload.put("accountNumber", accountNumber);
-        payload.put("accountHolderName", accountHolderName);
-
-        JsonNode response = postJson(bankAccountVerifyUrl, payload);
-
-        return SepayBankAccountVerification.builder()
-                .valid(isSuccessfulResponse(response))
-                .accountHolderName(firstText(
-                        response,
-                        "accountHolderName",
-                        "accountName",
-                        "account_name",
-                        "beneficiaryName"
-                ))
-                .providerName("SEPAY")
-                .rawResponse(response.toString())
-                .build();
-    }
-
-=======
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     public SepayPayoutResult createPayout(
             String bankCode,
             String accountNumber,
@@ -194,18 +150,6 @@ public class SepayBankGateway {
 
     @Data
     @Builder
-<<<<<<< HEAD
-    public static class SepayBankAccountVerification {
-        boolean valid;
-        String accountHolderName;
-        String providerName;
-        String rawResponse;
-    }
-
-    @Data
-    @Builder
-=======
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     public static class SepayPayoutResult {
         String providerName;
         String providerTransactionCode;

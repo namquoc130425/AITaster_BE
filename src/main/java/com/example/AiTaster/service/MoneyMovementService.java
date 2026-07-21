@@ -135,17 +135,10 @@ public class MoneyMovementService {
             throw new GlobalException(400, "Payment transaction is not pending");
         }
 
-<<<<<<< HEAD
-        transaction.setSenderId(fromId);
-        transaction.setReceiverId(toId);
-        transaction.setSourceWalletId(sourceWalletId);
-        transaction.setTargetWalletId(targetWalletId);
-=======
         transaction.setSenderId(fromId != null ? fromId : transaction.getSenderId());
         transaction.setReceiverId(toId != null ? toId : transaction.getReceiverId());
         transaction.setSourceWalletId(sourceWalletId != null ? sourceWalletId : transaction.getSourceWalletId());
         transaction.setTargetWalletId(targetWalletId != null ? targetWalletId : transaction.getTargetWalletId());
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         transaction.setProjectEscrowId(resolveProjectEscrowId(transactionType, fromId, toId));
         transaction.setTransactionType(transactionType);
         transaction.setReferenceId(referenceId);

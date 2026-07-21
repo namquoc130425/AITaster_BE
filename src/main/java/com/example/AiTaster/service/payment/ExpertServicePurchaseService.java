@@ -34,8 +34,6 @@ public class ExpertServicePurchaseService {
     private final SepayGateway sepayGateway;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final PaymentTransactionMapper paymentTransactionMapper;
-<<<<<<< HEAD
-=======
     private final InvoiceService invoiceService;
     private final ExpertServicePurchaseEventService purchaseEventService;
     private final InvoiceEmailService invoiceEmailService;
@@ -61,16 +59,9 @@ public class ExpertServicePurchaseService {
 
         BigDecimal amount = expertService.getServiceFee();
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
-<<<<<<< HEAD
-
-        // Chuyển tiền nội bộ: ví client -> ví expert.
-        // MoneyMovementService tự throw lỗi nếu ví client không đủ tiền.
-        return moneyMovementService.moneyTransactionManagement(
-=======
         // Chuyển tiền nội bộ: ví client -> ví expert.
         // MoneyMovementService tự throw lỗi nếu ví client không đủ tiền
         PaymentTransaction paymentTransaction = moneyMovementService.moneyTransactionManagement(
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 clientUserId,
                 expertUserId,
                 TransactionType.EXPERT_SERVICE_PURCHASE,
@@ -82,8 +73,6 @@ public class ExpertServicePurchaseService {
                 null
 
         );
-<<<<<<< HEAD
-=======
          // tạo hóa đơn khi transaction thành công
         // Tạo invoice AIService và gửi email invoice sau commit.
         Invoices invoice = invoiceService.createForPaidAiService(paymentTransaction.getPaymentTransactionId());
@@ -99,7 +88,6 @@ public class ExpertServicePurchaseService {
         );
 
         return paymentTransaction;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
     // Tạo giao dịch SePay PENDING để client thanh toán AIService bên ngoài ví nội bộ.

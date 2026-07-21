@@ -26,14 +26,11 @@ public interface MessageRepo
             Conversation conversation
     );
 
-<<<<<<< HEAD
-=======
     long countByConversationAndReceiverAndIsReadFalse(
             Conversation conversation,
             User receiver
     );
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     @Modifying(
             flushAutomatically = true,
             clearAutomatically = true
@@ -52,8 +49,4 @@ public interface MessageRepo
             @Param("receiver")
             User receiver
     );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384

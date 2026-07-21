@@ -56,8 +56,6 @@ public enum ErrorCode {
     CANNOT_UPDATE_REPORT("Only pending report can be updated", HttpStatus.BAD_REQUEST),
     CANNOT_REPORT_YOURSELF("You cannot report yourself", HttpStatus.BAD_REQUEST),
     EVIDENCE_FILE_INVALID("Evidence file invalid", HttpStatus.BAD_REQUEST),
-<<<<<<< HEAD
-=======
 
     AI_SERVICE_NOT_FOUND("AI service not found", HttpStatus.NOT_FOUND),
     AI_SERVICE_ALREADY_DELETED("AI service already deleted", HttpStatus.BAD_REQUEST),
@@ -82,7 +80,6 @@ public enum ErrorCode {
     SUPABASE_EMAIL_REQUIRED("Supabase email is required", HttpStatus.BAD_REQUEST),
     SUPABASE_ACCOUNT_NOT_REGISTERED("Supabase account is not registered in AiTaster", HttpStatus.NOT_FOUND),
     SUPABASE_ACCOUNT_ALREADY_LINKED("This Supabase account is already linked to another user", HttpStatus.CONFLICT),
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED);

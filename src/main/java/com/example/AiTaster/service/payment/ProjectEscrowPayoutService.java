@@ -8,7 +8,6 @@ import com.example.AiTaster.service.InvoiceEmailService;
 import com.example.AiTaster.service.InvoiceService;
 import com.example.AiTaster.service.MoneyMovementService;
 import com.example.AiTaster.service.NotificationService;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.example.AiTaster.service.RealtimeService;
 import lombok.RequiredArgsConstructor;
 
@@ -19,11 +18,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-<<<<<<< HEAD
-=======
 import java.text.NumberFormat;
 import java.util.Locale;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 
 @Service
@@ -33,9 +29,6 @@ public class ProjectEscrowPayoutService {
     private final MoneyMovementService moneyMovementService;
     private final ProjectRepo projectRepo;
     private final RealtimeService realtimeService;
-<<<<<<< HEAD
-
-=======
     private final NotificationService notificationService;
     private final InvoiceService invoiceService;
     private final InvoiceEmailService invoiceEmailService;
@@ -87,10 +80,6 @@ public class ProjectEscrowPayoutService {
         project.setIsActive(false);
 
         projectRepo.save(project);
-<<<<<<< HEAD
-
-        ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
-=======
         //tạo hóa đơn
         ProjectEscrow savedEscrow = projectEscrowRepo.save(escrow);
         // Tạo invoice hoàn thành project và gửi email invoice cho client/expert sau commit.
@@ -100,19 +89,13 @@ public class ProjectEscrowPayoutService {
                 expertUser,
                 "PROJECT_ESCROW_RELEASED",
                 null,
-<<<<<<< HEAD
-                "Project escrow released"
-=======
                 "Project escrow released: " + formatMoney(expertAmount)
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         );
         realtimeService.pushProjectParticipants(
                 project,
                 "PROJECT_COMPLETED",
                 "Project completed"
         );
-<<<<<<< HEAD
-=======
         notificationService.notify(
                 expertUser,
                 NotificationType.ESCROW,
@@ -121,7 +104,6 @@ public class ProjectEscrowPayoutService {
                 "Project payment received",
                 "You received " + formatMoney(expertAmount) + " for project: " + project.getTitle()
         );
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
         return savedEscrow;
     }

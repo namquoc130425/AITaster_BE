@@ -37,32 +37,20 @@ public class PendingPaymentService {
     ) {
         validatePendingAmount(amount);
 
-<<<<<<< HEAD
-        return paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
-=======
         return paymentTransactionRepo.findPendingTransactionByReferenceAndMethod( // tìm payment Pendding cũ : có 1 số thông tin v..v
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 referenceType,
                 referenceId,
                 transactionType,
                 senderId,
                 PaymentStatus.PENDING,
                 PaymentMethod.SEPAY
-<<<<<<< HEAD
-        ).map(existingPayment -> {
-=======
         ).map(existingPayment -> {     // nếu tìm thấy kiểm tra payment pendding đó còn hạn hay không / không set status lưu lại
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
             if (existingPayment.getExpiredAt() != null
                     && existingPayment.getExpiredAt().isBefore(LocalDateTime.now())) {
                 existingPayment.setPaymentStatus(PaymentStatus.EXPIRED);
                 paymentTransactionRepo.save(existingPayment);
 
-<<<<<<< HEAD
-                return createNewPendingPayment(
-=======
                 return createNewPendingPayment( //Link thanh toán cũ hết hạn rồi, không dùng lại nữa. sau đó tạo payment transaction mới
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                         senderId,
                         receiverId,
                         sourceWalletId,
@@ -78,15 +66,9 @@ public class PendingPaymentService {
                 );
             }
 
-<<<<<<< HEAD
-            if (existingPayment.getGrossAmount().compareTo(amount) == 0) {
-                return existingPayment;
-            }
-=======
             if (existingPayment.getGrossAmount().compareTo(amount) == 0) { // th2 : payment cũng còn hạn và cùng giá tiền -> trả payment cũ
                 return existingPayment;
             }                                                              //th3 : payment còn hạn nhưng khác giá tiền -> set status cũ là EXPIRED và tạo   payment mới
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
             existingPayment.setPaymentStatus(PaymentStatus.EXPIRED);
             paymentTransactionRepo.save(existingPayment);
@@ -105,11 +87,7 @@ public class PendingPaymentService {
                     description,
                     expiredAt
             );
-<<<<<<< HEAD
-        }).orElseGet(() -> createNewPendingPayment(
-=======
         }).orElseGet(() -> createNewPendingPayment( // Không có payment PENDING nào phù hợp => tạo payment mới
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 senderId,
                 receiverId,
                 sourceWalletId,

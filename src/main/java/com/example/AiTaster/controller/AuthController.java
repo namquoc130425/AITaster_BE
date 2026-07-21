@@ -3,15 +3,7 @@ package com.example.AiTaster.controller;
 import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.dto.UserResponse;
-<<<<<<< HEAD
-import com.example.AiTaster.dto.request.AdminRegisterRequest;
-import com.example.AiTaster.dto.request.ClientRegisterRequest;
-import com.example.AiTaster.dto.request.ExpertRegisterRequest;
-import com.example.AiTaster.dto.request.LoginRequest;
-import com.example.AiTaster.dto.request.TokenRequest;
-=======
 import com.example.AiTaster.dto.request.*;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
 import com.example.AiTaster.dto.response.*;
 import com.example.AiTaster.exception.GlobalException;
@@ -50,8 +42,6 @@ public class AuthController {
                 (APIResponse.response(201,"Register Expert sucessfully",response)
                 );
     }
-<<<<<<< HEAD
-=======
 
     @PostMapping("/register/client/supabase/google")
     public ResponseEntity<APIResponse<AuthenticationResponse>> registerClientWithSupabaseGoogle(
@@ -84,7 +74,6 @@ public class AuthController {
                 )
         );
     }
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     // API đăng nhập.
     @PostMapping("login")
     public ResponseEntity<APIResponse<AuthenticationResponse>> login (@RequestBody @Valid LoginRequest request) {
@@ -94,8 +83,6 @@ public class AuthController {
                 );
     }
 
-<<<<<<< HEAD
-=======
     @PostMapping("/login/supabase/google")
     public ResponseEntity<APIResponse<AuthenticationResponse>> loginWithSupabaseGoogle(
             @RequestBody @Valid GoogleLoginRequest request
@@ -112,7 +99,6 @@ public class AuthController {
         );
     }
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     @PostMapping("/refresh")
     @Operation(summary = "refresh token")
     public ResponseEntity<APIResponse<AuthResponse>> refresh(@RequestBody @Valid TokenRequest request){

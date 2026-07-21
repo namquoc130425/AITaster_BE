@@ -10,7 +10,6 @@ import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.service.InvoiceEmailService;
 import com.example.AiTaster.service.InvoiceService;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 import com.example.AiTaster.service.MoneyMovementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,8 +25,6 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
     private final ExpertServiceRepo expertServiceRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final MoneyMovementService moneyMovementService;
-<<<<<<< HEAD
-=======
     private final InvoiceService invoiceService;
     private final ExpertServicePurchaseEventService purchaseEventService;
     private final InvoiceEmailService invoiceEmailService;
@@ -56,12 +53,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
 
         BigDecimal amount = payment.getGrossAmount();
 
-<<<<<<< HEAD
-        // calculateFee() tự tạo transaction PLATFORM_FEE cho admin
-        // và trả về số tiền net expert nhận.
-=======
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         BigDecimal balanceAmount = moneyMovementService.calculateFee(amount);
 
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
@@ -70,11 +62,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
         // Số tiền cần trừ ví = 0.
         // Số tiền nhận = số tiền net expert nhận sau phí sàn.
         PaymentTransaction successTransaction = moneyMovementService.moneyTransactionManagement(
-<<<<<<< HEAD
-                null,
-=======
                 payment.getSenderId(),          // sepay thu tiền ben ngoài hệ thống , nên deductibleAmount = 0, và Van truyen senderId de giu lai client mua service,
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
                 expertUserId,
                 TransactionType.EXPERT_SERVICE_PURCHASE,
                 expertService.getServiceId(),
@@ -85,10 +73,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
                 payment.getPaymentTransactionId()
         );
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
         successTransaction.setProviderTransactionCode(providerTransactionCode);
         successTransaction.setProviderContent(providerContent);
         successTransaction.setPaidAt(paidAt);
@@ -106,7 +91,6 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
                 successTransaction.getTargetWalletId(),
                 balanceAmount
         );
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
     }
 
 

@@ -1,8 +1,6 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.ErrorCode;
-<<<<<<< HEAD
-=======
 import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.constant.ReferenceType;
@@ -48,10 +46,7 @@ public class MessageService implements IMessageService {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final RealtimeService realtimeService;
-<<<<<<< HEAD
-=======
     private final NotificationService notificationService;
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
     /*
      * Gửi tin nhắn bằng REST.
@@ -199,8 +194,6 @@ public class MessageService implements IMessageService {
                 "Message sent"
         );
         realtimeService.pushUserMessage(receiver, response);
-<<<<<<< HEAD
-=======
         notificationService.notify(
                 receiver,
                 NotificationType.SYSTEM,
@@ -209,7 +202,6 @@ public class MessageService implements IMessageService {
                 "New message",
                 buildMessageNotificationContent(sender, response.getContent())
         );
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 
         return response;
     }
@@ -479,8 +471,6 @@ public class MessageService implements IMessageService {
                 ErrorCode.NOT_CONVERSATION_MEMBER
         );
     }
-<<<<<<< HEAD
-=======
 
     private void ensureConversationCanReceiveMessage(Conversation conversation) {
         Long projectId = conversation.getProjectId();
@@ -529,5 +519,4 @@ public class MessageService implements IMessageService {
 
         return "User";
     }
->>>>>>> 4ceb432e65237a7ca034898d24e678aac4935384
 }
