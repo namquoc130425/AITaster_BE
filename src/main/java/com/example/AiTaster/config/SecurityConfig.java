@@ -1,12 +1,16 @@
 package com.example.AiTaster.config;
 
 import com.example.AiTaster.Security.Filter;
+import com.example.AiTaster.dto.response.APIResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,6 +26,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Configuration
@@ -34,6 +41,7 @@ public class SecurityConfig {
     SecurityProperties securityProperties;
 
     Filter filter;
+    ObjectMapper objectMapper;
     private static final String[] SWAGGER = {
             "/swagger-ui.html",
             "/swagger-ui/**",
@@ -71,6 +79,14 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) ->
+                                writeJsonError(response, HttpStatus.UNAUTHORIZED, "You need to log in to perform this action")
+                        )
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                writeJsonError(response, HttpStatus.FORBIDDEN, "You do not have permission to perform this action")
+                        )
+                )
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)   // chạy trước kiểm tra token , lấy user , set vào Authentication vào SecurityContext
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER).permitAll()
@@ -92,5 +108,20 @@ public class SecurityConfig {
 
 
         return http.build();
+    }
+
+    private void writeJsonError(
+            HttpServletResponse response,
+            HttpStatus status,
+            String message
+    ) throws IOException {
+        response.setStatus(status.value());
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().write(
+                objectMapper.writeValueAsString(
+                        APIResponse.response(status.value(), message, null)
+                )
+        );
     }
 }

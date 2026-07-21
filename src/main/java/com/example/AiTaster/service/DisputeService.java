@@ -423,8 +423,12 @@ public class DisputeService implements IDisputeService {
 
     private void checkAdmin() {
         User user = currentUserService.getCurrentUser();
-        if (user.getRole() != Role.ADMIN) {
-            throw new GlobalException(403, "Only admin can use this API");
+        if (!Role.ADMIN.equals(user.getRole())) {
+            throw new GlobalException(
+                    403,
+                    "Only admin can use this API. Current role: "
+                            + (user.getRole() == null ? "UNKNOWN" : user.getRole().name())
+            );
         }
     }
 
