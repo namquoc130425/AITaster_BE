@@ -17,6 +17,7 @@ public class ProjectEscrowBalanceService {
     public ProjectEscrow depositByEscrowId(Long escrowId, BigDecimal amount) {
         validateAmount(amount);
 
+        //giống như nạp và rút của ví riêng thì khi xử lý giao dịch sẽ khóa lại . không cho 2 request xữ lý đồng thời
         ProjectEscrow escrow = projectEscrowRepo.findByProjectEscrowIdForUpdate(escrowId)
                 .orElseThrow(() -> new GlobalException(404, "Project escrow not found: " + escrowId));
 
@@ -33,7 +34,7 @@ public class ProjectEscrowBalanceService {
 
     public ProjectEscrow withdrawByEscrowId(Long escrowId, BigDecimal amount) {
         validateAmount(amount);
-
+     // không cho 2 request xữ lý đồng thời 
         ProjectEscrow escrow = projectEscrowRepo.findByProjectEscrowIdForUpdate(escrowId)
                 .orElseThrow(() -> new GlobalException(404, "Project escrow not found: " + escrowId));
 

@@ -2,8 +2,10 @@ package com.example.AiTaster.service.scheduler;
 
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.entity.Invitation;
+import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.repository.InvitationRepo;
+import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import java.util.List;
 public class InvitationPaymentExpirationScheduler {
     private final InvitationRepo invitationRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
+    private final JobPostRepo jobPostRepo;
 
     @Transactional // Một lần job chạy nằm trong một transaction.
     @Scheduled(fixedDelayString = "${app.jobs.invitation-expiration.fixed-delay-ms:60000}") // 60s sẽ chạy 1 lần
@@ -57,9 +60,10 @@ public class InvitationPaymentExpirationScheduler {
             return; // Không có invitation nào quá hạn thanh toán.
         }
 
-        invitations.forEach(invitation ->
-                invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED)
-        );
+        invitations.forEach(invitation -> {
+            invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
+            reopenJobPostIfClosedByThisInvitation(invitation);
+        });
 
         invitationRepo.saveAll(invitations); // Lưu status PAYMENT_EXPIRED.
         expirePendingSepayPayments(invitations); // Payment liên quan cũng phải chuyển EXPIRED.
@@ -68,7 +72,16 @@ public class InvitationPaymentExpirationScheduler {
 
     }
 
+    // Mở lại JobPost nếu nó đang bị CLOSED chính vì invitation này (tránh JobPost kẹt vĩnh viễn khi Client lỡ hạn thanh toán)
+    private void reopenJobPostIfClosedByThisInvitation(Invitation invitation) {
+        JobPost jobPost = invitation.getExpertApplication().getJobpost();
+        boolean closedByThisInvitation = JobpostStatus.CLOSED.equals(jobPost.getJobPostStatus())
+                && invitation.getInvitationId().equals(jobPost.getClosedByInvitationId());
 
+        if (closedByThisInvitation) {
+            jobPostRepo.reopenJobPost(jobPost.getJobPostId(), JobpostStatus.OPEN);
+        }
+    }
 
     //tìm những transaction có lời mời hết hạn thì đổi sang status Expired
     private void expirePendingSepayPayments(List<Invitation>  invitations) {

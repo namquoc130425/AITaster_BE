@@ -46,6 +46,9 @@ public class JobPost {
     @Column(nullable = false, length = 30)
     JobpostStatus jobPostStatus;
 
+    @Column(name = "closed_by_invitation_id")
+    Long closedByInvitationId; // invitation nào khiến JobPost này bị CLOSED, null nếu chưa từng bị đóng do invitation
+
     @CreationTimestamp
     @Column(nullable = false)
     LocalDateTime createAt;

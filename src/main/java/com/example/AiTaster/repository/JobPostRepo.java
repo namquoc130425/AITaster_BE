@@ -38,13 +38,27 @@ public interface JobPostRepo extends JpaRepository<JobPost, Long>, JpaSpecificat
            @Param("reservedStatuses") Collection<InvitationStatus> reservedStatuses
    );
 
+   // Đóng JobPost và ghi nhận invitation nào gây ra việc đóng (dùng để có thể mở lại đúng job khi invitation đó hết hạn thanh toán)
    @Modifying(flushAutomatically = true)
    @Query("""
            UPDATE JobPost j
-           SET j.jobPostStatus = :status
+           SET j.jobPostStatus = :status, j.closedByInvitationId = :invitationId
            WHERE j.jobPostId = :jobPostId
            """)
-   int updateJobPostStatus(
+   int closeJobPostByInvitation(
+           @Param("jobPostId") Long jobPostId,
+           @Param("status") JobpostStatus status,
+           @Param("invitationId") Long invitationId
+   );
+
+   // Mở lại JobPost và xóa dấu vết invitation cũ
+   @Modifying(flushAutomatically = true)
+   @Query("""
+           UPDATE JobPost j
+           SET j.jobPostStatus = :status, j.closedByInvitationId = NULL
+           WHERE j.jobPostId = :jobPostId
+           """)
+   int reopenJobPost(
            @Param("jobPostId") Long jobPostId,
            @Param("status") JobpostStatus status
    );
@@ -52,7 +66,12 @@ public interface JobPostRepo extends JpaRepository<JobPost, Long>, JpaSpecificat
    @Modifying(flushAutomatically = true)
    @Query("""
            UPDATE JobPost j
-           SET j.jobPostStatus = :closedStatus
+           SET j.jobPostStatus = :closedStatus,
+               j.closedByInvitationId = (
+                   SELECT i.invitationId FROM Invitation i
+                   JOIN i.expertApplication a
+                   WHERE a.jobpost = j AND i.invitationStatus = :acceptedStatus
+               )
            WHERE j.clientProfile = :clientProfile
              AND j.jobPostStatus = :openStatus
              AND j.jobPostId IN (

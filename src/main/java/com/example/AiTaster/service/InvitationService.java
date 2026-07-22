@@ -39,6 +39,7 @@ public class InvitationService implements Iinvitation {
     private final RealtimeService realtimeService;
     private final ProjectRepo projectRepo;
     private final ExpertVerificationGuardService expertVerificationGuardService;
+    private final InvitationTimePolicy invitationTimePolicy;
 
 
   // đẩy dữ liệu lên form cho client xem
@@ -73,7 +74,7 @@ public class InvitationService implements Iinvitation {
 
         Invitation invitation = invitationMapper.toEntity(request,expertApplication);
         invitation.setInvitationStatus(InvitationStatus.PENDING);
-        invitation.setExpiresAt(LocalDateTime.now().plusHours(24));
+        invitation.setExpiresAt(invitationTimePolicy.responseDeadline(LocalDateTime.now()));
         invitation.setClientAcceptedTerms(request.getClientAcceptedTerms());
         invitation.setExpertAcceptedTerms(false);
         invitation.setRespondedAt(null);
@@ -153,7 +154,7 @@ public class InvitationService implements Iinvitation {
         jobPost.setJobPostStatus(JobpostStatus.CLOSED);
 
         Invitation saveInvitation = invitationRepo.saveAndFlush(invitation);
-        jobPostRepo.updateJobPostStatus(jobPost.getJobPostId(), JobpostStatus.CLOSED);
+        jobPostRepo.closeJobPostByInvitation(jobPost.getJobPostId(), JobpostStatus.CLOSED, invitation.getInvitationId());
 
         notificationService.notifyInvitationAccepted(saveInvitation);
         realtimeService.pushInvitationParticipants(
@@ -358,6 +359,7 @@ public class InvitationService implements Iinvitation {
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
     }
 
+    // kiem tra và thay đổi trạng thái cho 2 trường hợp . Expert không phản hồi và client không thanh toán đúng hạn
     private void refreshInvitationTimeoutStatus(Invitation invitation) {
         LocalDateTime now = LocalDateTime.now();
         if (InvitationStatus.PENDING.equals(invitation.getInvitationStatus())
@@ -369,7 +371,7 @@ public class InvitationService implements Iinvitation {
         }
         if (InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())
                 && invitation.getRespondedAt() != null
-                && invitation.getRespondedAt().plusHours(24).isBefore(now)
+                && invitationTimePolicy.isPaymentExpired(invitation, now)    // kiểm tra hết hạn thanh toán chưa
                 && !projectRepo.existsByInvitation(invitation)) {
             invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED); // Client không thanh toán đúng hạn.
             invitationRepo.save(invitation); // Lưu status mới vào DB.

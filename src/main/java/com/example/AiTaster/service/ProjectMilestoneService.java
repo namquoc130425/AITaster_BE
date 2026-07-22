@@ -11,6 +11,7 @@ import com.example.AiTaster.mapper.ProjectMilestoneMapper;
 import com.example.AiTaster.repository.*;
 import com.example.AiTaster.service.payment.ProjectEscrowPayoutService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,7 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProjectMilestoneService {
@@ -251,6 +252,38 @@ public class ProjectMilestoneService {
         // tinh phi admin, cong tien expert, tao transaction, va update project/escrow.
         projectEscrowPayoutService.releaseToExpert(project);
 
+    }
+    // Được gọi bởi MilestoneAutoReleaseScheduler khi Client quá hạn xác nhận mốc cuối.
+    // Tái dùng nguyên logic finalConfirm() để không lặp lại code tính phí/cộng ví/tạo transaction.
+    @Transactional
+    public void autoReleaseOverdueFinalMilestone(Long milestoneId) {
+        ProjectMilestone milestone = projectMilestoneRepo.findById(milestoneId).orElse(null);
+        if (milestone == null
+                || milestone.getCurrentStep() != MilestoneStep.FINAL_CONFIRMATION
+                || milestone.getFinalApprovedAt() != null) {
+            // Dữ liệu đã đổi khác từ lúc scheduler query tới lúc xử lý
+            // (Client vừa approve, hoặc milestone đã lùi về SOURCE_CODE do reject) -> bỏ qua an toàn.
+            return;
+        }
+
+        Project project = projectRepo.findWithDetailByProjectId(milestone.getProjectId()).orElse(null);
+        if (project == null || project.getProjectStatus() != ProjectStatus.ACTIVE) {
+            // ACTIVE là điều kiện finalConfirm() cũng check - project DISPUTED/CANCELED/COMPLETED thì bỏ qua,
+            // không auto-release. Đây chính là nơi Dispute (nếu Client đã mở) chặn được auto-release.
+            return;
+        }
+
+        finalConfirm(project, milestone);
+
+        publishMilestoneEvent(
+                project,
+                milestone,
+                "AUTO_RELEASED",
+                "Hệ thống tự động giải ngân do quá hạn xác nhận mốc cuối",
+                getClientUserId(project)
+        );
+
+        log.info("Auto-released escrow for project {} due to client confirmation timeout", project.getProjectId());
     }
 
     // lấy bản Deliverable file mới nhất của mốc đang xữ lý + danh sách file để client xem

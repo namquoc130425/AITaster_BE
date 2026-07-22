@@ -28,7 +28,8 @@ public interface UserWalletRepo extends JpaRepository<UserWallet, Long> {
     Optional<UserWallet> findByUser_UserId(Long userId);
 
     List<UserWallet> findByRequestWithdrawalTrueOrderByUpdateAtDesc();
-
+  // Khi transaction A đọc dòng ví bằng findByUserIdForUpdate, dòng đó bị khóa ở DB cho tới khi transaction A commit hoặc rollback.
+    // thì transaction B mới được xử lý tiếp 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
     SELECT w
