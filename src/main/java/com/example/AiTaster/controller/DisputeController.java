@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +45,6 @@ public class DisputeController {
     }
 
     @PostMapping("/admin/filter")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<PageResponse<DisputeResponse>>> filterAdmin(
             @RequestBody(required = false) DisputeFilterRequest request
     ) {
@@ -74,7 +72,6 @@ public class DisputeController {
             value = "/admin/{disputeId}/resolve",
             method = {RequestMethod.PATCH, RequestMethod.POST}
     )
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<DisputeResponse>> resolve(
             @PathVariable Long disputeId,
             @RequestBody @Valid ResolveDisputeRequest request

@@ -19,6 +19,7 @@ public class DatabaseSchemaInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         normalizeExpertServiceStatusColumn();
+        normalizeInvoiceTypeColumn();
     }
 
     private void normalizeExpertServiceStatusColumn() {
@@ -42,5 +43,30 @@ public class DatabaseSchemaInitializer implements CommandLineRunner {
                 "ALTER TABLE expert_service MODIFY COLUMN service_status VARCHAR(30) NOT NULL"
         );
         log.info("Normalized expert_service.service_status column");
+    }
+
+    private void normalizeInvoiceTypeColumn() {
+        String dataType =
+                jdbcTemplate.query(
+                        """
+                                SELECT data_type
+                                FROM information_schema.columns
+                                WHERE table_schema = DATABASE()
+                                  AND table_name = 'invoices'
+                                  AND column_name = 'invoice_type'
+                                """,
+                        resultSet -> resultSet.next() ? resultSet.getString(1) : null
+                );
+
+        if (dataType == null
+                || dataType.equalsIgnoreCase("varchar")
+                || dataType.equalsIgnoreCase("character varying")) {
+            return;
+        }
+
+        jdbcTemplate.execute(
+                "ALTER TABLE invoices MODIFY COLUMN invoice_type VARCHAR(50) NOT NULL"
+        );
+        log.info("Normalized invoices.invoice_type column");
     }
 }

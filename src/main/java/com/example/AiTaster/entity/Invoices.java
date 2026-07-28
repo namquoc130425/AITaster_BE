@@ -39,7 +39,7 @@ public class Invoices {
     private Long expertId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "invoice_type", nullable = false)
+    @Column(name = "invoice_type", nullable = false, length = 50, columnDefinition = "varchar(50)")
     private InvoiceType invoiceType;
 
     @Enumerated(EnumType.STRING)

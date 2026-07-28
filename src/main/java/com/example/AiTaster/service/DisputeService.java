@@ -317,7 +317,7 @@ public class DisputeService implements IDisputeService {
                     project.getProjectId(),
                     invoicePaymentId,
                     refund,
-                    resolvedExpertAmount,
+                    release,
                     resolvedExpertAmount,
                     resolvedPlatformFee,
                     request.getDecision()
