@@ -82,7 +82,8 @@ public enum ErrorCode {
     SUPABASE_ACCOUNT_ALREADY_LINKED("This Supabase account is already linked to another user", HttpStatus.CONFLICT),
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
-    ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED);
+    ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED),
+    INVALID_JOB_POST_INPUT("Promt Không Hợp Lệ", HttpStatus.BAD_REQUEST),;
 
 
     final String message;
