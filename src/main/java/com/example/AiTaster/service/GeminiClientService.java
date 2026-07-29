@@ -71,7 +71,7 @@ public class GeminiClientService {
             Nếu người dùng chưa nhập budgets hoặc budgets là "chưa xác định", phải đề xuất một ngân sách hợp lý bằng VND
             dựa trên title, phạm vi yêu cầu và candidate skills. Không trả 0, không trả null, không trả text.
             Với yêu cầu mơ hồ/nhỏ, đề xuất trong khoảng 3.000.000 đến 10.000.000 VND.
-            Với yêu cầu trung bình, đề xuất trong khoảng 10.000.000 đến 0.000.000 VND.
+            Với yêu cầu trung bình, đề xuất trong khoảng 10.000.000 đến 30.000.000 VND.
             Với yêu cầu phức tạp, đề xuất từ 30.000.000 VND trở lên.
         17. Trường timeLine PHẢI trả về đúng một trong các format sau:
         - "1 ngày" đến "7 ngày"
