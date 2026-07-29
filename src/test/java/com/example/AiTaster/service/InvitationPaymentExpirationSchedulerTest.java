@@ -1,13 +1,17 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.InvitationStatus;
+import com.example.AiTaster.constant.JobpostStatus;
 import com.example.AiTaster.constant.PaymentMethod;
 import com.example.AiTaster.constant.PaymentReferenceType;
 import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.TransactionType;
+import com.example.AiTaster.entity.ExpertApplication;
 import com.example.AiTaster.entity.Invitation;
+import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.repository.InvitationRepo;
+import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.service.scheduler.InvitationPaymentExpirationScheduler;
 import org.junit.jupiter.api.Test;
@@ -35,6 +39,9 @@ class InvitationPaymentExpirationSchedulerTest {
     @Mock
     private PaymentTransactionRepo paymentTransactionRepo;
 
+    @Mock
+    private JobPostRepo jobPostRepo;
+
     @InjectMocks
     private InvitationPaymentExpirationScheduler scheduler;
 
@@ -46,10 +53,20 @@ class InvitationPaymentExpirationSchedulerTest {
                 .expiresAt(LocalDateTime.now().minusMinutes(1))
                 .respondedAt(null)
                 .build();
+
+        JobPost jobPost = JobPost.builder()
+                .jobPostId(99L)
+                .jobPostStatus(JobpostStatus.CLOSED)
+                .closedByInvitationId(2L)
+                .build();
+        ExpertApplication expertApplication = ExpertApplication.builder()
+                .jobpost(jobPost)
+                .build();
         Invitation acceptedInvitation = Invitation.builder()
                 .invitationId(2L)
                 .invitationStatus(InvitationStatus.ACCEPTED)
                 .respondedAt(LocalDateTime.now().minusHours(25))
+                .expertApplication(expertApplication)
                 .build();
         PaymentTransaction pendingPayment = PaymentTransaction.builder()
                 .paymentStatus(PaymentStatus.PENDING)
@@ -77,6 +94,42 @@ class InvitationPaymentExpirationSchedulerTest {
         verify(invitationRepo).saveAll(List.of(pendingInvitation));
         verify(invitationRepo).saveAll(List.of(acceptedInvitation));
         verify(paymentTransactionRepo).saveAll(List.of(pendingPayment));
+        verify(jobPostRepo).reopenJobPost(99L, JobpostStatus.OPEN);
+    }
+
+    @Test
+    void expireInvitationAndPaymentDeadlines_doesNotReopenJobPostClosedByAnotherInvitation() {
+        JobPost jobPost = JobPost.builder()
+                .jobPostId(100L)
+                .jobPostStatus(JobpostStatus.CLOSED)
+                .closedByInvitationId(777L) // đóng bởi invitation khác, không phải cái đang hết hạn
+                .build();
+        ExpertApplication expertApplication = ExpertApplication.builder()
+                .jobpost(jobPost)
+                .build();
+        Invitation acceptedInvitation = Invitation.builder()
+                .invitationId(3L)
+                .invitationStatus(InvitationStatus.ACCEPTED)
+                .respondedAt(LocalDateTime.now().minusHours(25))
+                .expertApplication(expertApplication)
+                .build();
+
+        when(invitationRepo.findByInvitationStatusAndExpiresAtBefore(eq(InvitationStatus.PENDING), org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
+                .thenReturn(List.of());
+        when(invitationRepo.findAcceptedPaymentExpiredWithoutProject(eq(InvitationStatus.ACCEPTED), org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
+                .thenReturn(List.of(acceptedInvitation));
+        when(paymentTransactionRepo.findByPaymentReferenceTypeAndReferenceIdInAndTransactionTypeAndPaymentStatusAndPaymentMethod(
+                eq(PaymentReferenceType.INVITATION),
+                eq(List.of(3L)),
+                eq(TransactionType.PROJECT_ESCROW_DEPOSIT),
+                eq(PaymentStatus.PENDING),
+                eq(PaymentMethod.SEPAY)
+        )).thenReturn(List.of());
+
+        scheduler.expireInvitationAndPaymentDeadlines();
+
+        assertThat(acceptedInvitation.getInvitationStatus()).isEqualTo(InvitationStatus.PAYMENT_EXPIRED);
+        verify(jobPostRepo, org.mockito.Mockito.never()).reopenJobPost(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

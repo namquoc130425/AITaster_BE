@@ -93,6 +93,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/invoice-email-payment-test.html").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/local-test/invoice-email/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/webhooks/sepay", "/api/webhooks/sepay/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/category", "/api/category/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/skill", "/api/skill/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/expert-profiles/public/**").permitAll()

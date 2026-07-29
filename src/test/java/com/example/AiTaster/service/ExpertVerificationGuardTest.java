@@ -151,7 +151,7 @@ class ExpertVerificationGuardTest {
                 .isInstanceOf(GlobalException.class)
                 .hasMessage("Expert must be verified by admin before using this feature");
 
-        verify(jobPostRepo, never()).updateJobPostStatus(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(jobPostRepo, never()).closeJobPostByInvitation(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     private ExpertProfile unverifiedExpert(User user) {

@@ -254,7 +254,7 @@ public class MoneyMovementService {
             projectEscrowBalanceService.withdrawByEscrowId(fromId, amount);
             return null;
         }
-
+         // lock lại không cho 2 request sử lý cùng lúc . request này xong mowis xu lý request tiếp theo
         UserWallet wallet = userWalletRepo.findByUserIdForUpdate(fromId)
                 .orElseThrow(() -> new GlobalException(404, "Wallet not found for user: " + fromId));
 
@@ -279,7 +279,7 @@ public class MoneyMovementService {
             projectEscrowBalanceService.depositByEscrowId(toId, amount);
             return null;
         }
-
+        // lock lại không cho 2 request sử lý cùng lúc . request này xong mowis xu lý request tiếp theo
         UserWallet wallet = userWalletRepo.findByUserIdForUpdate(toId)
                 .orElseGet(() -> createActiveWalletForUserId(toId));
 

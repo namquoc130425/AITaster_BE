@@ -112,6 +112,8 @@ class JobPostAiServiceTest {
         request.setSelectedSkillIds(List.of(1L));
 
         GeminiJobPostResponse aiResponse = new GeminiJobPostResponse(
+                true,
+                "",
                 "Tao chatbot AI tu van khach hang",
                 "Can chatbot tra loi FAQ va tu van san pham.",
                 "Giam tai cham soc khach hang.",

@@ -52,6 +52,7 @@ public class SepayWebhookService {
 
     @Transactional
     public void handleWebhook(String rawBody, String secretKey) {
+        // so sanh secretkey mà sepay trả về với key có sẵn trong hệ thống 
         verifySecretKey(secretKey);
 
         SepayWebhookRequest request = parseBody(rawBody);
@@ -66,7 +67,7 @@ public class SepayWebhookService {
         if (providerTransactionCode == null) {
             return;
         }
-
+        // kiem tra ProviderTransactionCode đâ có chưa . có thì không xữ lý lại . trống trùng hai lan cộng tiền
         // Bỏ qua webhook trùng đã xử lý trước đó.
         if (paymentTransactionRepo.findByProviderTransactionCode(providerTransactionCode).isPresent()) {
             return;
@@ -81,6 +82,7 @@ public class SepayWebhookService {
         PaymentTransaction paymentTransaction =
                 paymentTransactionRepo.findByPaymentCode(paymentCode).orElse(null);
 
+        // nếu transaction không phải là PENDING mà là SUCCESS/FAILED/EXPIRED sẽ không bao giờ bị xử lý lại
         if (paymentTransaction == null
                 || !PaymentStatus.PENDING.equals(paymentTransaction.getPaymentStatus())) {
             return;
