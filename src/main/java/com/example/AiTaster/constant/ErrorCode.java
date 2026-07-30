@@ -38,6 +38,7 @@ public enum ErrorCode {
     PRICE_INVALID("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
 
     APPLICATION_NOT_FOUND("Application not found", HttpStatus.NOT_FOUND),
+    JOB_POST_NOT_FOUND("Job Post Not Found", HttpStatus.NOT_FOUND),
     CONVERSATION_NOT_FOUND("Conversation not found", HttpStatus.NOT_FOUND),
     CONVERSATION_ALREADY_EXISTS("Conversation already exists for this application", HttpStatus.CONFLICT),
     ONLY_CLIENT_CAN_START_CONVERSATION("Only client can start a conversation", HttpStatus.FORBIDDEN),
