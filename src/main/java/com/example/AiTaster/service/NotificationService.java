@@ -34,6 +34,7 @@ public class NotificationService implements INotificationService {
     private final CurrentUserService currentUserService;
     private final SimpMessagingTemplate messagingTemplate;
     private final ApplicationEventPublisher eventPublisher;
+    private final EmailService emailService;
 
     /*
      * Dùng cho trường hợp cần tạo notification ngay.
@@ -282,6 +283,7 @@ public class NotificationService implements INotificationService {
                 "Có expert mới ứng tuyển",
                 expertName + " đã ứng tuyển vào job post: " + jobTitle
         );
+        emailService.queueExpertApplied(clientUser, expertUser, jobTitle);
     }
 
     /*
@@ -304,6 +306,15 @@ public class NotificationService implements INotificationService {
             return;
         }
 
+        User clientUser = null;
+        if (invitation.getExpertApplication().getJobpost() != null
+                && invitation.getExpertApplication().getJobpost().getClientProfile() != null) {
+            clientUser = invitation.getExpertApplication()
+                    .getJobpost()
+                    .getClientProfile()
+                    .getUser();
+        }
+
         User expertUser =
                 invitation.getExpertApplication()
                         .getExpertProfile()
@@ -323,6 +334,7 @@ public class NotificationService implements INotificationService {
                 "Bạn nhận được lời mời dự án",
                 "Client đã gửi cho bạn lời mời tham gia dự án: " + projectTitle
         );
+        emailService.queueInvitationReceived(clientUser, expertUser, projectTitle);
     }
 
     /*
@@ -373,6 +385,7 @@ public class NotificationService implements INotificationService {
                 "Expert đã chấp nhận lời mời",
                 expertName + " đã chấp nhận lời mời dự án: " + projectTitle
         );
+        emailService.queueInvitationAccepted(clientUser, expertUser, projectTitle);
     }
 
     /*
@@ -470,6 +483,7 @@ public class NotificationService implements INotificationService {
                 title,
                 content
         );
+        emailService.queueProjectStarted(clientUser, expertUser, projectTitle);
     }
 
     /*

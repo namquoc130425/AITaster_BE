@@ -10,6 +10,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,6 +74,15 @@ public static Specification<ExpertService> filter(ExpertServiceFillerRequest req
             // Lọc theo giá tiền <=.
             if(filter.getFeeTo() != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("serviceFee"),filter.getFeeTo()));
+            }
+
+            // minRating null/0 nghĩa là không lọc. Khi lọc theo sao, loại service chưa có đánh giá.
+            if(filter.getMinRating() != null && filter.getMinRating() > 0) {
+                predicates.add(cb.greaterThan(root.<Integer>get("ratingCount"), 0));
+                predicates.add(cb.greaterThanOrEqualTo(
+                        root.<BigDecimal>get("rating"),
+                        BigDecimal.valueOf(filter.getMinRating())
+                ));
             }
 
         }
