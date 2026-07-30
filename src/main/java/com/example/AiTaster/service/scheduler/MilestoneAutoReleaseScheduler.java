@@ -2,10 +2,10 @@ package com.example.AiTaster.service.scheduler;
 
 import com.example.AiTaster.constant.MilestoneStep;
 import com.example.AiTaster.repository.ProjectMilestoneRepo;
+import com.example.AiTaster.service.MilestoneTimePolicy;
 import com.example.AiTaster.service.ProjectMilestoneService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,13 +18,11 @@ import java.util.List;
 public class MilestoneAutoReleaseScheduler {
     private final ProjectMilestoneRepo projectMilestoneRepo;
     private final ProjectMilestoneService projectMilestoneService;
-
-    @Value("${app.jobs.milestone-auto-release.days:3}")
-    private int autoReleaseDays;
+    private final MilestoneTimePolicy milestoneTimePolicy;
 
     @Scheduled(fixedDelayString = "${app.jobs.milestone-auto-release.fixed-delay-ms:60000}")
     public void autoReleaseOverdueFinalMilestones() {
-        LocalDateTime deadline = LocalDateTime.now().minusDays(autoReleaseDays);
+        LocalDateTime deadline = milestoneTimePolicy.overdueCutoff(LocalDateTime.now());
 
         List<Long> overdueMilestoneIds = projectMilestoneRepo.findOverdueFinalConfirmationMilestoneIds(MilestoneStep.FINAL_CONFIRMATION, deadline
         );

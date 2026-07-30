@@ -83,7 +83,7 @@ public enum ErrorCode {
     //---------------------------------------------------------------------------
     INVALID_REFRESH_TOKEN("Invalid refresh token!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_EXPIRED("Expired token!", HttpStatus.UNAUTHORIZED),
-    INVALID_JOB_POST_INPUT("Promt Không Hợp Lệ", HttpStatus.BAD_REQUEST),;
+    INVALID_JOB_POST_INPUT("Nội dung job post không hợp lệ", HttpStatus.BAD_REQUEST),;
 
 
     final String message;

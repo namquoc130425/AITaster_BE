@@ -60,7 +60,7 @@ public class InvitationResponse {
 
     LocalDateTime respondedAt;   // Thời điểm expert accept/reject invitation.
 
-    LocalDateTime paymentDeadline; // Hạn thanh toán, tính bằng respondedAt + 24h khi status = ACCEPTED.
+    LocalDateTime paymentDeadline; // Hạn thanh toán do BE tính theo cấu hình hiện tại.
 
     LocalDateTime createAt;
 

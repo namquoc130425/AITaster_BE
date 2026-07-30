@@ -43,6 +43,7 @@ public class ProjectMilestoneService {
     private final ProjectEscrowPayoutService projectEscrowPayoutService;
     private final RealtimeService realtimeService;
     private final NotificationService notificationService;
+    private final MilestoneTimePolicy milestoneTimePolicy;
 
     public record DeliverableFileDownload(
             Resource resource,
@@ -70,7 +71,7 @@ public class ProjectMilestoneService {
     public ProjectMilestoneResponse getMilestone(Long projectId) {
         Project project = getProjectWithDetail(projectId);
         checkCurrentUser(project); // chỉ người trong project mới xem được
-        return projectMilestoneMapper.toResponse(
+        return toMilestoneResponse(
                 normalizeFinalConfirmationReviewState(getMilestoneByProjectId(projectId))
         );
     }
@@ -140,7 +141,7 @@ public class ProjectMilestoneService {
                 "Expert đã nộp file " + step.getTitle() + ", chờ bạn duyệt",
                 getClientUserId(project)
         );
-        return projectMilestoneMapper.toResponse(milestone);
+        return toMilestoneResponse(milestone);
     }
     // client reject yêu cầu làm lại
     @Transactional
@@ -170,7 +171,7 @@ public class ProjectMilestoneService {
                 "Client yêu cầu chỉnh sửa lại " + revisionStep.getTitle(),
                 getExpertUserId(project)
         );
-        return projectMilestoneMapper.toResponse(saveProjectMilestone);
+        return toMilestoneResponse(saveProjectMilestone);
     }
 
 
@@ -218,7 +219,7 @@ public class ProjectMilestoneService {
                  "Client đã duyệt " + approvedStep.getTitle() + ", mời expert làm bước tiếp theo",
                  getExpertUserId(project));
      }
-        return projectMilestoneMapper.toResponse(projectMilestone);
+        return toMilestoneResponse(projectMilestone);
     }
 
     //hoàn tất bước 3 -> released tiền cho expert
@@ -384,6 +385,12 @@ public class ProjectMilestoneService {
         }
 
         return milestone;
+    }
+
+    private ProjectMilestoneResponse toMilestoneResponse(ProjectMilestone milestone) {
+        ProjectMilestoneResponse response = projectMilestoneMapper.toResponse(milestone);
+        response.setAutoReleaseAt(milestoneTimePolicy.autoReleaseAt(milestone));
+        return response;
     }
 
     private ProjectEscrow getEscrowByProjectId(Long projectId){

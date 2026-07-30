@@ -3,8 +3,8 @@ package com.example.AiTaster.service;
 import com.example.AiTaster.entity.Invitation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,13 +13,12 @@ class InvitationTimePolicyTest {
 
     private InvitationTimePolicy invitationTimePolicy;
 
-    // @Value không tự chạy trong unit test thuần (không có Spring context),
-    // nên phải tự gán giá trị bằng ReflectionTestUtils để mô phỏng đúng giá trị Spring sẽ tiêm vào lúc chạy thật.
     @BeforeEach
     void setUp() {
-        invitationTimePolicy = new InvitationTimePolicy();
-        ReflectionTestUtils.setField(invitationTimePolicy, "paymentWindowHours", 24L);
-        ReflectionTestUtils.setField(invitationTimePolicy, "responseWindowHours", 24L);
+        invitationTimePolicy = new InvitationTimePolicy(
+                Duration.ofHours(24),
+                Duration.ofHours(24)
+        );
     }
 
     @Test
@@ -82,12 +81,14 @@ class InvitationTimePolicyTest {
 
     @Test
     void differentConfiguredWindow_isRespected() {
-        // Mô phỏng trường hợp đổi application.yaml xuống 2 phút (demo trước hội đồng).
-        ReflectionTestUtils.setField(invitationTimePolicy, "paymentWindowHours", 0L);
+        invitationTimePolicy = new InvitationTimePolicy(
+                Duration.ofMinutes(2),
+                Duration.ofMinutes(2)
+        );
         LocalDateTime respondedAt = LocalDateTime.of(2026, 1, 1, 10, 0);
         Invitation invitation = Invitation.builder().respondedAt(respondedAt).build();
 
-        assertThat(invitationTimePolicy.paymentDeadline(invitation)).isEqualTo(respondedAt);
-        assertThat(invitationTimePolicy.isPaymentExpired(invitation, respondedAt.plusSeconds(1))).isTrue();
+        assertThat(invitationTimePolicy.paymentDeadline(invitation)).isEqualTo(respondedAt.plusMinutes(2));
+        assertThat(invitationTimePolicy.isPaymentExpired(invitation, respondedAt.plusMinutes(2).plusSeconds(1))).isTrue();
     }
 }

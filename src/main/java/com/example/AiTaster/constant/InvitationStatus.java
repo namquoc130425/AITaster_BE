@@ -5,6 +5,6 @@ public enum InvitationStatus {
     ACCEPTED,
     PAYMENT_EXPIRED,
     REJECTED,
-    EXPIRED // quá 24h mà expert không phản hồi
+    EXPIRED // quá hạn cấu hình mà expert không phản hồi
 
 }

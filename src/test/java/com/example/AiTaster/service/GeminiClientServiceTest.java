@@ -91,8 +91,12 @@ class GeminiClientServiceTest {
 
         assertThatThrownBy(() -> geminiClientService.generateJobPost(request, vectorSkillResults))
                 .isInstanceOf(GlobalException.class)
-                .extracting(ex -> ((GlobalException) ex).getCode())
-                .isEqualTo(400);
+                .satisfies(ex -> {
+                    GlobalException globalException = (GlobalException) ex;
+                    assertThat(globalException.getCode()).isEqualTo(400);
+                    assertThat(globalException.getMessage())
+                            .isEqualTo("Noi dung khong lien quan den dich vu AI");
+                });
     }
 
     @Test

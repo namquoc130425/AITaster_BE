@@ -113,7 +113,7 @@ public class PaymentTransaction {
     // time thanh toán thành công
     LocalDateTime paidAt;
 
-    // hạn thanh toán của project trong vòng 24h lấy từ lúc expert accept
+    // Hạn thanh toán của project tính từ lúc expert accept theo cấu hình hệ thống.
     LocalDateTime expiredAt;
 
     @CreationTimestamp

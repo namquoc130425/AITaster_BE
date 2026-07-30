@@ -7,6 +7,7 @@ import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.repository.InvitationRepo;
 import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
+import com.example.AiTaster.service.InvitationTimePolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +24,7 @@ public class InvitationPaymentExpirationScheduler {
     private final InvitationRepo invitationRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final JobPostRepo jobPostRepo;
+    private final InvitationTimePolicy invitationTimePolicy;
 
     @Transactional // Một lần job chạy nằm trong một transaction.
     @Scheduled(fixedDelayString = "${app.jobs.invitation-expiration.fixed-delay-ms:60000}") // 60s sẽ chạy 1 lần
@@ -33,7 +35,7 @@ public class InvitationPaymentExpirationScheduler {
         expireAcceptedInvitationsWaitingForPayment(now); // Dọn invitation ACCEPTED quá hạn thanh toán.
     }
 
-//trường hợp Invitation đã được gửi nhưng expert không phản hồi trong 24h thì đổi sang status EXPIRED
+// Invitation đã gửi nhưng expert không phản hồi đúng hạn thì đổi sang EXPIRED.
     private void expirePendingInvitations(LocalDateTime now) {
         List<Invitation> expiredInvitations =
                 invitationRepo.findByInvitationStatusAndExpiresAtBefore(InvitationStatus.PENDING, now);
@@ -51,9 +53,9 @@ public class InvitationPaymentExpirationScheduler {
         log.info("Expired {} pending invitations", expiredInvitations.size()); // Ghi log để dễ kiểm tra.
     }
 
-    //trường hợp Invitation đã được expert chấp nhận nhưng chưa thanh toán trong 24h thì đổi sang status PAYMENT_EXPIRED
+    // Invitation đã được expert chấp nhận nhưng client chưa thanh toán đúng hạn thì đổi sang PAYMENT_EXPIRED.
     private void expireAcceptedInvitationsWaitingForPayment(LocalDateTime now) {
-        LocalDateTime deadline = now.minusHours(24); // Giả sử thời hạn thanh toán là 24 giờ kể từ khi invitation được chấp nhận.
+        LocalDateTime deadline = invitationTimePolicy.paymentCutoff(now);
         List<Invitation> invitations  =  invitationRepo.findAcceptedPaymentExpiredWithoutProject(InvitationStatus.ACCEPTED, deadline);
 
         if (invitations.isEmpty()) {
