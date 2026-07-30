@@ -65,8 +65,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 PaymentReferenceType.INVITATION,
                 invitation.getFinalOfferedPrice(),
                 "SePay project escrow payment - invitation " + invitation.getInvitationId(),
-                invitationTimePolicy.paymentDeadline(invitation)   // time tính hạn thanh toán . tính từ lúc expert accept:
-                // responser + 24h
+                invitationTimePolicy.paymentDeadline(invitation)
 
         );
         SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);

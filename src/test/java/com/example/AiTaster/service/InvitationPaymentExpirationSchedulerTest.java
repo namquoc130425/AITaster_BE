@@ -15,6 +15,7 @@ import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.service.scheduler.InvitationPaymentExpirationScheduler;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -42,8 +43,17 @@ class InvitationPaymentExpirationSchedulerTest {
     @Mock
     private JobPostRepo jobPostRepo;
 
+    @Mock
+    private InvitationTimePolicy invitationTimePolicy;
+
     @InjectMocks
     private InvitationPaymentExpirationScheduler scheduler;
+
+    @BeforeEach
+    void setUpTimePolicy() {
+        when(invitationTimePolicy.paymentCutoff(org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
+                .thenAnswer(invocation -> invocation.<LocalDateTime>getArgument(0).minusHours(24));
+    }
 
     @Test
     void expireInvitationAndPaymentDeadlines_expiresPendingInvitationAcceptedInvitationAndPendingSepayPayment() {

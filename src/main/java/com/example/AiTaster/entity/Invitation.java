@@ -102,7 +102,5 @@ public class Invitation {
         if (invitationStatus == null) invitationStatus = InvitationStatus.PENDING;
         if (clientDeleted == null) clientDeleted = false;
         if (expertDeleted == null) expertDeleted = false;
-        if (expiresAt == null) expiresAt = LocalDateTime.now().plusHours(24);
     }
-    // Nếu expiresAt chưa có giá trị thì tự động gán hạn 24 tiếng từ thời gian hiện tại.
 }

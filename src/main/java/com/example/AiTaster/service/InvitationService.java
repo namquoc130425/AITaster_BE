@@ -69,7 +69,7 @@ public class InvitationService implements Iinvitation {
         boolean hasPendingIntrueFour = invitationRepo.existsByExpertApplication_JobpostAndInvitationStatusAndExpiresAtAfter(expertApplication.getJobpost(),InvitationStatus.PENDING,LocalDateTime.now());
 
         if (hasPendingIntrueFour) {
-            throw new GlobalException(400, "Job post already has pending invitation in 24 hours");
+            throw new GlobalException(400, "Job post already has an active pending invitation");
         }
 
         Invitation invitation = invitationMapper.toEntity(request,expertApplication);
@@ -91,7 +91,7 @@ public class InvitationService implements Iinvitation {
                 "Invitation created"
         );
 
-        return invitationMapper.toResponseInvitation(saveInvitation);
+        return toInvitationResponse(saveInvitation);
     }
  // client xem đc danh sách của mình
     @Override
@@ -102,7 +102,7 @@ public class InvitationService implements Iinvitation {
         return invitationRepo.findByExpertApplication_Jobpost_ClientProfileOrderByCreateAtDesc(clientProfile)
                 .stream()
                 .filter(invitation -> !Boolean.TRUE.equals(invitation.getClientDeleted()))
-                .map(invitationMapper::toResponseInvitation)
+                        .map(this::toInvitationResponse)
                 .toList();
 
     }
@@ -114,7 +114,7 @@ public class InvitationService implements Iinvitation {
         return invitationRepo.findByExpertApplication_ExpertProfileOrderByCreateAtDesc(expertProfile)
                 .stream()
                 .filter(invitation -> !Boolean.TRUE.equals(invitation.getExpertDeleted()))
-                .map(invitationMapper :: toResponseInvitation).toList();
+                .map(this::toInvitationResponse).toList();
 
     }
 //expert hoặc client xem chung chi tiết invitations
@@ -124,11 +124,11 @@ public class InvitationService implements Iinvitation {
         refreshInvitationTimeoutStatus(invitation); // Check timeout bằng giờ server trước khi trả về FE.
         expireIfNeeded(invitation);
         if(isCurrentInvitedExpert(invitation)) {
-            return invitationMapper.toResponseInvitation(invitation);
+            return toInvitationResponse(invitation);
         }
         ClientProfile clientProfile = getCurrentClientProfile();  // Nếu không phải expert thì kiểm tra client.
         checkInvitationOwnerClient(invitation,clientProfile);   // Chỉ client chủ job được xem.
-        return invitationMapper.toResponseInvitation(invitation);
+        return toInvitationResponse(invitation);
     }
     @Transactional
     @Override
@@ -163,7 +163,7 @@ public class InvitationService implements Iinvitation {
                 "Invitation accepted"
         );
 
-        return invitationMapper.toResponseInvitation(saveInvitation);
+        return toInvitationResponse(saveInvitation);
     }
 
     @Transactional
@@ -204,10 +204,10 @@ public class InvitationService implements Iinvitation {
                 "Invitation rejected"
         );
 
-        return invitationMapper.toResponseInvitation(saveInvitation);
+        return toInvitationResponse(saveInvitation);
     }
 
-    // Đổi các invitation PENDING quá 24h sang EXPIRED theo kiểu lazy expire.
+    // Đổi các invitation PENDING quá hạn sang EXPIRED theo kiểu lazy expire.
     public void pendingInvitationsExpire() {
         List<Invitation> expiredInvitations  = invitationRepo.findByInvitationStatusAndExpiresAtBefore(InvitationStatus.PENDING, LocalDateTime.now());
         if(expiredInvitations.isEmpty()) {
@@ -357,6 +357,17 @@ public class InvitationService implements Iinvitation {
     private Invitation getInvitationWithDetail(Long invitationId) {
         return invitationRepo.findWithDetailByInvitationId(invitationId)
                 .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
+    }
+
+    private InvitationResponse toInvitationResponse(Invitation invitation) {
+        InvitationResponse response = invitationMapper.toResponseInvitation(invitation);
+
+        if (InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())
+                || InvitationStatus.PAYMENT_EXPIRED.equals(invitation.getInvitationStatus())) {
+            response.setPaymentDeadline(invitationTimePolicy.paymentDeadline(invitation));
+        }
+
+        return response;
     }
 
     // kiem tra và thay đổi trạng thái cho 2 trường hợp . Expert không phản hồi và client không thanh toán đúng hạn

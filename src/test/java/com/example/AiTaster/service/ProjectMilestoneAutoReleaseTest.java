@@ -57,6 +57,7 @@ class ProjectMilestoneAutoReleaseTest {
     @Mock private ProjectEscrowPayoutService projectEscrowPayoutService;
     @Mock private RealtimeService realtimeService;
     @Mock private NotificationService notificationService;
+    @Mock private MilestoneTimePolicy milestoneTimePolicy;
 
     @InjectMocks
     private ProjectMilestoneService service;

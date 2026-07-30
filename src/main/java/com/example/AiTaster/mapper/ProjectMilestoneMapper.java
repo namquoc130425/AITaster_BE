@@ -11,6 +11,7 @@ public interface ProjectMilestoneMapper {
     //expressin : code java xữ lý riêng không map thẳng đc
 
       @Mapping(target = "currentStepTitle",expression = "java(projectMilestone.getCurrentStep()!= null ? projectMilestone.getCurrentStep().getTitle() : null)")
+      @Mapping(target = "autoReleaseAt", ignore = true)
       @Mapping(target = "canApprove", expression = "java(canClientReview(projectMilestone))")
       @Mapping(target = "canRequestRevision", expression = "java(canClientReview(projectMilestone))")
     ProjectMilestoneResponse toResponse(ProjectMilestone projectMilestone);

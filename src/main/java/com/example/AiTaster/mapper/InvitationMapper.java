@@ -1,6 +1,5 @@
 package com.example.AiTaster.mapper;
 
-import com.example.AiTaster.constant.InvitationStatus;
 import com.example.AiTaster.dto.request.InvitationCreateRequest;
 import com.example.AiTaster.dto.response.InvitationDraftResponse;
 import com.example.AiTaster.dto.response.InvitationResponse;
@@ -8,8 +7,6 @@ import com.example.AiTaster.entity.ExpertApplication;
 import com.example.AiTaster.entity.Invitation;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
-import java.time.LocalDateTime;
 
 @Mapper(componentModel = "spring")
 public interface InvitationMapper {
@@ -39,22 +36,6 @@ public interface InvitationMapper {
     @Mapping(target = "contactName", source = "expertApplication.jobpost.clientProfile.contactName")
     @Mapping(target = "expertProfileId", source = "expertApplication.expertProfile.expertProfileId")
     @Mapping(target = "expertName", source = "expertApplication.expertProfile.user.fullName")
-    @Mapping(target = "paymentDeadline", expression = "java(buildPaymentDeadline(invitation))")
+    @Mapping(target = "paymentDeadline", ignore = true)
     InvitationResponse toResponseInvitation(Invitation invitation);
-
-    default LocalDateTime buildPaymentDeadline(Invitation invitation) {
-        if (invitation == null) {
-            return null;
-        }
-
-        if (!InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())) {
-            return null;
-        }
-
-        if (invitation.getRespondedAt() == null) {
-            return null;
-        }
-
-        return invitation.getRespondedAt().plusHours(24);
-    }
 }

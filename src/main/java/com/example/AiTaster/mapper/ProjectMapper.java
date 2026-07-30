@@ -13,6 +13,7 @@ import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.ProjectMilestone;
 import org.mapstruct.Mapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -72,7 +73,11 @@ public interface ProjectMapper {
                 .build();
     }
 
-    default ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject) {
+    default ProjectCardResponse toInvitationCardResponse(
+            Invitation invitation,
+            boolean isClientProject,
+            LocalDateTime paymentDeadlineAt
+    ) {
         ExpertApplication application = invitation.getExpertApplication();
         JobPost jobPost = application.getJobpost();
         InvitationStatus invitationStatus = invitation.getInvitationStatus();
@@ -101,7 +106,7 @@ public interface ProjectMapper {
                 .budget(invitation.getFinalOfferedPrice())
                 .timeline(invitation.getFinalTimeline())
                 .deadlineAt(null)
-                .paymentDeadlineAt(getInvitationPaymentDeadline(invitation))
+                .paymentDeadlineAt(paymentDeadlineAt)
                 .currentStepCode(getCurrentStepCode(invitationStatus))
                 .currentStepTitle(getCurrentStepTitle(invitationStatus))
                 .currentStepDescription(getCurrentStepDescription(invitationStatus))
@@ -128,16 +133,6 @@ public interface ProjectMapper {
             case REJECTED -> "REJECTED";
             case EXPIRED -> "EXPIRED";
         };
-    }
-
-    private java.time.LocalDateTime getInvitationPaymentDeadline(Invitation invitation) {
-        if (invitation == null
-                || invitation.getInvitationStatus() != InvitationStatus.ACCEPTED
-                || invitation.getRespondedAt() == null) {
-            return null;
-        }
-
-        return invitation.getRespondedAt().plusHours(24);
     }
 
     private String getEscrowStatus(InvitationStatus status) {

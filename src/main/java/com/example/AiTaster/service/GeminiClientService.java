@@ -31,7 +31,13 @@ public class GeminiClientService {
          GeminiJobPostResponse response =  objectMapper.readValue(clearJsonContext, GeminiJobPostResponse.class); // chuyển json sang
 
             if (Boolean.FALSE.equals(response.getIsValid())) {
-                throw new GlobalException(ErrorCode.INVALID_JOB_POST_INPUT);
+                String rejectionReason = response.getRejectionReason();
+                throw new GlobalException(
+                        ErrorCode.INVALID_JOB_POST_INPUT,
+                        rejectionReason == null || rejectionReason.isBlank()
+                                ? ErrorCode.INVALID_JOB_POST_INPUT.getMessage()
+                                : rejectionReason
+                );
             }
 
             return response;
