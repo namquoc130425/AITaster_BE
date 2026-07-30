@@ -2,6 +2,7 @@ package com.example.AiTaster.dto.request.ExpertProduct;
 
 import com.example.AiTaster.dto.request.PageRequest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.Valid;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
@@ -14,5 +15,6 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class ExpertServiceFillerRequest extends PageRequest {
+    @Valid
     SubExpertServiceFilterRequest filter;
 }

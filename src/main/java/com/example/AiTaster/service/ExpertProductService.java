@@ -82,6 +82,7 @@ public class ExpertProductService implements IExpertService {
         ensureExpertVerified(expertProfile);
 
         validateInputContent(request);
+        validateRequiredSubmissionFiles(request);
 
         Category category =
                 getCategoryByCategoryId(
@@ -546,6 +547,15 @@ public class ExpertProductService implements IExpertService {
         if (request.getServiceFee() == null
                 || request.getServiceFee().signum() <= 0) {
             throw new GlobalException(ErrorCode.SERVICE_FEE_INVALID);
+        }
+    }
+
+    private void validateRequiredSubmissionFiles(ExpertServiceRequest request) {
+        if (request.getDocFile() == null
+                || request.getDocFile().isEmpty()
+                || request.getSourceFile() == null
+                || request.getSourceFile().isEmpty()) {
+            throw new GlobalException(ErrorCode.SERVICE_FILE_REQUIRED);
         }
     }
 

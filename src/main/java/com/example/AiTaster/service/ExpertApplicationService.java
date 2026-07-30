@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.JobpostStatus;
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.dto.request.ExpertApplicationRequest;
 import com.example.AiTaster.dto.request.ExpertProposalRequest;
 import com.example.AiTaster.dto.response.ExpertApplicationResponse;
@@ -43,7 +44,7 @@ private final ExpertVerificationGuardService expertVerificationGuardService;
         ExpertProfile expertProfile = getCurrentExpertProfile();
         ensureExpertVerified(expertProfile);
         JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId)
-                .orElseThrow(() -> new GlobalException("JobPost not found"));
+                .orElseThrow(() -> new GlobalException(ErrorCode.JOB_POST_NOT_FOUND));
 
         if (!JobpostStatus.OPEN.equals(jobPost.getJobPostStatus())) {
             throw new GlobalException(400, "Job post is not OPEN");
@@ -71,7 +72,8 @@ private final ExpertVerificationGuardService expertVerificationGuardService;
     @Override
     public List<ExpertApplicationResponse> getApplicationsByJobPost(Long jobPostId) {
         ClientProfile clientProfile = getCurrentClientProfile();
-        JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId).orElseThrow(() -> new GlobalException("Job Post Not Found"));
+        JobPost jobPost = jobPostRepo.findJobPostByjobPostId(jobPostId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.JOB_POST_NOT_FOUND));
 
         checkJobPostOwner(jobPost,clientProfile);
 
@@ -163,7 +165,8 @@ private ExpertProposalResponse mapProposalForClient(ExpertProposal expertProposa
 
     // Tìm application theo id, không có thì báo lỗi.
     private ExpertApplication getExpertApplication(Long applicationId) {
-        return expertApplicationRepo.findByApplicationId(applicationId) .orElseThrow(() -> new GlobalException("Application not found"));
+        return expertApplicationRepo.findByApplicationId(applicationId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.APPLICATION_NOT_FOUND));
     }
     // Tìm proposal theo id, không có thì báo lỗi.
     private ExpertProposal getProposalById(Long proposalId) {

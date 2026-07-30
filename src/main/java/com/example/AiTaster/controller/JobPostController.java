@@ -7,6 +7,7 @@ import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.JobPostResponse;
 import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.entity.JobPost;
+import com.example.AiTaster.constant.ErrorCode;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.JobPostMapper;
 import com.example.AiTaster.repository.JobPostRepo;
@@ -60,7 +61,8 @@ public class JobPostController {
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<JobPostResponse>> getJobPostById(@Valid @PathVariable long id) {
-        JobPost jobPost = jobPostRepo.findById(id).orElseThrow(() -> new GlobalException("Job Post Not Found"));
+        JobPost jobPost = jobPostRepo.findById(id)
+                .orElseThrow(() -> new GlobalException(ErrorCode.JOB_POST_NOT_FOUND));
         JobPostResponse jobPostResponse = jobPostService.GetJobPostById(jobPost.getJobPostId());
         return ResponseEntity.ok(APIResponse.response(200, "Job Post successfully", jobPostResponse));
     }

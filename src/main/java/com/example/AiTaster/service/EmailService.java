@@ -3,21 +3,30 @@ package com.example.AiTaster.service;
 import com.example.AiTaster.constant.InvoiceEmailRecipientRole;
 import com.example.AiTaster.constant.InvoiceEmailType;
 import com.example.AiTaster.entity.Invoices;
+import com.example.AiTaster.entity.User;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.util.Map;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Gửi email hóa đơn bằng template phù hợp với loại invoice email.
     public void sendInvoiceEmail(
@@ -211,4 +220,138 @@ public class EmailService {
             throw new RuntimeException("Failed to send email");
         }
     }
+
+    public void queueExpertApplied(User client, User expert, String jobTitle) {
+        queueWorkflowEmail(
+                client,
+                "AITasker - Có chuyên gia mới ứng tuyển",
+                "workflow-expert-applied",
+                workflowVariables(client, expert, "jobTitle", safeDisplay(jobTitle, "Công việc của bạn"))
+        );
+    }
+
+    public void queueInvitationReceived(User client, User expert, String projectTitle) {
+        queueWorkflowEmail(
+                expert,
+                "AITasker - Bạn nhận được lời mời dự án mới",
+                "workflow-invitation-received",
+                workflowVariables(client, expert, "projectTitle", safeDisplay(projectTitle, "Dự án"))
+        );
+    }
+
+    public void queueInvitationAccepted(User client, User expert, String projectTitle) {
+        queueWorkflowEmail(
+                client,
+                "AITasker - Chuyên gia đã chấp nhận lời mời",
+                "workflow-invitation-accepted",
+                workflowVariables(client, expert, "projectTitle", safeDisplay(projectTitle, "Dự án"))
+        );
+    }
+
+    public void queueProjectStarted(User client, User expert, String projectTitle) {
+        queueWorkflowEmail(
+                expert,
+                "AITasker - Dự án đã chính thức bắt đầu",
+                "workflow-project-started",
+                workflowVariables(client, expert, "projectTitle", safeDisplay(projectTitle, "Dự án"))
+        );
+    }
+
+    private Map<String, Object> workflowVariables(
+            User client,
+            User expert,
+            String titleVariable,
+            String title
+    ) {
+        return Map.of(
+                "clientName", displayName(client, "khách hàng"),
+                "expertName", displayName(expert, "chuyên gia"),
+                titleVariable, title
+        );
+    }
+
+    private void queueWorkflowEmail(
+            User recipient,
+            String subject,
+            String templateName,
+            Map<String, Object> variables
+    ) {
+        if (recipient == null || recipient.getEmail() == null || recipient.getEmail().isBlank()) {
+            return;
+        }
+
+        eventPublisher.publishEvent(new WorkflowEmailRequestedEvent(
+                recipient.getEmail(),
+                subject,
+                templateName,
+                variables
+        ));
+    }
+
+    @TransactionalEventListener(
+            phase = TransactionPhase.AFTER_COMMIT,
+            fallbackExecution = true
+    )
+    public void sendWorkflowEmailAfterCommit(WorkflowEmailRequestedEvent event) {
+        try {
+            sendTemplateEmail(
+                    event.recipientEmail(),
+                    event.subject(),
+                    event.templateName(),
+                    event.variables()
+            );
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Failed to send workflow email with template {} to {}",
+                    event.templateName(),
+                    event.recipientEmail(),
+                    exception
+            );
+        }
+    }
+
+    public void sendTemplateEmail(
+            String to,
+            String subject,
+            String templateName,
+            Map<String, Object> variables
+    ) {
+        try {
+            Context context = new Context();
+            context.setVariables(variables == null ? Map.of() : variables);
+
+            String htmlContent = templateEngine.process(templateName, context);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email", e);
+        }
+    }
+
+    private String displayName(User user, String fallback) {
+        if (user == null) {
+            return fallback;
+        }
+        if (user.getFullName() != null && !user.getFullName().isBlank()) {
+            return user.getFullName();
+        }
+        if (user.getUsername() != null && !user.getUsername().isBlank()) {
+            return user.getUsername();
+        }
+        return fallback;
+    }
+}
+
+record WorkflowEmailRequestedEvent(
+        String recipientEmail,
+        String subject,
+        String templateName,
+        Map<String, Object> variables
+) {
 }
