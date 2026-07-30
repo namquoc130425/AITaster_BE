@@ -13,6 +13,7 @@ import com.example.AiTaster.entity.Project;
 import com.example.AiTaster.entity.ProjectMilestone;
 import org.mapstruct.Mapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -58,7 +59,8 @@ public interface ProjectMapper {
                 .currentStepDescription(getCurrentStepDescription(projectStatus, milestone))
                 .milestoneStatus(milestone != null ? milestone.getStatus().name() : null)
                 .canPayWithSepay(isClientProject && projectStatus == ProjectStatus.WAITING_ESCROW)
-                .canOpenWorkspace(projectStatus == ProjectStatus.ACTIVE)
+                .canOpenWorkspace(projectStatus == ProjectStatus.ACTIVE || projectStatus == ProjectStatus.DISPUTED)
+                .canOpenDispute(projectStatus == ProjectStatus.ACTIVE)
                 .canViewPaymentStatus(isClientProject)
                 .canViewDetails(true)
                 .canViewSummary(projectStatus == ProjectStatus.COMPLETED)
@@ -71,7 +73,11 @@ public interface ProjectMapper {
                 .build();
     }
 
-    default ProjectCardResponse toInvitationCardResponse(Invitation invitation, boolean isClientProject) {
+    default ProjectCardResponse toInvitationCardResponse(
+            Invitation invitation,
+            boolean isClientProject,
+            LocalDateTime paymentDeadlineAt
+    ) {
         ExpertApplication application = invitation.getExpertApplication();
         JobPost jobPost = application.getJobpost();
         InvitationStatus invitationStatus = invitation.getInvitationStatus();
@@ -100,7 +106,7 @@ public interface ProjectMapper {
                 .budget(invitation.getFinalOfferedPrice())
                 .timeline(invitation.getFinalTimeline())
                 .deadlineAt(null)
-                .paymentDeadlineAt(invitationStatus == InvitationStatus.ACCEPTED ? invitation.getExpiresAt() : null)
+                .paymentDeadlineAt(paymentDeadlineAt)
                 .currentStepCode(getCurrentStepCode(invitationStatus))
                 .currentStepTitle(getCurrentStepTitle(invitationStatus))
                 .currentStepDescription(getCurrentStepDescription(invitationStatus))
@@ -209,6 +215,7 @@ public interface ProjectMapper {
             case ACTIVE -> "HELD";
             case COMPLETED -> "RELEASED";
             case CANCELED -> "CANCELED";
+            case DISPUTED -> "DISPUTED";
         };
     }
 
@@ -226,6 +233,9 @@ public interface ProjectMapper {
         if (projectStatus == ProjectStatus.CANCELED) {
             return "CANCELED";
         }
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return "DISPUTED";
+        }
         if (milestone == null || milestone.getCurrentStep() == null) {
             return MilestoneStep.DOCUMENT.name();
         }
@@ -241,6 +251,9 @@ public interface ProjectMapper {
         }
         if (projectStatus == ProjectStatus.CANCELED) {
             return "Project canceled";
+        }
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return "Project under dispute";
         }
         if (milestone == null || milestone.getCurrentStep() == null) {
             return "Document";
@@ -258,6 +271,9 @@ public interface ProjectMapper {
         if (projectStatus == ProjectStatus.CANCELED) {
             return "This project is no longer active.";
         }
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return "Project work is paused while admin reviews the dispute.";
+        }
         if (milestone == null || milestone.getStatus() == null) {
             return "Project workspace is ready.";
         }
@@ -271,6 +287,14 @@ public interface ProjectMapper {
     }
 
     private List<ProjectStepResponse> buildSteps(ProjectStatus projectStatus, ProjectMilestone milestone) {
+        if (projectStatus == ProjectStatus.DISPUTED) {
+            return List.of(
+                    step(MilestoneStep.DOCUMENT, "LOCKED"),
+                    step(MilestoneStep.SOURCE_CODE, "LOCKED"),
+                    step(MilestoneStep.FINAL_CONFIRMATION, "LOCKED")
+            );
+        }
+
         if (projectStatus == ProjectStatus.CANCELED) {
             return List.of(
                     step(MilestoneStep.DOCUMENT, "LOCKED"),
@@ -335,4 +359,6 @@ public interface ProjectMapper {
                 .status(status)
                 .build();
     }
+
+
 }

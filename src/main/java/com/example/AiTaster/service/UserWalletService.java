@@ -1,6 +1,7 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.constant.UserWalletStatus;
 import com.example.AiTaster.dto.request.UserWalletRequest;
@@ -60,6 +61,19 @@ public class UserWalletService implements IUserWalletService {
         UserWallet wallet = userWalletRepo.findByUser(user)
                 .orElseThrow(() ->
                         new GlobalException(404, "Wallet not found"));
+
+        return userWalletMapper.toResponse(wallet);
+    }
+
+    @Override
+    public UserWalletResponse getAdminWalletBalance() {
+        User admin = currentUserService.getCurrentUser();
+
+        if (!Role.ADMIN.equals(admin.getRole())) {
+            throw new GlobalException(403, "Only admin can view platform wallet balance");
+        }
+
+        UserWallet wallet = createWalletIfAbsent(admin);
 
         return userWalletMapper.toResponse(wallet);
     }

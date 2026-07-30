@@ -34,6 +34,7 @@ public class NotificationService implements INotificationService {
     private final CurrentUserService currentUserService;
     private final SimpMessagingTemplate messagingTemplate;
     private final ApplicationEventPublisher eventPublisher;
+    private final EmailService emailService;
 
     /*
      * Dùng cho trường hợp cần tạo notification ngay.
@@ -282,6 +283,7 @@ public class NotificationService implements INotificationService {
                 "Có expert mới ứng tuyển",
                 expertName + " đã ứng tuyển vào job post: " + jobTitle
         );
+        emailService.queueExpertApplied(clientUser, expertUser, jobTitle);
     }
 
     /*
@@ -304,6 +306,15 @@ public class NotificationService implements INotificationService {
             return;
         }
 
+        User clientUser = null;
+        if (invitation.getExpertApplication().getJobpost() != null
+                && invitation.getExpertApplication().getJobpost().getClientProfile() != null) {
+            clientUser = invitation.getExpertApplication()
+                    .getJobpost()
+                    .getClientProfile()
+                    .getUser();
+        }
+
         User expertUser =
                 invitation.getExpertApplication()
                         .getExpertProfile()
@@ -323,6 +334,7 @@ public class NotificationService implements INotificationService {
                 "Bạn nhận được lời mời dự án",
                 "Client đã gửi cho bạn lời mời tham gia dự án: " + projectTitle
         );
+        emailService.queueInvitationReceived(clientUser, expertUser, projectTitle);
     }
 
     /*
@@ -373,6 +385,7 @@ public class NotificationService implements INotificationService {
                 "Expert đã chấp nhận lời mời",
                 expertName + " đã chấp nhận lời mời dự án: " + projectTitle
         );
+        emailService.queueInvitationAccepted(clientUser, expertUser, projectTitle);
     }
 
     /*
@@ -423,6 +436,54 @@ public class NotificationService implements INotificationService {
                 "Expert đã từ chối lời mời",
                 expertName + " đã từ chối lời mời dự án: " + projectTitle
         );
+    }
+
+    @Override
+    public void notifyProjectWorkspaceReady(Project project) {
+        if (project == null
+                || project.getProjectId() == null
+                || project.getInvitation() == null
+                || project.getInvitation().getExpertApplication() == null
+                || project.getInvitation().getExpertApplication().getJobpost() == null
+                || project.getInvitation().getExpertApplication().getJobpost().getClientProfile() == null
+                || project.getInvitation().getExpertApplication().getJobpost().getClientProfile().getUser() == null
+                || project.getInvitation().getExpertApplication().getExpertProfile() == null
+                || project.getInvitation().getExpertApplication().getExpertProfile().getUser() == null) {
+            return;
+        }
+
+        User clientUser = project.getInvitation()
+                .getExpertApplication()
+                .getJobpost()
+                .getClientProfile()
+                .getUser();
+
+        User expertUser = project.getInvitation()
+                .getExpertApplication()
+                .getExpertProfile()
+                .getUser();
+
+        String projectTitle = safeText(project.getTitle(), "dự án");
+        String title = "Project workspace is ready";
+        String content = "Escrow payment completed. Open workspace for: " + projectTitle;
+
+        notify(
+                clientUser,
+                NotificationType.PROJECT,
+                ReferenceType.PROJECT,
+                project.getProjectId(),
+                title,
+                content
+        );
+        notify(
+                expertUser,
+                NotificationType.PROJECT,
+                ReferenceType.PROJECT,
+                project.getProjectId(),
+                title,
+                content
+        );
+        emailService.queueProjectStarted(clientUser, expertUser, projectTitle);
     }
 
     /*

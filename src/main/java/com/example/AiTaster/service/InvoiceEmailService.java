@@ -52,7 +52,8 @@ public class InvoiceEmailService {
             return emailLogs;
         }
 
-        if (InvoiceType.PROJECT_COMPLETION.equals(invoice.getInvoiceType())) {
+        if (InvoiceType.PROJECT_COMPLETION.equals(invoice.getInvoiceType())
+                || InvoiceType.DISPUTE_RESOLUTION.equals(invoice.getInvoiceType())) {
             emailLogs.add(createPendingEmailIfMissing(
                     invoice,
                     invoice.getClientId(),

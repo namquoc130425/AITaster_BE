@@ -44,6 +44,8 @@ public interface INotificationService {
 
     void notifyInvitationRejected(Invitation invitation);
 
+    void notifyProjectWorkspaceReady(Project project);
+
     void notifyAdminNewReport(Report report);
 
     void notifyReporterReportResolved(Report report);

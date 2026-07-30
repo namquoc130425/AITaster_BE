@@ -1,6 +1,7 @@
 package com.example.AiTaster.service.payment;
 
 import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.entity.ClientProfile;
@@ -12,6 +13,7 @@ import com.example.AiTaster.entity.User;
 import com.example.AiTaster.mapper.PaymentTransactionMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
 import com.example.AiTaster.repository.ExpertServiceRepo;
+import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.service.CurrentUserService;
 import com.example.AiTaster.service.InvoiceEmailService;
 import com.example.AiTaster.service.InvoiceService;
@@ -55,6 +57,9 @@ class ExpertServicePurchaseServiceTest {
 
     @Mock
     private SepayGateway sepayGateway;
+
+    @Mock
+    private PaymentTransactionRepo paymentTransactionRepo;
 
     @Mock
     private PaymentTransactionMapper paymentTransactionMapper;
@@ -104,6 +109,13 @@ class ExpertServicePurchaseServiceTest {
         when(currentUserService.getCurrentUser()).thenReturn(client);
         when(clientProfileRepo.findByUser(client)).thenReturn(Optional.of(clientProfile));
         when(expertServiceRepo.findById(5L)).thenReturn(Optional.of(expertService));
+        when(paymentTransactionRepo.existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+                any(),
+                any(TransactionType.class),
+                any(PaymentReferenceType.class),
+                any(PaymentStatus.class),
+                any()
+        )).thenReturn(false);
         when(moneyMovementService.calculateFee(BigDecimal.valueOf(1_000_000))).thenReturn(BigDecimal.valueOf(900_000));
         when(moneyMovementService.moneyTransactionManagement(
                 any(),

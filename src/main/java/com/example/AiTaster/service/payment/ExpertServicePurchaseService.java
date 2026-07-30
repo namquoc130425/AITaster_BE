@@ -1,6 +1,7 @@
 package com.example.AiTaster.service.payment;
 
 import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.ServiceStatus;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.dto.response.SepayCheckoutFormResponse;
@@ -10,6 +11,7 @@ import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.PaymentTransactionMapper;
 import com.example.AiTaster.repository.ClientProfileRepo;
 import com.example.AiTaster.repository.ExpertServiceRepo;
+import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class ExpertServicePurchaseService {
     private final PlatformFeeCalculator platformFeeCalculator;
     private final PendingPaymentService pendingPaymentService;
     private final SepayGateway sepayGateway;
+    private final PaymentTransactionRepo paymentTransactionRepo;
     private final PaymentTransactionMapper paymentTransactionMapper;
     private final InvoiceService invoiceService;
     private final ExpertServicePurchaseEventService purchaseEventService;
@@ -48,6 +51,8 @@ public class ExpertServicePurchaseService {
             throw new GlobalException(400, "Service is not available");
         }
         Long clientUserId = clientProfile.getUser().getUserId();
+        ensureServiceNotPurchased(clientUserId, serviceId);
+
         // expertService -> expertProfile -> user.
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
@@ -103,6 +108,8 @@ public class ExpertServicePurchaseService {
         BigDecimal amount = expertService.getServiceFee();
 
         Long clientUserId = clientProfile.getUser().getUserId();
+        ensureServiceNotPurchased(clientUserId, serviceId);
+
         Long expertUserId = expertService.getExpertProfile().getUser().getUserId();
 
         // Tạo pending SePay transaction. Chưa đổi số dư ví cho đến khi webhook success.
@@ -124,6 +131,21 @@ public class ExpertServicePurchaseService {
         SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);
 
         return paymentTransactionMapper.toSepayPurchasePaymentResponse(paymentTransaction, checkoutForm);
+    }
+
+    private void ensureServiceNotPurchased(Long clientUserId, Long serviceId) {
+        boolean alreadyPurchased = paymentTransactionRepo
+                .existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+                        clientUserId,
+                        TransactionType.EXPERT_SERVICE_PURCHASE,
+                        PaymentReferenceType.EXPERT_SERVICE,
+                        PaymentStatus.SUCCESS,
+                        serviceId
+                );
+
+        if (alreadyPurchased) {
+            throw new GlobalException(409, "You already purchased this AI service");
+        }
     }
 
     // Chạy hành động sau khi transaction commit; nếu không có transaction thì chạy ngay để dễ test unit.

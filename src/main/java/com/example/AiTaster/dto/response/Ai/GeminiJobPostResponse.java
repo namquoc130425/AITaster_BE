@@ -14,6 +14,9 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GeminiJobPostResponse {
+    Boolean isValid;
+
+    String rejectionReason;
 
     String title; // Tiêu đề job post
 

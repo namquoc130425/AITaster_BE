@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to AITasker</title>
+</head>
+<body style="margin:0;background:#f3f7fb;font-family:Inter,Arial,sans-serif;color:#0f172a;">
+<div style="display:none;max-height:0;overflow:hidden;">
+    Your AITasker account is ready.
+</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f7fb;padding:32px 16px;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dbeafe;border-radius:18px;overflow:hidden;">
+                <tr>
+                    <td style="background:#0f5bff;padding:28px 32px;color:#ffffff;">
+                        <div style="font-size:24px;font-weight:800;letter-spacing:.2px;">AI-tasker</div>
+                        <div style="margin-top:8px;font-size:14px;opacity:.9;">Welcome aboard</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:32px;">
+                        <h1 style="margin:0;font-size:22px;line-height:1.35;">
+                            Welcome, <span th:text="${displayName}">there</span>
+                        </h1>
+                        <p style="margin:14px 0 0;color:#475569;font-size:15px;line-height:1.7;">
+                            Your AITasker <b th:text="${role}">member</b> account has been created successfully.
+                        </p>
+
+                        <div style="margin:22px 0;padding:16px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;">
+                            <div style="font-size:13px;color:#64748b;">What you can do next</div>
+                            <div style="margin-top:8px;color:#0f172a;font-size:15px;line-height:1.7;">
+                                Complete your profile, explore your dashboard, and start managing AI projects with platform payment protection.
+                            </div>
+                        </div>
+
+                        <p style="margin:18px 0 0;color:#64748b;font-size:14px;line-height:1.6;">
+                            This email was sent automatically by AITasker. Please do not reply directly to this email.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

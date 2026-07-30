@@ -20,6 +20,9 @@ public class JobPostResponse {
     Long jobPostId;
 
     Long clientId;
+    Long clientUserId;
+    String clientName;
+    String clientEmail;
 
     String title;
 

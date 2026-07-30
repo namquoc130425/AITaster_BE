@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,6 +42,7 @@ public class CategoryController {
     }
 
     @PostMapping()
+    @PreAuthorize("hasRole('ADMIN')")
     // @Valid để kích hoạt validation
     public ResponseEntity<APIResponse<CategoryResponse>> createCategory(@RequestBody @Valid CategoryRequest request) {
         CategoryResponse response = categoryService.CreateCategory(request);
@@ -64,6 +66,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<CategoryResponse>> update(@Valid @PathVariable Long id, @RequestBody CategoryRequest request
     ) {
         CategoryResponse response =  categoryService.UpdateCategory(id,request);
@@ -71,6 +74,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<CategoryResponse>> delete(@PathVariable Long id) {
         categoryService.DeleteCategory(id);
         return ResponseEntity.status(201).body(APIResponse.response(201,"Deleted Category successfully",null));

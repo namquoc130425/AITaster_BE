@@ -46,6 +46,11 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
             return;
         }
 
+        if (hasSuccessfulPurchase(payment.getSenderId(), expertService.getServiceId())) {
+            markFailed(payment, providerTransactionCode, providerContent);
+            return;
+        }
+
         BigDecimal amount = payment.getGrossAmount();
 
 
@@ -90,6 +95,17 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
 
 
     // Đánh dấu payment thất bại khi service không còn mở để bán.
+    private boolean hasSuccessfulPurchase(Long clientUserId, Long serviceId) {
+        return paymentTransactionRepo
+                .existsBySenderIdAndTransactionTypeAndPaymentReferenceTypeAndPaymentStatusAndReferenceId(
+                        clientUserId,
+                        TransactionType.EXPERT_SERVICE_PURCHASE,
+                        PaymentReferenceType.EXPERT_SERVICE,
+                        PaymentStatus.SUCCESS,
+                        serviceId
+                );
+    }
+
     private void markFailed(
             PaymentTransaction payment,
             String providerTransactionCode,

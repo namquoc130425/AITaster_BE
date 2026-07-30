@@ -36,7 +36,8 @@ public class ProjectPaymentService implements IProjectPayment {
     private final MoneyMovementService moneyMovementService;
     private final ConversationService conversationService;
     private final RealtimeService realtimeService;
-
+    private final NotificationService notificationService;
+    private final InvitationTimePolicy invitationTimePolicy;
     @Transactional
     @Override
     public ProjectPaymentResponse createProjectPayment(Long invitationId) {
@@ -64,7 +65,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 PaymentReferenceType.INVITATION,
                 invitation.getFinalOfferedPrice(),
                 "SePay project escrow payment - invitation " + invitation.getInvitationId(),
-                invitation.getRespondedAt().plusHours(24)
+                invitationTimePolicy.paymentDeadline(invitation)
 
         );
         SepayCheckoutFormResponse checkoutForm = sepayGateway.createCheckoutForm(paymentTransaction);
@@ -107,7 +108,7 @@ public class ProjectPaymentService implements IProjectPayment {
             throw new GlobalException(400, "Invitation response time is missing");
         }
 
-        if (invitation.getRespondedAt().plusHours(24).isBefore(LocalDateTime.now())) {
+        if (invitationTimePolicy.isPaymentExpired(invitation,LocalDateTime.now())) { // HẾT HẠN THANH TOÁN THÌ KIEE
             expireInvitationPayment(invitation);
             throw new GlobalException(403, "Payment deadline is expired");
         }
@@ -215,6 +216,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 "PROJECT_CREATED",
                 "Project created"
         );
+        notificationService.notifyProjectWorkspaceReady(project);
 
         return paymentTransactionMapper.toInvitationPaymentResponse(
                 paymentTransaction,
@@ -237,7 +239,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 .deadlineAt(null)
                 .startAt(null)
                 .completedAt(null)
-                .paymentDeadlineAt(invitation.getRespondedAt().plusHours(24))
+                .paymentDeadlineAt(invitationTimePolicy.paymentDeadline(invitation))
                 .projectStatus(ProjectStatus.ACTIVE)
                 .isActive(false)
                 .build();

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Bạn nhận được lời mời dự án mới</title>
+</head>
+<body style="margin:0;background:#f3f7fb;font-family:Arial,sans-serif;color:#172033;">
+<div style="display:none;max-height:0;overflow:hidden;">Một khách hàng vừa gửi lời mời dự án cho bạn.</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f7fb;padding:32px 16px;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #dce6f2;border-radius:8px;overflow:hidden;">
+                <tr>
+                    <td style="background:#125bd3;padding:24px 30px;color:#ffffff;">
+                        <div style="font-size:23px;font-weight:700;">AITasker</div>
+                        <div style="margin-top:6px;font-size:14px;">Lời mời dự án mới</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:30px;">
+                        <h1 style="margin:0;font-size:22px;line-height:1.4;">Bạn nhận được lời mời dự án</h1>
+                        <p style="margin:18px 0 0;font-size:15px;line-height:1.7;">
+                            Xin chào <strong th:text="${expertName}">chuyên gia</strong>,
+                        </p>
+                        <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#40506a;">
+                            Khách hàng <strong th:text="${clientName}">khách hàng</strong> đã gửi cho bạn lời mời tham gia dự án
+                            <strong th:text="${projectTitle}">Dự án mới</strong>.
+                        </p>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:22px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;">
+                            <tr><td style="padding:14px 16px;color:#60708a;width:120px;">Khách hàng</td><td style="padding:14px 16px;font-weight:700;" th:text="${clientName}">Tên khách hàng</td></tr>
+                            <tr><td style="padding:14px 16px;color:#60708a;border-top:1px solid #e2e8f0;">Chuyên gia</td><td style="padding:14px 16px;font-weight:700;border-top:1px solid #e2e8f0;" th:text="${expertName}">Tên chuyên gia</td></tr>
+                            <tr><td style="padding:14px 16px;color:#60708a;border-top:1px solid #e2e8f0;">Dự án</td><td style="padding:14px 16px;font-weight:700;border-top:1px solid #e2e8f0;" th:text="${projectTitle}">Tên dự án</td></tr>
+                        </table>
+                        <p style="margin:22px 0 0;font-size:15px;line-height:1.7;color:#40506a;">
+                            Hãy đăng nhập AITasker để xem điều khoản, thời hạn phản hồi và chấp nhận hoặc từ chối lời mời.
+                        </p>
+                        <p style="margin:24px 0 0;color:#718096;font-size:13px;line-height:1.6;">Email này được gửi tự động từ AITasker. Vui lòng không trả lời trực tiếp email này.</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

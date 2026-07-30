@@ -15,6 +15,11 @@ public interface ExpertServiceRepo extends JpaRepository<ExpertService, Long>, J
 
     List<ExpertService> findByServiceStatus(ServiceStatus serviceStatus);
 
+    long countByExpertProfile_ExpertProfileIdAndServiceStatus(
+            Long expertProfileId,
+            ServiceStatus serviceStatus
+    );
+
     List<ExpertService> findByExpertProfile(ExpertProfile expertProfile);
 
     List<ExpertService> findByExpertProfileAndServiceStatusNot(

@@ -61,6 +61,20 @@ public class UserWalletController {
         );
     }
 
+    @GetMapping("/admin/balance")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<APIResponse<UserWalletResponse>>
+    getAdminWalletBalance() {
+
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Success",
+                        userWalletService.getAdminWalletBalance()
+                )
+        );
+    }
+
     @GetMapping("/{walletId}")
     public ResponseEntity<APIResponse<UserWalletResponse>>
     getWallet(

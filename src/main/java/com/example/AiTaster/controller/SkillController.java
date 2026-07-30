@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -25,6 +26,7 @@ public class SkillController {
     SkillService skillService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<SkillResponse>> createSkill(@RequestBody @Valid SkillRequest skillRequest) {
 
         return ResponseEntity.status(201).body(APIResponse
@@ -46,12 +48,14 @@ public class SkillController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<SkillResponse>> deleteSkillById(@PathVariable long id) {
         return ResponseEntity.ok(APIResponse
                 .response(200, "Delete Skill Success", skillService.delete(id)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<APIResponse<SkillResponse>> updateSkillById
             (@Valid @RequestBody SkillRequest skillRequest, @PathVariable long id) {
         return ResponseEntity.ok(APIResponse

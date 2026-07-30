@@ -2,9 +2,12 @@ package com.example.AiTaster.service.scheduler;
 
 import com.example.AiTaster.constant.*;
 import com.example.AiTaster.entity.Invitation;
+import com.example.AiTaster.entity.JobPost;
 import com.example.AiTaster.entity.PaymentTransaction;
 import com.example.AiTaster.repository.InvitationRepo;
+import com.example.AiTaster.repository.JobPostRepo;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
+import com.example.AiTaster.service.InvitationTimePolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,6 +23,8 @@ import java.util.List;
 public class InvitationPaymentExpirationScheduler {
     private final InvitationRepo invitationRepo;
     private final PaymentTransactionRepo paymentTransactionRepo;
+    private final JobPostRepo jobPostRepo;
+    private final InvitationTimePolicy invitationTimePolicy;
 
     @Transactional // Một lần job chạy nằm trong một transaction.
     @Scheduled(fixedDelayString = "${app.jobs.invitation-expiration.fixed-delay-ms:60000}") // 60s sẽ chạy 1 lần
@@ -30,7 +35,7 @@ public class InvitationPaymentExpirationScheduler {
         expireAcceptedInvitationsWaitingForPayment(now); // Dọn invitation ACCEPTED quá hạn thanh toán.
     }
 
-//trường hợp Invitation đã được gửi nhưng expert không phản hồi trong 24h thì đổi sang status EXPIRED
+// Invitation đã gửi nhưng expert không phản hồi đúng hạn thì đổi sang EXPIRED.
     private void expirePendingInvitations(LocalDateTime now) {
         List<Invitation> expiredInvitations =
                 invitationRepo.findByInvitationStatusAndExpiresAtBefore(InvitationStatus.PENDING, now);
@@ -48,18 +53,19 @@ public class InvitationPaymentExpirationScheduler {
         log.info("Expired {} pending invitations", expiredInvitations.size()); // Ghi log để dễ kiểm tra.
     }
 
-    //trường hợp Invitation đã được expert chấp nhận nhưng chưa thanh toán trong 24h thì đổi sang status PAYMENT_EXPIRED
+    // Invitation đã được expert chấp nhận nhưng client chưa thanh toán đúng hạn thì đổi sang PAYMENT_EXPIRED.
     private void expireAcceptedInvitationsWaitingForPayment(LocalDateTime now) {
-        LocalDateTime deadline = now.minusHours(24); // Giả sử thời hạn thanh toán là 24 giờ kể từ khi invitation được chấp nhận.
+        LocalDateTime deadline = invitationTimePolicy.paymentCutoff(now);
         List<Invitation> invitations  =  invitationRepo.findAcceptedPaymentExpiredWithoutProject(InvitationStatus.ACCEPTED, deadline);
 
         if (invitations.isEmpty()) {
             return; // Không có invitation nào quá hạn thanh toán.
         }
 
-        invitations.forEach(invitation ->
-                invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED)
-        );
+        invitations.forEach(invitation -> {
+            invitation.setInvitationStatus(InvitationStatus.PAYMENT_EXPIRED);
+            reopenJobPostIfClosedByThisInvitation(invitation);
+        });
 
         invitationRepo.saveAll(invitations); // Lưu status PAYMENT_EXPIRED.
         expirePendingSepayPayments(invitations); // Payment liên quan cũng phải chuyển EXPIRED.
@@ -68,7 +74,16 @@ public class InvitationPaymentExpirationScheduler {
 
     }
 
+    // Mở lại JobPost nếu nó đang bị CLOSED chính vì invitation này (tránh JobPost kẹt vĩnh viễn khi Client lỡ hạn thanh toán)
+    private void reopenJobPostIfClosedByThisInvitation(Invitation invitation) {
+        JobPost jobPost = invitation.getExpertApplication().getJobpost();
+        boolean closedByThisInvitation = JobpostStatus.CLOSED.equals(jobPost.getJobPostStatus())
+                && invitation.getInvitationId().equals(jobPost.getClosedByInvitationId());
 
+        if (closedByThisInvitation) {
+            jobPostRepo.reopenJobPost(jobPost.getJobPostId(), JobpostStatus.OPEN);
+        }
+    }
 
     //tìm những transaction có lời mời hết hạn thì đổi sang status Expired
     private void expirePendingSepayPayments(List<Invitation>  invitations) {

@@ -24,7 +24,9 @@ import com.example.AiTaster.repository.ProjectEscrowRepo;
 import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.service.ConversationService;
 import com.example.AiTaster.service.CurrentUserService;
+import com.example.AiTaster.service.InvitationTimePolicy;
 import com.example.AiTaster.service.MoneyMovementService;
+import com.example.AiTaster.service.NotificationService;
 import com.example.AiTaster.service.PendingPaymentService;
 import com.example.AiTaster.service.PlatformFeeCalculator;
 import com.example.AiTaster.service.ProjectMilestoneService;
@@ -92,6 +94,12 @@ class ProjectPaymentServiceTest {
 
     @Mock
     private RealtimeService realtimeService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private InvitationTimePolicy invitationTimePolicy;
 
     @InjectMocks
     private ProjectPaymentService projectPaymentService;
@@ -181,6 +189,8 @@ class ProjectPaymentServiceTest {
         when(clientProfileRepo.findByUser(clientUser)).thenReturn(Optional.of(clientProfile));
         when(invitationRepo.findByInvitationId(1L)).thenReturn(Optional.of(invitation));
         when(projectRepo.existsByInvitation(invitation)).thenReturn(false);
+        when(invitationTimePolicy.isPaymentExpired(eq(invitation), any(LocalDateTime.class)))
+                .thenReturn(true);
         when(paymentTransactionRepo.findPendingTransactionByReferenceAndMethod(
                 eq(PaymentReferenceType.INVITATION),
                 eq(1L),
@@ -222,6 +232,10 @@ class ProjectPaymentServiceTest {
         when(clientProfileRepo.findByUser(clientUser)).thenReturn(Optional.of(clientProfile));
         when(invitationRepo.findWithDetailByInvitationId(1L)).thenReturn(Optional.of(invitation));
         when(projectRepo.existsByInvitation(invitation)).thenReturn(false);
+        when(invitationTimePolicy.isPaymentExpired(eq(invitation), any(LocalDateTime.class)))
+                .thenReturn(false);
+        when(invitationTimePolicy.paymentDeadline(invitation))
+                .thenReturn(invitation.getRespondedAt().plusHours(24));
         when(projectRepo.save(any(Project.class))).thenAnswer(invocation -> {
             Project project = invocation.getArgument(0);
             if (project.getProjectId() == null) {
@@ -260,6 +274,7 @@ class ProjectPaymentServiceTest {
 
         assertThat(pendingSepayPayment.getPaymentStatus()).isEqualTo(PaymentStatus.EXPIRED);
         verify(paymentTransactionRepo).save(pendingSepayPayment);
+        verify(notificationService).notifyProjectWorkspaceReady(any(Project.class));
     }
 
     private Invitation acceptedInvitation(ClientProfile clientProfile, LocalDateTime respondedAt) {
