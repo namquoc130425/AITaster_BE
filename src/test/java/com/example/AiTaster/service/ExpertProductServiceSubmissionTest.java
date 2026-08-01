@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,6 +62,25 @@ class ExpertProductServiceSubmissionTest {
     private ExpertProductService expertProductService;
 
     @Test
+    void createService_rejectsFeeBelowMinimum() {
+        User user = User.builder().userId(1L).build();
+        ExpertProfile expertProfile = ExpertProfile.builder().expertProfileId(2L).user(user).build();
+        ExpertServiceRequest request = new ExpertServiceRequest();
+        request.setServiceName("AI chatbot");
+        request.setServiceDescription("Build a support chatbot");
+        request.setServiceFee(BigDecimal.valueOf(9_999));
+
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
+
+        assertThatThrownBy(() -> expertProductService.CreatService(request))
+                .isInstanceOf(GlobalException.class)
+                .hasMessage("Phí dịch vụ AI phải từ 10.000 VND trở lên");
+
+        verify(expertServiceRepo, never()).save(any());
+    }
+
+    @Test
     void createService_rejectsSubmissionWhenRequiredFilesAreMissing() {
         User user = User.builder().userId(1L).build();
         ExpertProfile expertProfile = ExpertProfile.builder().expertProfileId(2L).user(user).build();
@@ -68,7 +88,7 @@ class ExpertProductServiceSubmissionTest {
         ExpertServiceRequest request = new ExpertServiceRequest();
         request.setServiceName("AI chatbot");
         request.setServiceDescription("Build a support chatbot");
-        request.setServiceFee(BigDecimal.valueOf(100_000));
+        request.setServiceFee(BigDecimal.valueOf(10_000));
         request.setSelectedCategoryId(3L);
         request.setSelectedSkillIds(List.of(4L));
 

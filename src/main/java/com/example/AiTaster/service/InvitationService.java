@@ -26,6 +26,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class InvitationService implements Iinvitation {
+    private static final BigDecimal MIN_PROJECT_PRICE = BigDecimal.valueOf(10_000);
+
     private final ExpertApplicationMapper expertApplicationMapper;
     private final ExpertApplicationRepo expertApplicationRepo;
     private final ContentManagerService contentManagerService;
@@ -291,6 +293,11 @@ public class InvitationService implements Iinvitation {
         contentManagerService.validateKeywordInput(request.getAcceptanceCriteria());
 
         validateTimeLine(request.getFinalTimelineValue(), request.getFinalTimelineUnit());
+
+        if (request.getFinalOfferedPrice() == null
+                || request.getFinalOfferedPrice().compareTo(MIN_PROJECT_PRICE) < 0) {
+            throw new GlobalException(400, "Giá toàn bộ dự án phải từ 10.000 VND trở lên");
+        }
 
         if (!Boolean.TRUE.equals(request.getClientAcceptedTerms())) {
             throw new GlobalException(400, "Khách hàng phải đồng ý với điều khoản");

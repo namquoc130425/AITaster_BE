@@ -60,6 +60,7 @@ public class ExpertProductService implements IExpertService {
     private static final int SERVICE_DESCRIPTION_MAX_LENGTH = 2000;
     private static final long MAX_DOCUMENT_SIZE = 20L * 1024 * 1024;
     private static final long MAX_SOURCE_SIZE = 100L * 1024 * 1024;
+    private static final BigDecimal MIN_SERVICE_FEE = new BigDecimal("10000");
     private static final BigDecimal MAX_SERVICE_FEE = new BigDecimal("1000000000");
 
     private final ContentManagerService contentManagerService;
@@ -572,7 +573,7 @@ public class ExpertProductService implements IExpertService {
         contentManagerService.validateKeywordInput(serviceDescription);
 
         if (request.getServiceFee() == null
-                || request.getServiceFee().signum() <= 0) {
+                || request.getServiceFee().compareTo(MIN_SERVICE_FEE) < 0) {
             throw new GlobalException(ErrorCode.SERVICE_FEE_INVALID);
         }
 
@@ -646,7 +647,7 @@ public class ExpertProductService implements IExpertService {
         }
 
         if (expertService.getServiceFee() == null
-                || expertService.getServiceFee().signum() <= 0) {
+                || expertService.getServiceFee().compareTo(MIN_SERVICE_FEE) < 0) {
             throw new GlobalException(ErrorCode.SERVICE_FEE_INVALID);
         }
 

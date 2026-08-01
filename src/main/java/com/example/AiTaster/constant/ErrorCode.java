@@ -43,6 +43,7 @@ public enum ErrorCode {
     BLOCKED_KEYWORD("Nội dung chứa từ khóa không được phép", HttpStatus.BAD_REQUEST),
     PROMPT_INJECTION("Nội dung có dấu hiệu can thiệp câu lệnh AI", HttpStatus.BAD_REQUEST),
     PRICE_INVALID("Giá phải lớn hơn hoặc bằng 0", HttpStatus.BAD_REQUEST),
+    PROJECT_PRICE_MINIMUM("Giá toàn bộ dự án phải từ 10.000 VND trở lên", HttpStatus.BAD_REQUEST),
 
     APPLICATION_NOT_FOUND("Không tìm thấy hồ sơ ứng tuyển", HttpStatus.NOT_FOUND),
     JOB_POST_NOT_FOUND("Không tìm thấy bài đăng dự án", HttpStatus.NOT_FOUND),
@@ -75,7 +76,7 @@ public enum ErrorCode {
     AI_SERVICE_NOT_READY_FOR_REVIEW("Dịch vụ AI chưa đủ điều kiện để gửi duyệt", HttpStatus.BAD_REQUEST),
     ONLY_ADMIN_CAN_REVIEW_AI_SERVICE("Chỉ quản trị viên mới có thể duyệt dịch vụ AI", HttpStatus.FORBIDDEN),
     REJECTION_REASON_REQUIRED("Lý do từ chối không được để trống", HttpStatus.BAD_REQUEST),
-    SERVICE_FEE_INVALID("Phí dịch vụ phải lớn hơn 0", HttpStatus.BAD_REQUEST),
+    SERVICE_FEE_INVALID("Phí dịch vụ AI phải từ 10.000 VND trở lên", HttpStatus.BAD_REQUEST),
     SERVICE_SKILL_REQUIRED("Vui lòng chọn ít nhất một kỹ năng", HttpStatus.BAD_REQUEST),
     SERVICE_CATEGORY_REQUIRED("Vui lòng chọn danh mục", HttpStatus.BAD_REQUEST),
     SERVICE_FILE_REQUIRED("Phải có tệp tài liệu và mã nguồn trước khi gửi duyệt", HttpStatus.BAD_REQUEST),

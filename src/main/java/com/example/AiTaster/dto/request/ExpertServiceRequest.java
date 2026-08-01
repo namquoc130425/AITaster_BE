@@ -29,7 +29,7 @@ public class ExpertServiceRequest {
     String serviceDescription;
 
     @NotNull(message = "SERVICE_FEE_INVALID")
-    @DecimalMin(value = "1", message = "SERVICE_FEE_INVALID")
+    @DecimalMin(value = "10000", message = "SERVICE_FEE_INVALID")
     @DecimalMax(value = "1000000000", message = "Phí dịch vụ không được vượt quá 1.000.000.000 VND")
     BigDecimal serviceFee;
 

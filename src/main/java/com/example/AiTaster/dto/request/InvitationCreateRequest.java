@@ -30,7 +30,7 @@ public class InvitationCreateRequest {
     String acceptanceCriteria;
 
     @NotNull(message = "FIELD_REQUIRED")
-    @DecimalMin(value = "0.0", inclusive = false, message = "PRICE_INVALID")
+    @DecimalMin(value = "10000", message = "PROJECT_PRICE_MINIMUM")
     BigDecimal finalOfferedPrice;
 
 
