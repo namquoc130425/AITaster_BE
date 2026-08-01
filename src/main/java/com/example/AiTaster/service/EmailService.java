@@ -44,7 +44,7 @@ public class EmailService {
             context.setVariable("recipientRole", recipientRole);
             context.setVariable("emailType", emailType);
             context.setVariable("recipientName", safeDisplay(recipientName, "bạn"));
-            context.setVariable("serviceName", safeDisplay(serviceName, "AI Service"));
+            context.setVariable("serviceName", safeDisplay(serviceName, "Dịch vụ AI"));
             context.setVariable("projectTitle", safeDisplay(projectTitle, "Dự án"));
 
             String htmlContent = templateEngine.process(
@@ -65,7 +65,7 @@ public class EmailService {
 
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send invoice email", e);
+            throw new RuntimeException("Không thể gửi email hóa đơn", e);
         }
     }
 
@@ -79,7 +79,7 @@ public class EmailService {
             return "invoice-project-completed";
         }
 
-        throw new IllegalArgumentException("Unsupported invoice email type: " + emailType);
+        throw new IllegalArgumentException("Loại email hóa đơn không được hỗ trợ: " + emailType);
     }
 
     // Tạo subject email rõ nghiệp vụ và có mã hóa đơn để người nhận dễ đối chiếu.
@@ -138,13 +138,13 @@ public class EmailService {
             );
 
             helper.setTo(to);
-            helper.setSubject("AITasker Reset Password OTP");
+            helper.setSubject("Mã OTP đặt lại mật khẩu AITasker");
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email");
+            throw new RuntimeException("Không thể gửi email");
         }
     }
 
@@ -156,8 +156,8 @@ public class EmailService {
     ) {
         try {
             Context context = new Context();
-            context.setVariable("displayName", safeDisplay(displayName, "there"));
-            context.setVariable("role", safeDisplay(role, "member"));
+            context.setVariable("displayName", safeDisplay(displayName, "bạn"));
+            context.setVariable("role", safeDisplay(role, "thành viên"));
 
             String htmlContent = templateEngine.process(
                     "welcome-user",
@@ -173,13 +173,13 @@ public class EmailService {
             );
 
             helper.setTo(to);
-            helper.setSubject("Welcome to AITasker");
+            helper.setSubject("Chào mừng bạn đến với AITasker");
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send welcome email", e);
+            throw new RuntimeException("Không thể gửi email chào mừng", e);
         }
     }
 
@@ -211,13 +211,13 @@ public class EmailService {
             );
 
             helper.setTo(to);
-            helper.setSubject("AITasker bank account verification OTP");
+            helper.setSubject("Mã OTP xác thực tài khoản ngân hàng AITasker");
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email");
+            throw new RuntimeException("Không thể gửi email");
         }
     }
 
@@ -330,7 +330,7 @@ public class EmailService {
 
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email", e);
+            throw new RuntimeException("Không thể gửi email", e);
         }
     }
 

@@ -81,10 +81,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) ->
-                                writeJsonError(response, HttpStatus.UNAUTHORIZED, "You need to log in to perform this action")
+                                writeJsonError(response, HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện thao tác này")
                         )
                         .accessDeniedHandler((request, response, accessDeniedException) ->
-                                writeJsonError(response, HttpStatus.FORBIDDEN, "You do not have permission to perform this action")
+                                writeJsonError(response, HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này")
                         )
                 )
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)   // chạy trước kiểm tra token , lấy user , set vào Authentication vào SecurityContext

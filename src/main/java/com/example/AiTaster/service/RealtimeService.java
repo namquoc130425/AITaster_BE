@@ -11,6 +11,8 @@ import com.example.AiTaster.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 
@@ -55,7 +57,7 @@ public class RealtimeService {
                 "MESSAGE_RECEIVED",
                 ReferenceType.CONVERSATION,
                 message.getConversationId(),
-                "New message received"
+                "Đã nhận tin nhắn mới"
         );
     }
 
@@ -76,15 +78,12 @@ public class RealtimeService {
                 message
         );
 
-        sendToUser(user, "/queue/wallet", event);
-        sendLegacyUserTopic(user, "wallet", event);
-        pushUserDashboardEvent(
-                user,
-                eventType,
-                ReferenceType.WITHDRAW,
-                walletId,
-                message
-        );
+        runAfterCommit(() -> {
+            sendToUser(user, "/queue/wallet", event);
+            sendLegacyUserTopic(user, "wallet", event);
+            sendToUser(user, "/queue/dashboard", event);
+            sendLegacyUserTopic(user, "dashboard", event);
+        });
     }
 
     public void pushUserProjectEvent(
@@ -192,10 +191,25 @@ public class RealtimeService {
                 .at(LocalDateTime.now())
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/admin/withdrawals", event);
+        runAfterCommit(() -> {
+            messagingTemplate.convertAndSend("/topic/admin/withdrawals", event);
+            userRepo.findByRole(Role.ADMIN)
+                    .forEach(admin -> sendToUser(admin, "/queue/dashboard", event));
+        });
+    }
 
-        userRepo.findByRole(Role.ADMIN)
-                .forEach(admin -> sendToUser(admin, "/queue/dashboard", event));
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 
     private RealtimeEventResponse buildEvent(

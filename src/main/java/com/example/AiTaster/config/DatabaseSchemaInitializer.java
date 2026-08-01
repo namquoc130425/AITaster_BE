@@ -20,6 +20,7 @@ public class DatabaseSchemaInitializer implements CommandLineRunner {
     public void run(String... args) {
         normalizeExpertServiceStatusColumn();
         normalizeInvoiceTypeColumn();
+        reconcileExpertServiceRatings();
     }
 
     private void normalizeExpertServiceStatusColumn() {
@@ -68,5 +69,26 @@ public class DatabaseSchemaInitializer implements CommandLineRunner {
                 "ALTER TABLE invoices MODIFY COLUMN invoice_type VARCHAR(50) NOT NULL"
         );
         log.info("Normalized invoices.invoice_type column");
+    }
+
+    private void reconcileExpertServiceRatings() {
+        jdbcTemplate.update(
+                """
+                        UPDATE expert_service
+                        SET rating = COALESCE(
+                                (SELECT ROUND(AVG(r.rating), 2)
+                                 FROM rating r
+                                 WHERE r.target_type = 'EXPERT_SERVICE'
+                                   AND r.expert_service_id = expert_service.service_id),
+                                0.00),
+                            rating_count = COALESCE(
+                                (SELECT COUNT(*)
+                                 FROM rating r
+                                 WHERE r.target_type = 'EXPERT_SERVICE'
+                                   AND r.expert_service_id = expert_service.service_id),
+                                0)
+                        """
+        );
+        log.info("Reconciled expert service rating aggregates");
     }
 }

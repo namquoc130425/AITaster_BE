@@ -19,7 +19,7 @@ public class CurrentUserService {
             throw new GlobalException("Bạn chưa đăng nhập");
         }
         String username = authentication.getName(); // lấy email hoặc user name từ jwt
-        return userRepo.findByUsername(username).orElseThrow(() ->  new GlobalException("User not found"));
+        return userRepo.findByUsername(username).orElseThrow(() ->  new GlobalException("Không tìm thấy người dùng"));
     }
 
 }

@@ -37,22 +37,32 @@ CategoryRepo categoryRepo;
 
     @Override
     public CategoryResponse getByCategoryId(Long id) {
-        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Category: " + ErrorCode.NOT_FOUND.getMessage()));
+        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Danh mục: " + ErrorCode.NOT_FOUND.getMessage()));
         return categoryMapper.toResponse(category);
     }
 
     @Override
-    public CategoryResponse CreateCategory(CategoryRequest category) {
-        Category categoryEntity = categoryMapper.toEntity(category);
+    public CategoryResponse CreateCategory(CategoryRequest request) {
+        String categoryName = request.getCategoryName().trim();
+        String slug = resolveSlug(request.getSlug(), categoryName);
+        validateUniqueCategory(categoryName, slug, null);
+
+        Category categoryEntity = categoryMapper.toEntity(request);
+        applyNormalizedValues(categoryEntity, categoryName, slug, request.getDescription());
         categoryEntity = categoryRepo.save(categoryEntity);
 
         return categoryMapper.toResponse(categoryEntity);
     }
 
     @Override
-    public CategoryResponse UpdateCategory(Long id, CategoryRequest category) {
-        Category categoryid = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Category: " + ErrorCode.NOT_FOUND.getMessage()));
-        Category entity = categoryMapper.updateEntity(category, categoryid);
+    public CategoryResponse UpdateCategory(Long id, CategoryRequest request) {
+        Category categoryid = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Danh mục: " + ErrorCode.NOT_FOUND.getMessage()));
+        String categoryName = request.getCategoryName().trim();
+        String slug = resolveSlug(request.getSlug(), categoryName);
+        validateUniqueCategory(categoryName, slug, id);
+
+        Category entity = categoryMapper.updateEntity(request, categoryid);
+        applyNormalizedValues(entity, categoryName, slug, request.getDescription());
          categoryRepo.save(entity);
          CategoryResponse categoryResponse = categoryMapper.toResponse(entity);
         return categoryResponse;
@@ -62,7 +72,7 @@ CategoryRepo categoryRepo;
 
     @Override
     public Void DeleteCategory(long id) {
-        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Category: " + ErrorCode.NOT_FOUND.getMessage()));
+        Category category = categoryRepo.findById(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Danh mục: " + ErrorCode.NOT_FOUND.getMessage()));
         categoryRepo.delete(category);
         return null;
     }
@@ -80,7 +90,47 @@ CategoryRepo categoryRepo;
     }
 
 
-    // gọi ra nha chung , gọi trong create hoặc update á ( bạn làm lười lắm )
+    private String resolveSlug(String requestedSlug, String categoryName) {
+        String source = requestedSlug == null || requestedSlug.isBlank()
+                ? categoryName
+                : requestedSlug;
+        String slug = generateSlug(source);
+
+        if (slug.isBlank() || slug.length() > 120) {
+            throw new GlobalException(400, "Slug danh mục không hợp lệ");
+        }
+
+        return slug;
+    }
+
+    private void validateUniqueCategory(String categoryName, String slug, Long excludedId) {
+        boolean duplicatedName = excludedId == null
+                ? categoryRepo.existsByCategoryNameIgnoreCase(categoryName)
+                : categoryRepo.existsByCategoryNameIgnoreCaseAndCategoryIdNot(categoryName, excludedId);
+        boolean duplicatedSlug = excludedId == null
+                ? categoryRepo.existsBySlugIgnoreCase(slug)
+                : categoryRepo.existsBySlugIgnoreCaseAndCategoryIdNot(slug, excludedId);
+
+        if (duplicatedName) {
+            throw new GlobalException(409, "Tên danh mục đã tồn tại");
+        }
+
+        if (duplicatedSlug) {
+            throw new GlobalException(409, "Slug danh mục đã tồn tại");
+        }
+    }
+
+    private void applyNormalizedValues(
+            Category category,
+            String categoryName,
+            String slug,
+            String description
+    ) {
+        category.setCategoryName(categoryName);
+        category.setSlug(slug);
+        category.setDescription(description.trim());
+    }
+
     private String generateSlug(String input) {
         return Normalizer.normalize(input, Normalizer.Form.NFD)   // tách dấu tiếng việt
                 .replaceAll("\\p{M}", "")        // xóa toàn bộ dấu

@@ -1,7 +1,10 @@
 package com.example.AiTaster.service.imp;
 
 import com.example.AiTaster.constant.UserWalletStatus;
+import com.example.AiTaster.constant.PaymentStatus;
+import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.dto.request.UserWalletRequest;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.dto.response.PaymentTransactionResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.entity.User;
@@ -24,6 +27,13 @@ public interface IUserWalletService {
     List<UserWalletResponse> getWithdrawalRequests();
 
     List<PaymentTransactionResponse> getMyTransactions();
+
+    PageResponse<PaymentTransactionResponse> getAdminTransactions(
+            Integer page,
+            Integer size,
+            PaymentStatus paymentStatus,
+            TransactionType transactionType
+    );
 
     UserWalletResponse changeStatus(
             Long walletId,

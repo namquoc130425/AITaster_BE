@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class ResubmitExpertCertificateRequest {
-    @NotBlank(message = "certificateUrl is required")
+    @NotBlank(message = "Đường dẫn chứng chỉ không được để trống")
     String certificateUrl;
 }

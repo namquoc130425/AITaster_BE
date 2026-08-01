@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TokenRequest {
 
-    @NotBlank
+    @NotBlank(message = "FIELD_REQUIRED")
     @JsonAlias("refreshToken")
     String token;
 }

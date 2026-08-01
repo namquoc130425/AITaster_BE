@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorSkill {
 
-    SKILL_EXISTS("Skill already exist", HttpStatus.BAD_REQUEST),
-    NOT_FOUND_SKILL("Skill not found", HttpStatus.BAD_REQUEST),
+    SKILL_EXISTS("Kỹ năng đã tồn tại", HttpStatus.BAD_REQUEST),
+    NOT_FOUND_SKILL("Không tìm thấy kỹ năng", HttpStatus.BAD_REQUEST),
     ;
 
 

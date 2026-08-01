@@ -44,11 +44,11 @@ public class ExpertServicePurchaseService {
     public PaymentTransaction purchaseService(Long serviceId) {
         User user = currentUserService.getCurrentUser();
 
-        ClientProfile clientProfile = clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Only client can purchase service"));
-        ExpertService expertService = expertServiceRepo.findById(serviceId).orElseThrow(() -> new GlobalException(404, "Expert service not found"));
+        ClientProfile clientProfile = clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể mua dịch vụ AI"));
+        ExpertService expertService = expertServiceRepo.findById(serviceId).orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ AI"));
 
         if(!expertService.getServiceStatus().equals(ServiceStatus.OPEN)) {
-            throw new GlobalException(400, "Service is not available");
+            throw new GlobalException(400, "Dịch vụ AI hiện không khả dụng");
         }
         Long clientUserId = clientProfile.getUser().getUserId();
         ensureServiceNotPurchased(clientUserId, serviceId);
@@ -96,13 +96,13 @@ public class ExpertServicePurchaseService {
         User user = currentUserService.getCurrentUser();
 
         ClientProfile clientProfile = clientProfileRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(403, "Only client can purchase service"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể mua dịch vụ AI"));
 
         ExpertService expertService = expertServiceRepo.findById(serviceId)
-                .orElseThrow(() -> new GlobalException(404, "Expert service not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ AI"));
 
         if (!ServiceStatus.OPEN.equals(expertService.getServiceStatus())) {
-            throw new GlobalException(400, "Service is not available");
+            throw new GlobalException(400, "Dịch vụ AI hiện không khả dụng");
         }
 
         BigDecimal amount = expertService.getServiceFee();
@@ -144,7 +144,7 @@ public class ExpertServicePurchaseService {
                 );
 
         if (alreadyPurchased) {
-            throw new GlobalException(409, "You already purchased this AI service");
+            throw new GlobalException(409, "Bạn đã mua dịch vụ AI này");
         }
     }
 

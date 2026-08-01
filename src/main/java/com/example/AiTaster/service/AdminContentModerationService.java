@@ -68,7 +68,7 @@ public class AdminContentModerationService {
         checkAdmin();
 
         JobPost jobPost = jobPostRepo.findById(jobPostId)
-                .orElseThrow(() -> new GlobalException(404, "Job post not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy bài đăng dự án"));
         User owner = resolveJobPostOwner(jobPost);
 
         jobPost.setJobPostStatus(JobpostStatus.CANCELED);
@@ -86,8 +86,8 @@ public class AdminContentModerationService {
                     NotificationType.SYSTEM,
                     ReferenceType.JOB_POST,
                     saved.getJobPostId(),
-                    "Job post removed by admin",
-                    buildModerationMessage("Your job post '" + saved.getTitle() + "' was removed by admin.", request)
+                    "Bài đăng dự án đã bị quản trị viên gỡ",
+                    buildModerationMessage("Bài đăng dự án '" + saved.getTitle() + "' của bạn đã bị quản trị viên gỡ.", request)
             );
         }
 
@@ -115,7 +115,7 @@ public class AdminContentModerationService {
         checkAdmin();
 
         ExpertService expertService = expertServiceRepo.findById(serviceId)
-                .orElseThrow(() -> new GlobalException(404, "AI service not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ AI"));
         User owner = resolveExpertServiceOwner(expertService);
 
         expertService.setServiceStatus(ServiceStatus.DELETED);
@@ -133,8 +133,8 @@ public class AdminContentModerationService {
                     NotificationType.EXPERT_SERVICE,
                     ReferenceType.EXPERT_SERVICE,
                     saved.getServiceId(),
-                    "AI service removed by admin",
-                    buildModerationMessage("Your AI service '" + saved.getServiceName() + "' was removed by admin.", request)
+                    "Dịch vụ AI đã bị quản trị viên gỡ",
+                    buildModerationMessage("Dịch vụ AI '" + saved.getServiceName() + "' của bạn đã bị quản trị viên gỡ.", request)
             );
         }
 
@@ -206,7 +206,7 @@ public class AdminContentModerationService {
     private void checkAdmin() {
         User currentUser = currentUserService.getCurrentUser();
         if (!Role.ADMIN.equals(currentUser.getRole())) {
-            throw new GlobalException(403, "Only admin can moderate content");
+            throw new GlobalException(403, "Chỉ quản trị viên mới có thể kiểm duyệt nội dung");
         }
     }
 
@@ -234,6 +234,6 @@ public class AdminContentModerationService {
             return baseMessage;
         }
 
-        return baseMessage + " Reason: " + reason.trim();
+        return baseMessage + " Lý do: " + reason.trim();
     }
 }

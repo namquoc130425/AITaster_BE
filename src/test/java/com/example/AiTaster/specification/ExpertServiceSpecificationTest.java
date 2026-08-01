@@ -51,6 +51,8 @@ class ExpertServiceSpecificationTest {
                 .build());
 
         persistService("Unrated", BigDecimal.ZERO, 0);
+        persistService("One star", new BigDecimal("1.00"), 1);
+        persistService("One point nine stars", new BigDecimal("1.90"), 2);
         persistService("Ba sao", new BigDecimal("3.00"), 2);
         persistService("Four stars", new BigDecimal("4.00"), 3);
         persistService("Five stars", new BigDecimal("5.00"), 4);
@@ -58,7 +60,7 @@ class ExpertServiceSpecificationTest {
     }
 
     @Test
-    void minRating_filtersInDatabaseBeforePaginationAndExcludesUnratedServices() {
+    void minRating_filtersExactStarBucketInDatabaseBeforePagination() {
         ExpertServiceFillerRequest request = requestWithMinRating(4);
 
         Page<ExpertService> page = expertServiceRepo.findAll(
@@ -66,11 +68,23 @@ class ExpertServiceSpecificationTest {
                 PageRequest.of(0, 1, Sort.by("serviceId").ascending())
         );
 
-        assertThat(page.getTotalElements()).isEqualTo(2);
+        assertThat(page.getTotalElements()).isEqualTo(1);
         assertThat(page.getContent())
                 .extracting(ExpertService::getServiceName)
                 .containsExactly("Four stars");
         assertThat(page.getContent().getFirst().getRatingCount()).isPositive();
+    }
+
+    @Test
+    void minRatingOne_doesNotReturnFiveStarServices() {
+        Page<ExpertService> page = expertServiceRepo.findAll(
+                ExpertServiceSpecification.filter(requestWithMinRating(1)),
+                PageRequest.of(0, 10, Sort.by("serviceId").ascending())
+        );
+
+        assertThat(page.getContent())
+                .extracting(ExpertService::getServiceName)
+                .containsExactly("One star", "One point nine stars");
     }
 
     @Test
@@ -84,8 +98,8 @@ class ExpertServiceSpecificationTest {
                 PageRequest.of(0, 10)
         );
 
-        assertThat(withoutRatingFilter.getTotalElements()).isEqualTo(4);
-        assertThat(clearedRatingFilter.getTotalElements()).isEqualTo(4);
+        assertThat(withoutRatingFilter.getTotalElements()).isEqualTo(6);
+        assertThat(clearedRatingFilter.getTotalElements()).isEqualTo(6);
     }
 
     @Test

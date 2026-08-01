@@ -67,7 +67,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<APIResponse<CategoryResponse>> update(@Valid @PathVariable Long id, @RequestBody CategoryRequest request
+    public ResponseEntity<APIResponse<CategoryResponse>> update(@PathVariable Long id, @RequestBody @Valid CategoryRequest request
     ) {
         CategoryResponse response =  categoryService.UpdateCategory(id,request);
         return ResponseEntity.status(201).body(APIResponse.response(201,"Update Category successfully",response));

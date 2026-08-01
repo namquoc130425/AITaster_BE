@@ -78,7 +78,7 @@ class ExpertApplicationServiceNotFoundTest {
         );
 
         assertThat(exception.getCode()).isEqualTo(404);
-        assertThat(exception).hasMessage("Job Post Not Found");
+        assertThat(exception).hasMessage("Không tìm thấy bài đăng dự án");
     }
 
     @Test
@@ -96,7 +96,7 @@ class ExpertApplicationServiceNotFoundTest {
         );
 
         assertThat(exception.getCode()).isEqualTo(404);
-        assertThat(exception).hasMessage("Job Post Not Found");
+        assertThat(exception).hasMessage("Không tìm thấy bài đăng dự án");
     }
 
     @Test
@@ -109,6 +109,6 @@ class ExpertApplicationServiceNotFoundTest {
         );
 
         assertThat(exception.getCode()).isEqualTo(404);
-        assertThat(exception).hasMessage("Application not found");
+        assertThat(exception).hasMessage("Không tìm thấy hồ sơ ứng tuyển");
     }
 }

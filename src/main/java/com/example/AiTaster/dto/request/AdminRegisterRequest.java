@@ -30,7 +30,7 @@ public class AdminRegisterRequest {
     @NotBlank(message = "FIELD_REQUIRED")
     String avatarUrl;
 
-    @NotBlank(message = "ErrorCode.FIELD_REQUIRED")
+    @NotBlank(message = "FIELD_REQUIRED")
     @Pattern(regexp = "^(03|05|07|08|09|012|016|018|019)[0-9]{8}$", message = "INVALID_FORMAT")
     String phone;
 }

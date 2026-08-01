@@ -8,13 +8,13 @@ import org.springframework.web.multipart.MultipartFile;
 @Data
 public class CreateReportRequest {
 
-    @NotNull
+    @NotNull(message = "FIELD_REQUIRED")
     Long reportedUserId;
 
-    @NotBlank
+    @NotBlank(message = "FIELD_REQUIRED")
     String reportTitle;
 
-    @NotBlank
+    @NotBlank(message = "FIELD_REQUIRED")
     String reportReason;
 
     String reportDescription;

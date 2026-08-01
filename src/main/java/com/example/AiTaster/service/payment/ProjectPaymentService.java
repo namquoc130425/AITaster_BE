@@ -48,7 +48,7 @@ public class ProjectPaymentService implements IProjectPayment {
         Invitation invitation = findInvitation(invitationId);
         checkInvitationOwnerClient(invitation, clientProfile);
         if (projectRepo.existsByInvitation(invitation)) {
-            throw new GlobalException(400, "Project already exists for this invitation");
+            throw new GlobalException(400, "Lời mời này đã có dự án");
         }
         ensureInvitationCanBePaid(invitation);
 
@@ -86,7 +86,7 @@ public class ProjectPaymentService implements IProjectPayment {
                 .getClientProfileId();
 
         if (!ownerClientId.equals(clientProfile.getClientProfileId())) {
-            throw new GlobalException(403, "You are not owner client of this invitation");
+            throw new GlobalException(403, "Bạn không phải khách hàng sở hữu lời mời này");
         }
     }
 
@@ -94,23 +94,23 @@ public class ProjectPaymentService implements IProjectPayment {
     // Tìm invitation theo id.
     private Invitation findInvitation(Long invitationId) {
         return invitationRepo.findByInvitationId(invitationId)
-                .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy lời mời"));
     }
 
 
     // Invitation phải được expert accept, có thời gian phản hồi, và còn hạn thanh toán.
     private void ensureInvitationCanBePaid(Invitation invitation) {
         if (!InvitationStatus.ACCEPTED.equals(invitation.getInvitationStatus())) {
-            throw new GlobalException(400, "Invitation is not accepted");
+            throw new GlobalException(400, "Lời mời chưa được chấp nhận");
         }
 
         if (invitation.getRespondedAt() == null) {
-            throw new GlobalException(400, "Invitation response time is missing");
+            throw new GlobalException(400, "Không tìm thấy thời điểm phản hồi lời mời");
         }
 
         if (invitationTimePolicy.isPaymentExpired(invitation,LocalDateTime.now())) { // HẾT HẠN THANH TOÁN THÌ KIEE
             expireInvitationPayment(invitation);
-            throw new GlobalException(403, "Payment deadline is expired");
+            throw new GlobalException(403, "Đã quá hạn thanh toán");
         }
     }
 
@@ -145,7 +145,7 @@ public class ProjectPaymentService implements IProjectPayment {
     }
 
     private ClientProfile findClientProfileByCurrentUser(User currentUser) {
-        return clientProfileRepo.findByUser(currentUser).orElseThrow(() -> new GlobalException(403, "Only client can create project payment"));
+        return clientProfileRepo.findByUser(currentUser).orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể thanh toán dự án"));
     }
 
     @Transactional
@@ -154,11 +154,11 @@ public class ProjectPaymentService implements IProjectPayment {
         ClientProfile clientProfile = findClientProfileByCurrentUser(currentUser);
 
         Invitation invitation = invitationRepo.findWithDetailByInvitationId(invitationId)
-                .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy lời mời"));
 
         checkInvitationOwnerClient(invitation, clientProfile);
         if (projectRepo.existsByInvitation(invitation)) {
-            throw new GlobalException(400, "Project already exists for this invitation");
+            throw new GlobalException(400, "Lời mời này đã có dự án");
         }
         ensureInvitationCanBePaid(invitation);
 
@@ -209,12 +209,12 @@ public class ProjectPaymentService implements IProjectPayment {
                 currentUser,
                 "PROJECT_ESCROW_PAID_BY_WALLET",
                 null,
-                "Project escrow paid by wallet"
+                "Đã thanh toán ký quỹ dự án bằng ví"
         );
         realtimeService.pushProjectParticipants(
                 project,
                 "PROJECT_CREATED",
-                "Project created"
+                "Đã tạo dự án"
         );
         notificationService.notifyProjectWorkspaceReady(project);
 
@@ -250,7 +250,7 @@ public class ProjectPaymentService implements IProjectPayment {
     // Tạo project escrow.
     private ProjectEscrow createProjectEscrow(Project project) {
         if (projectEscrowRepo.existsByProjectId(project.getProjectId())) {
-            throw new GlobalException(400, "Project escrow already exists");
+            throw new GlobalException(400, "Dự án đã có khoản ký quỹ");
         }
 
         Long clientProfileId = project.getInvitation()

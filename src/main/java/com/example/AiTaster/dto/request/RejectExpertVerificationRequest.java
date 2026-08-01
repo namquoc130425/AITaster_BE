@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class RejectExpertVerificationRequest {
-    @NotBlank(message = "Reject reason is required")
+    @NotBlank(message = "Lý do từ chối không được để trống")
     String reason;
 }

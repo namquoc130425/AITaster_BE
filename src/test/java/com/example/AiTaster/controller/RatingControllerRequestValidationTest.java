@@ -47,7 +47,7 @@ class RatingControllerRequestValidationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.messages").value("Invalid request body"));
+                .andExpect(jsonPath("$.messages").value("Dữ liệu yêu cầu không hợp lệ"));
 
         verifyNoInteractions(ratingService);
     }
@@ -60,7 +60,7 @@ class RatingControllerRequestValidationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.messages").value("Invalid request body"));
+                .andExpect(jsonPath("$.messages").value("Dữ liệu yêu cầu không hợp lệ"));
 
         verifyNoInteractions(ratingService);
     }
@@ -73,7 +73,7 @@ class RatingControllerRequestValidationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.messages").value("Invalid request body"));
+                .andExpect(jsonPath("$.messages").value("Dữ liệu yêu cầu không hợp lệ"));
 
         verifyNoInteractions(ratingService);
     }

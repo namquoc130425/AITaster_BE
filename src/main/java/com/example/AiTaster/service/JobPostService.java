@@ -39,7 +39,7 @@ public class JobPostService implements IJobPost {
     private final ContentManagerService  contentManagerService;
     private final SkillRepo skillRepo;
     private final ExpertApplicationRepo expertApplicationRepo;
-    private static final int TITLE_MIN_WORDS = 10;
+    private static final int TITLE_MIN_LENGTH = 20;
 
     //client tự tạo jobpost với status là Draft mà không dùng AI
     public JobPostResponse createJobPost(JobPostRequest jobPostRequest) {
@@ -159,7 +159,7 @@ public class JobPostService implements IJobPost {
 
     public JobPostResponse changeJobPostStatus(Long id, JobpostStatus jobPostStatus) {
         if (jobPostStatus == null) {
-            throw new GlobalException(400, "Job post status is required");
+            throw new GlobalException(400, "Trạng thái bài đăng dự án không được để trống");
         }
 
         ClientProfile clientProfile = getCurrentClientProfile();
@@ -176,20 +176,20 @@ public class JobPostService implements IJobPost {
     }
 
     public JobPost findJobPostById(Long jobPostId) {
-        return jobPostRepo.findJobPostByjobPostId(jobPostId).orElseThrow(() -> new GlobalException("Không tìm thấy job post với id: " + jobPostId));
+        return jobPostRepo.findJobPostByjobPostId(jobPostId).orElseThrow(() -> new GlobalException("Không tìm thấy bài đăng dự án với mã: " + jobPostId));
     }
 
     // lấy profile của user đang nhập hiện tại mà ko cần front end truyền id vào
     public ClientProfile getCurrentClientProfile() {
         User currentUser = currentUserService.getCurrentUser();
         return clientProfileRepo.findByUser(currentUser)
-                .orElseThrow(() -> new GlobalException(403, "Only client can access job posts"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể truy cập bài đăng dự án"));
     }
 
     // hàm check jobPost thuộc về client Profile nào
     private void checkJobPostByClientId(JobPost jobPost, ClientProfile clientProfile) {
         if (!clientProfile.getClientProfileId().equals(jobPost.getClientProfile().getClientProfileId())) {
-            throw new GlobalException("Bạn không có quyền thao tác job post này");
+            throw new GlobalException("Bạn không có quyền thao tác với bài đăng dự án này");
         }
     }
 
@@ -198,12 +198,12 @@ public class JobPostService implements IJobPost {
 
         // Nếu dữ liệu yêu cầu null thì chặn trước.
         if (request == null) {
-            throw new GlobalException(400, "Request is required");
+            throw new GlobalException(400, "Dữ liệu yêu cầu không được để trống");
         }
 
         // Check title
         contentManagerService.validateKeywordInput(request.getTitle());
-        validateTitleWordCount(request.getTitle());
+        validateTitleLength(request.getTitle());
 
         // Check mô tả yêu cầu
         contentManagerService.validateKeywordInput(request.getRequirementDescription());
@@ -218,7 +218,7 @@ public class JobPostService implements IJobPost {
         contentManagerService.validateKeywordInput(request.getTimeLine());
 
         if (request.getBudgets() == null || request.getBudgets().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Budget must be greater than 0");
+            throw new GlobalException(400, "Ngân sách phải lớn hơn 0");
         }
     }
 
@@ -235,22 +235,14 @@ public class JobPostService implements IJobPost {
         );
 
         if (duplicated) {
-            throw new GlobalException(409, "Duplicate job post request. Please do not submit the same job post twice");
+            throw new GlobalException(409, "Bài đăng dự án bị trùng lặp. Vui lòng không gửi cùng một nội dung hai lần");
         }
     }
 
-    private void validateTitleWordCount(String title) {
-        if (countWords(title) < TITLE_MIN_WORDS) {
-            throw new GlobalException(400, "Job title must contain at least " + TITLE_MIN_WORDS + " words");
+    private void validateTitleLength(String title) {
+        if (title == null || title.trim().length() < TITLE_MIN_LENGTH) {
+            throw new GlobalException(400, "Tiêu đề dự án phải có ít nhất " + TITLE_MIN_LENGTH + " ký tự");
         }
-    }
-
-    private int countWords(String value) {
-        if (value == null || value.isBlank()) {
-            return 0;
-        }
-
-        return value.trim().split("\\s+").length;
     }
 
     private String normalizeText(String value) {

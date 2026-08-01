@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class ReportStatusRequest {
 
-    @NotNull
+    @NotNull(message = "FIELD_REQUIRED")
     private ReportStatus reportStatus;
 
     private String adminResponse;

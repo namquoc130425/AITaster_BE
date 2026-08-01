@@ -18,6 +18,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JobPostAiRequest {
     @NotBlank(message = "TITLE_REQUIRED")
+    @Size(min = 20, message = "TITLE_MIN_LENGTH")
     String title;
 
     String requirementDescription;

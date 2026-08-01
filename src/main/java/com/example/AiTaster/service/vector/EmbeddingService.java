@@ -13,7 +13,7 @@ public class EmbeddingService {
 
     public float[] converTextToVector(String text) {
         if(text == null || text.isBlank()) {
-            throw new IllegalArgumentException("Text cannot be null or blank");
+            throw new IllegalArgumentException("Nội dung không được để trống");
         }
 
         return embeddingModel.embed(text);

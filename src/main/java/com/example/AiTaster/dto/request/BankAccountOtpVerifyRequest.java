@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class BankAccountOtpVerifyRequest {
-    @NotBlank(message = "OTP is required")
+    @NotBlank(message = "Mã OTP không được để trống")
     String otp;
 }

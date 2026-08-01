@@ -41,6 +41,8 @@ public interface RatingRepo extends JpaRepository<Rating, Long>, JpaSpecificatio
             RatingTargetType targetType
     );
 
+    long countByExpertProfile_ExpertProfileId(Long expertProfileId);
+
     @Query("""
             SELECT AVG(r.rating)
             FROM Rating r
@@ -62,4 +64,11 @@ public interface RatingRepo extends JpaRepository<Rating, Long>, JpaSpecificatio
             @Param("expertProfileId") Long expertProfileId,
             @Param("targetType") RatingTargetType targetType
     );
+
+    @Query("""
+            SELECT AVG(r.rating)
+            FROM Rating r
+            WHERE r.expertProfile.expertProfileId = :expertProfileId
+            """)
+    Double averageByExpertProfileId(@Param("expertProfileId") Long expertProfileId);
 }

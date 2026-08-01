@@ -6,6 +6,7 @@ import com.example.AiTaster.constant.NotificationType;
 import com.example.AiTaster.constant.ReferenceType;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.ServiceStatus;
+import com.example.AiTaster.constant.ProjectStatus;
 import com.example.AiTaster.dto.request.ExpertProfileRequest;
 import com.example.AiTaster.dto.request.ExpertRegisterRequest;
 import com.example.AiTaster.dto.request.ResubmitExpertCertificateRequest;
@@ -15,6 +16,8 @@ import com.example.AiTaster.dto.response.ExpertVerificationResponse;
 import com.example.AiTaster.dto.response.PublicExpertProfileResponse;
 import com.example.AiTaster.entity.ExpertProfile;
 import com.example.AiTaster.entity.ExpertVerification;
+import com.example.AiTaster.entity.Category;
+import com.example.AiTaster.entity.Skill;
 import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.mapper.CurrentUserResponseMapper;
@@ -24,6 +27,10 @@ import com.example.AiTaster.mapper.UserMapper;
 import com.example.AiTaster.repository.ExpertProfileRepo;
 import com.example.AiTaster.repository.ExpertServiceRepo;
 import com.example.AiTaster.repository.ExpertVerificationRepo;
+import com.example.AiTaster.repository.CategoryRepo;
+import com.example.AiTaster.repository.SkillRepo;
+import com.example.AiTaster.repository.RatingRepo;
+import com.example.AiTaster.repository.ProjectRepo;
 import com.example.AiTaster.repository.UserRepo;
 import com.example.AiTaster.service.imp.IExpertProfile;
 import jakarta.transaction.Transactional;
@@ -31,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Slf4j
@@ -57,6 +66,14 @@ public class ExpertProfileService implements IExpertProfile {
     NotificationService notificationService;
 @Autowired
     ExpertServiceRepo expertServiceRepo;
+@Autowired
+    CategoryRepo categoryRepo;
+@Autowired
+    SkillRepo skillRepo;
+@Autowired
+    RatingRepo ratingRepo;
+@Autowired
+    ProjectRepo projectRepo;
 
 
     @Override
@@ -64,38 +81,38 @@ public class ExpertProfileService implements IExpertProfile {
         return expertProfileRepo
                 .findAll().
                 stream().
-                map(expertProfileMapper::toResponse)
+                map(this::toResponseWithStatistics)
                 .toList();
     }
 
 @Override
     public ExpertProfileResponse getByExpertId(Long expertId) {
         ExpertProfile profile = expertProfileRepo.findById(expertId)
-                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
-        return expertProfileMapper.toResponse(profile);
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Hồ sơ chuyên gia: " + ErrorCode.NOT_FOUND.getMessage()));
+        return toResponseWithStatistics(profile);
     }
 
     @Override
     public ExpertProfileResponse getByUserId(Long userId) {
         ExpertProfile profile = expertProfileRepo.findByUser_UserId(userId)
-                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
-        return expertProfileMapper.toResponse(profile);
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Hồ sơ chuyên gia: " + ErrorCode.NOT_FOUND.getMessage()));
+        return toResponseWithStatistics(profile);
     }
 
     @Transactional
     public PublicExpertProfileResponse getPublicProfile(Long expertProfileId) {
         ExpertProfile profile = expertProfileRepo.findByExpertProfileId(expertProfileId)
-                .orElseThrow(() -> new GlobalException(404, "Expert profile not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hồ sơ chuyên gia"));
 
         ExpertVerificationStatus verificationStatus = profile.getVerification() != null
                 ? profile.getVerification().getVerificationStatus()
                 : null;
 
         if (!ExpertVerificationStatus.VERIFIED.equals(verificationStatus)) {
-            throw new GlobalException(404, "Expert profile not found");
+            throw new GlobalException(404, "Không tìm thấy hồ sơ chuyên gia");
         }
 
-        ExpertProfileResponse profileResponse = expertProfileMapper.toResponse(profile);
+        ExpertProfileResponse profileResponse = toResponseWithStatistics(profile);
         User user = profile.getUser();
 
         return PublicExpertProfileResponse.builder()
@@ -109,9 +126,9 @@ public class ExpertProfileService implements IExpertProfile {
                 .skills(profileResponse.getSkills())
                 .yearOfExperience(profile.getYearOfExperience())
                 .portfolioUrl(profile.getPortfolioUrl())
-                .rating(profile.getRating())
-                .ratingCount(profile.getRatingCount())
-                .completedProjects(profile.getCompletedProjects())
+                .rating(profileResponse.getRating())
+                .ratingCount(profileResponse.getRatingCount())
+                .completedProjects(profileResponse.getCompletedProjects())
                 .openAiServiceCount(expertServiceRepo.countByExpertProfile_ExpertProfileIdAndServiceStatus(
                         profile.getExpertProfileId(),
                         ServiceStatus.OPEN
@@ -126,7 +143,7 @@ public class ExpertProfileService implements IExpertProfile {
     public ExpertProfileResponse createForRegister(User user, ExpertRegisterRequest request) {
         // kiểm tra tồn tại ko
         if(expertProfileRepo.existsByUser_UserId(user.getUserId())) {
-            throw new GlobalException("This user already has a client profile");
+            throw new GlobalException("Người dùng này đã có hồ sơ khách hàng");
         }
 
         // Mapper chuyển dữ liệu yêu cầu sang entity.
@@ -142,12 +159,33 @@ public class ExpertProfileService implements IExpertProfile {
     @Override
     @Transactional
     public CurrentUserResponse update(Long id, ExpertProfileRequest request) {
-        ExpertProfile profile = expertProfileRepo.findByExpertProfileId(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
+        ExpertProfile profile = expertProfileRepo.findByExpertProfileId(id).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Hồ sơ chuyên gia: " + ErrorCode.NOT_FOUND.getMessage()));
+        ExpertProfile currentProfile = getCurrentExpertProfile();
+
+        if (!profile.getExpertProfileId().equals(currentProfile.getExpertProfileId())) {
+            throw new GlobalException(403, "Bạn không sở hữu hồ sơ chuyên gia này");
+        }
+
         User user = profile.getUser();
 
+        validateUniqueAccountInformation(user, request);
+
+        Category category = categoryRepo.getCategoriesByCategoryId(request.getCategoryId())
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy danh mục"));
+        List<Long> distinctSkillIds = request.getSkillIds().stream().distinct().toList();
+        List<Skill> skills = skillRepo.findAllById(distinctSkillIds);
+
+        if (skills.size() != distinctSkillIds.size()) {
+            throw new GlobalException(404, "Có kỹ năng không tồn tại");
+        }
+
         expertProfileMapper.updateEntity(request,profile);
+        profile.setCategory(category);
+        profile.setSkills(skills);
         userMapper.updateUserFromExpertProfileRequest(request, user);
         ExpertProfile updateProfile = expertProfileRepo.save(profile);
+
+        populateStatistics(updateProfile);
 
         return currentUserResponseMapper.toResponse(updateProfile.getUser());
     }
@@ -157,10 +195,10 @@ public class ExpertProfileService implements IExpertProfile {
     public ExpertVerificationResponse resubmitCertificate(ResubmitExpertCertificateRequest request) {
         ExpertProfile expertProfile = getCurrentExpertProfile();
         ExpertVerification verification = expertVerificationRepo.findByExpertProfile(expertProfile)
-                .orElseThrow(() -> new GlobalException(404, "Verification not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy yêu cầu xác minh"));
 
         if (verification.getVerificationStatus() == ExpertVerificationStatus.VERIFIED) {
-            throw new GlobalException(400, "Verified expert does not need to resubmit certificate");
+            throw new GlobalException(400, "Chuyên gia đã được xác minh không cần gửi lại chứng chỉ");
         }
 
         verification.setCertificateUrl(request.getCertificateUrl());
@@ -177,8 +215,8 @@ public class ExpertProfileService implements IExpertProfile {
                         NotificationType.SYSTEM,
                         ReferenceType.NONE,
                         saved.getVerificationId(),
-                        "Expert certificate submitted",
-                        "An expert certificate is waiting for review."
+                        "Có chứng chỉ chuyên gia chờ duyệt",
+                        "Một chứng chỉ chuyên gia đang chờ được xét duyệt."
                 )
         );
 
@@ -190,7 +228,7 @@ public class ExpertProfileService implements IExpertProfile {
     @Override
     public void  delete(Long id) {
         ExpertProfile profile = expertProfileRepo.findById(id)
-                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(),"Expert profile"+ErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Hồ sơ chuyên gia: " + ErrorCode.NOT_FOUND.getMessage()));
 
         // muốn xóa profie của tk nào đó thì phải cắt quan hệ của User --- Profile . còn muốn xóa User mà đi kèm profile thì qua user làm
         User user = profile.getUser();
@@ -205,6 +243,46 @@ public class ExpertProfileService implements IExpertProfile {
     private ExpertProfile getCurrentExpertProfile() {
         User user = currentUserService.getCurrentUser();
         return expertProfileRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(403, "Only expert can use this API"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ chuyên gia mới có thể thực hiện thao tác này"));
+    }
+
+    private ExpertProfileResponse toResponseWithStatistics(ExpertProfile profile) {
+        populateStatistics(profile);
+        return expertProfileMapper.toResponse(profile);
+    }
+
+    private void populateStatistics(ExpertProfile profile) {
+        if (profile == null || profile.getExpertProfileId() == null) {
+            return;
+        }
+
+        Long profileId = profile.getExpertProfileId();
+        long ratingCount = ratingRepo.countByExpertProfile_ExpertProfileId(profileId);
+        Double ratingAverage = ratingRepo.averageByExpertProfileId(profileId);
+        long completedProjects = projectRepo
+                .countByInvitation_ExpertApplication_ExpertProfile_ExpertProfileIdAndProjectStatus(
+                        profileId,
+                        ProjectStatus.COMPLETED
+                );
+
+        profile.setRating(ratingAverage == null
+                ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.valueOf(ratingAverage).setScale(2, RoundingMode.HALF_UP));
+        profile.setRatingCount(Math.toIntExact(ratingCount));
+        profile.setCompletedProjects(Math.toIntExact(completedProjects));
+    }
+
+    private void validateUniqueAccountInformation(User user, ExpertProfileRequest request) {
+        Long userId = user.getUserId();
+
+        if (userRepo.existsByEmailAndUserIdNot(request.getEmail(), userId)) {
+            throw new GlobalException(409, "Email đã được sử dụng");
+        }
+        if (userRepo.existsByPhoneAndUserIdNot(request.getPhone(), userId)) {
+            throw new GlobalException(409, "Số điện thoại đã được sử dụng");
+        }
+        if (userRepo.existsByUsernameAndUserIdNot(request.getUsername(), userId)) {
+            throw new GlobalException(409, "Tên người dùng đã được sử dụng");
+        }
     }
 }

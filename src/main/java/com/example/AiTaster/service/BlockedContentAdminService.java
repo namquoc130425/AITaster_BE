@@ -23,7 +23,7 @@ public class BlockedContentAdminService implements IBlockedContent {
         String content = request.getContent().trim();
 
         if (blockedContentRepo.existsByContentIgnoreCase(content)) {
-            throw new GlobalException(400, "Blocked content already exists");
+            throw new GlobalException(400, "Nội dung bị chặn đã tồn tại");
         }
 
         BlockedContent blockedContent = blockedContentMapper.toEntity(request);
@@ -40,12 +40,12 @@ public class BlockedContentAdminService implements IBlockedContent {
     @Override
     public BlockedContent update(Long id, BlockedContentRequest request) {
         BlockedContent blockedContent  = blockedContentRepo.findById(id)
-                .orElseThrow(() -> new GlobalException(404, "Blocked content not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy nội dung bị chặn"));
 
         String content = request.getContent().trim();
 
         if (blockedContentRepo.existsByContentIgnoreCaseAndBlockedContentIdNot(content, id)) {
-            throw new GlobalException(400, "Blocked content already exists");
+            throw new GlobalException(400, "Nội dung bị chặn đã tồn tại");
         }
         blockedContentMapper.updateEntity(request,blockedContent);
         blockedContent.setContent(content);
@@ -57,7 +57,7 @@ public class BlockedContentAdminService implements IBlockedContent {
     @Override
     public void delete(Long id) {
         BlockedContent entity = blockedContentRepo.findById(id)
-                .orElseThrow(() -> new GlobalException(404, "Blocked content not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy nội dung bị chặn"));
 
 
         blockedContentRepo.delete(entity);

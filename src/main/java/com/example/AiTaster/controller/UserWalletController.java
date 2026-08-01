@@ -1,12 +1,15 @@
 package com.example.AiTaster.controller;
 
 import com.example.AiTaster.constant.UserWalletStatus;
+import com.example.AiTaster.constant.PaymentStatus;
+import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.dto.request.BankAccountOtpVerifyRequest;
 import com.example.AiTaster.dto.request.UserBankAccountRequest;
 import com.example.AiTaster.dto.request.UserWalletRequest;
 import com.example.AiTaster.dto.request.WalletBalanceRequest;
 import com.example.AiTaster.dto.response.APIResponse;
 import com.example.AiTaster.dto.response.PaymentTransactionResponse;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.dto.response.UserBankAccountResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.dto.response.WalletDepositPaymentResponse;
@@ -117,6 +120,29 @@ public class UserWalletController {
         );
     }
 
+    @GetMapping("/admin/transactions")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<APIResponse<PageResponse<PaymentTransactionResponse>>>
+    getAdminTransactions(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) PaymentStatus status,
+            @RequestParam(required = false) TransactionType transactionType
+    ) {
+        return ResponseEntity.ok(
+                APIResponse.response(
+                        200,
+                        "Get admin transactions successfully",
+                        userWalletService.getAdminTransactions(
+                                page,
+                                size,
+                                status,
+                                transactionType
+                        )
+                )
+        );
+    }
+
     @GetMapping("/bank-account/my")
     public ResponseEntity<APIResponse<UserBankAccountResponse>>
     getMyBankAccount() {
@@ -164,7 +190,7 @@ public class UserWalletController {
     public ResponseEntity<APIResponse<WalletDepositPaymentResponse>>
     createSepayDeposit(
             @PathVariable Long walletId,
-            @RequestBody WalletBalanceRequest request
+            @RequestBody @Valid WalletBalanceRequest request
     ) {
 
         return ResponseEntity.ok(

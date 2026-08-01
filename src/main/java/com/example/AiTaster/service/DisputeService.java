@@ -63,28 +63,28 @@ public class DisputeService implements IDisputeService {
         checkParticipant(project, currentUser);
 
         if (project.getProjectStatus() != ProjectStatus.ACTIVE) {
-            throw new GlobalException(400, "Only active project can be disputed");
+            throw new GlobalException(400, "Chỉ dự án đang hoạt động mới có thể mở tranh chấp");
         }
 
         if (disputeRepo.existsByProject_ProjectIdAndDisputeStatusIn(
                 projectId,
                 List.of(DisputeStatus.OPEN, DisputeStatus.UNDER_REVIEW)
         )) {
-            throw new GlobalException(400, "Project already has an open dispute");
+            throw new GlobalException(400, "Dự án đã có một tranh chấp đang mở");
         }
 
         ProjectEscrow escrow = getEscrowForUpdate(projectId);
         if (escrow.getEscrowStatus() != EscrowStatus.HELD) {
-            throw new GlobalException(400, "Escrow is not held");
+            throw new GlobalException(400, "Khoản ký quỹ không ở trạng thái đang giữ");
         }
 
         Deliverable deliverable = null;
         if (request.getDeliverableId() != null) {
             deliverable = deliverableRepo.findById(request.getDeliverableId())
-                    .orElseThrow(() -> new GlobalException(404, "Deliverable not found"));
+                    .orElseThrow(() -> new GlobalException(404, "Không tìm thấy sản phẩm bàn giao"));
 
             if (!projectId.equals(deliverable.getProjectId())) {
-                throw new GlobalException(400, "Deliverable does not belong to project");
+                throw new GlobalException(400, "Tệp bàn giao không thuộc dự án này");
             }
         }
 
@@ -112,17 +112,17 @@ public class DisputeService implements IDisputeService {
                 NotificationType.DISPUTE,
                 ReferenceType.DISPUTE,
                 dispute.getDisputeId(),
-                "Project has a new dispute",
-                displayName(currentUser) + " opened a dispute for project: " + project.getTitle()
+                "Dự án có tranh chấp mới",
+                displayName(currentUser) + " đã mở tranh chấp cho dự án: " + project.getTitle()
         );
 
         pushAfterCommit(() -> {
-            realtimeService.pushProjectParticipants(project, "PROJECT_DISPUTED", "Project has been disputed");
+            realtimeService.pushProjectParticipants(project, "PROJECT_DISPUTED", "Dự án đã phát sinh tranh chấp");
             realtimeService.pushAdminDisputeEvent(
                     "DISPUTE_CREATED",
                     dispute.getDisputeId(),
                     project.getProjectId(),
-                    "New dispute created"
+                    "Đã tạo tranh chấp mới"
             );
         });
 
@@ -181,24 +181,24 @@ public class DisputeService implements IDisputeService {
         checkAdmin();
 
         Dispute dispute = disputeRepo.findByDisputeId(disputeId)
-                .orElseThrow(() -> new GlobalException(404, "Dispute not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy tranh chấp"));
 
         if (dispute.getDisputeStatus() == DisputeStatus.RESOLVED
                 || dispute.getDisputeStatus() == DisputeStatus.REJECTED) {
-            throw new GlobalException(400, "Dispute already closed");
+            throw new GlobalException(400, "Tranh chấp đã được đóng");
         }
 
         Project project = getProject(dispute.getProject().getProjectId());
         ProjectEscrow escrow = getEscrowForUpdate(project.getProjectId());
 
         if (escrow.getEscrowStatus() != EscrowStatus.DISPUTED) {
-            throw new GlobalException(400, "Escrow is not under dispute");
+            throw new GlobalException(400, "Khoản ký quỹ không ở trạng thái tranh chấp");
         }
 
         BigDecimal held = escrow.getHeldAmount();
 
         if (held == null || held.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Escrow held amount is invalid");
+            throw new GlobalException(400, "Số tiền đang giữ trong ký quỹ không hợp lệ");
         }
 
         User clientUser = getClientUser(project);
@@ -213,11 +213,11 @@ public class DisputeService implements IDisputeService {
             case SPLIT -> {
                 refund = safe(request.getRefundAmount());
                 release = safe(request.getReleaseAmount());
-                validateNonNegative(refund, "Refund amount");
-                validateNonNegative(release, "Release amount");
+                validateNonNegative(refund, "Số tiền hoàn lại");
+                validateNonNegative(release, "Số tiền giải ngân");
 
                 if (refund.add(release).compareTo(held) != 0) {
-                    throw new GlobalException(400, "Refund + release must equal held amount");
+                    throw new GlobalException(400, "Tổng số tiền hoàn lại và giải ngân phải bằng số tiền đang giữ");
                 }
             }
             case REJECT -> {
@@ -235,16 +235,16 @@ public class DisputeService implements IDisputeService {
 
                 Dispute saved = disputeRepo.save(dispute);
                 notificationService.notify(clientUser, NotificationType.DISPUTE, ReferenceType.DISPUTE,
-                        saved.getDisputeId(), "Dispute rejected", "Admin rejected the dispute for project: " + project.getTitle());
+                        saved.getDisputeId(), "Tranh chấp đã bị từ chối", "Quản trị viên đã từ chối tranh chấp của dự án: " + project.getTitle());
                 notificationService.notify(expertUser, NotificationType.DISPUTE, ReferenceType.DISPUTE,
-                        saved.getDisputeId(), "Dispute rejected", "Admin rejected the dispute for project: " + project.getTitle());
+                        saved.getDisputeId(), "Tranh chấp đã bị từ chối", "Quản trị viên đã từ chối tranh chấp của dự án: " + project.getTitle());
                 pushAfterCommit(() -> {
-                    realtimeService.pushProjectParticipants(project, "DISPUTE_REJECTED", "Dispute was rejected by admin");
+                    realtimeService.pushProjectParticipants(project, "DISPUTE_REJECTED", "Tranh chấp đã bị quản trị viên từ chối");
                     realtimeService.pushAdminDisputeEvent(
                             "DISPUTE_REJECTED",
                             saved.getDisputeId(),
                             project.getProjectId(),
-                            "Dispute rejected"
+                            "Tranh chấp đã bị từ chối"
                     );
                 });
                 return toResponse(saved, escrow, null);
@@ -326,18 +326,18 @@ public class DisputeService implements IDisputeService {
         }
 
         notificationService.notify(clientUser, NotificationType.DISPUTE, ReferenceType.DISPUTE,
-                saved.getDisputeId(), "Dispute resolved", "Admin resolved dispute for project: " + project.getTitle());
+                saved.getDisputeId(), "Tranh chấp đã được xử lý", "Quản trị viên đã xử lý tranh chấp của dự án: " + project.getTitle());
 
         notificationService.notify(expertUser, NotificationType.DISPUTE, ReferenceType.DISPUTE,
-                saved.getDisputeId(), "Dispute resolved", "Admin resolved dispute for project: " + project.getTitle());
+                saved.getDisputeId(), "Tranh chấp đã được xử lý", "Quản trị viên đã xử lý tranh chấp của dự án: " + project.getTitle());
 
         pushAfterCommit(() -> {
-            realtimeService.pushProjectParticipants(project, "DISPUTE_RESOLVED", "Dispute resolved by admin");
+            realtimeService.pushProjectParticipants(project, "DISPUTE_RESOLVED", "Tranh chấp đã được quản trị viên xử lý");
             realtimeService.pushAdminDisputeEvent(
                     "DISPUTE_RESOLVED",
                     saved.getDisputeId(),
                     project.getProjectId(),
-                    "Dispute resolved"
+                    "Tranh chấp đã được xử lý"
             );
         });
 
@@ -413,22 +413,18 @@ public class DisputeService implements IDisputeService {
 
     private Project getProject(Long projectId) {
         return projectRepo.findWithDetailByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dự án"));
     }
 
     private ProjectEscrow getEscrowForUpdate(Long projectId) {
         return projectEscrowRepo.findByProjectIdForUpdate(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy khoản ký quỹ của dự án"));
     }
 
     private void checkAdmin() {
         User user = currentUserService.getCurrentUser();
         if (!Role.ADMIN.equals(user.getRole())) {
-            throw new GlobalException(
-                    403,
-                    "Only admin can use this API. Current role: "
-                            + (user.getRole() == null ? "UNKNOWN" : user.getRole().name())
-            );
+            throw new GlobalException(403, "Chỉ quản trị viên mới có thể thực hiện thao tác này");
         }
     }
 
@@ -436,7 +432,7 @@ public class DisputeService implements IDisputeService {
         Long userId = user.getUserId();
         if (!userId.equals(getClientUser(project).getUserId())
                 && !userId.equals(getExpertUser(project).getUserId())) {
-            throw new GlobalException(403, "You are not a participant of this project");
+            throw new GlobalException(403, "Bạn không phải thành viên của dự án này");
         }
     }
 
@@ -469,8 +465,8 @@ public class DisputeService implements IDisputeService {
                     NotificationType.DISPUTE,
                     ReferenceType.DISPUTE,
                     dispute.getDisputeId(),
-                    "New dispute",
-                    displayName(dispute.getReporter()) + " opened a dispute for project: "
+                    "Có tranh chấp mới",
+                    displayName(dispute.getReporter()) + " đã mở tranh chấp cho dự án: "
                             + dispute.getProject().getTitle()
             );
         }
@@ -482,7 +478,7 @@ public class DisputeService implements IDisputeService {
 
     private void validateNonNegative(BigDecimal amount, String fieldName) {
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new GlobalException(400, fieldName + " must not be negative");
+            throw new GlobalException(400, fieldName + " không được là số âm");
         }
     }
 
@@ -500,7 +496,7 @@ public class DisputeService implements IDisputeService {
 
     private String displayName(User user) {
         if (user == null) {
-            return "User";
+            return "Người dùng";
         }
 
         if (user.getFullName() != null && !user.getFullName().isBlank()) {
@@ -511,6 +507,6 @@ public class DisputeService implements IDisputeService {
             return user.getUsername();
         }
 
-        return "User";
+        return "Người dùng";
     }
 }

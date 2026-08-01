@@ -34,7 +34,8 @@ public class JobPostAiService {
     private final ClientProfileRepo clientProfileRepo;
     private final SkillRepo skillRepo;
     private final SkillVectorSearchService skillVectorSearchService;
-    private static final int MIN_CHARS_FOR_SEARCH = 45;
+    private static final int MIN_CHARS_FOR_SEARCH = 20;
+    private static final int TITLE_MIN_LENGTH = 20;
 
     public JobPostResponse creatJobPostByAi(JobPostAiRequest request) {
 
@@ -43,7 +44,7 @@ public class JobPostAiService {
         User currentUser = currentUserService.getCurrentUser();
 
         ClientProfile clientProfile = clientProfileRepo.findByUser_UserId(currentUser.getUserId())
-                .orElseThrow(() -> new GlobalException(403, "Only client can create job posts"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể tạo bài đăng dự án"));
         //lấy selected từ fe
         List<Skill> selectedSkills = getSelectedSkills(request.getSelectedSkillIds());
         validateSearchTextLength(buildSearchableUserText(request, selectedSkills));
@@ -53,7 +54,7 @@ public class JobPostAiService {
         List<VectorSkillResult> vectorResults = skillVectorSearchService.searchSkillResult(buildText, 10);
         //Nếu Qdrant không trả skill nào thì báo lỗi.
         if (vectorResults == null || vectorResults.isEmpty()) {
-            throw new GlobalException(400, "No suitable skills found from Qdrant");
+            throw new GlobalException(400, "Không tìm thấy kỹ năng phù hợp");
         }
         // Giới hạn số số skill mà qdrant  đưa cho Gemini.
         List<VectorSkillResult> aiLimitResult = limitResult(vectorResults, 8);
@@ -71,7 +72,7 @@ public class JobPostAiService {
         //Nếu AI không trả skill hợp lệ thì báo lỗi.
 
         if (finalSkillIds.isEmpty()) {
-            throw new GlobalException(400, "AI did not return valid skills");
+            throw new GlobalException(400, "AI không trả về kỹ năng hợp lệ");
         }
 
         //Lấy Skill entity thật từ MySQL.
@@ -117,7 +118,7 @@ public class JobPostAiService {
         // nghĩa là có ID không tồn tại trong database.
 
         if (skills.size() != validIds.size()) {
-            throw new GlobalException(400, "Some selected skills do not exist");
+            throw new GlobalException(400, "Một số kỹ năng đã chọn không tồn tại");
         }
 
         return skills;
@@ -312,11 +313,12 @@ public class JobPostAiService {
     // Kiểm tra nội dung user nhập có từ cấm hoặc prompt injection không.
     private void validateUserInputContent(JobPostAiRequest request) {
         if (request == null) {
-            throw new GlobalException(400, "Request is required");
+            throw new GlobalException(400, "Dữ liệu yêu cầu không được để trống");
         }
 
         // Title luôn bắt buộc
         contentManagerService.validateKeywordInput(request.getTitle());
+        validateTitleLength(request.getTitle());
 
         // Field optional: chỉ kiểm tra từ cấm/prompt injection KHI có dữ liệu.
         // Field trống thì bỏ qua hoàn toàn, không throw FIELD_REQUIRED nữa.
@@ -337,7 +339,7 @@ public class JobPostAiService {
     private void validateAiResponse(GeminiJobPostResponse aiResponse) {
 
         if (aiResponse == null) {
-            throw new GlobalException(500, "AI response is empty");
+            throw new GlobalException(500, "AI không trả về nội dung");
         }
 
         contentManagerService.validateKeywordInput(aiResponse.getTitle());
@@ -359,12 +361,12 @@ public class JobPostAiService {
         );
 
         if (aiResponse.getFinalSkillIds() == null || aiResponse.getFinalSkillIds().isEmpty()) {
-            throw new GlobalException(500, "AI final skill ids are empty");
+            throw new GlobalException(500, "AI không trả về danh sách kỹ năng cuối cùng");
         }
 
         if (aiResponse.getBudgets() == null
                 || aiResponse.getBudgets().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(500, "AI budget suggestion is invalid");
+            throw new GlobalException(500, "Ngân sách do AI đề xuất không hợp lệ");
         }
     }
 
@@ -374,6 +376,13 @@ public class JobPostAiService {
             throw new GlobalException(400,
                     "Vui lòng mô tả chi tiết hơn (tối thiểu " + MIN_CHARS_FOR_SEARCH
                             + " ký tự) để hệ thống gợi ý kỹ năng chính xác hơn");
+        }
+    }
+
+    private void validateTitleLength(String title) {
+        if (title == null || title.trim().length() < TITLE_MIN_LENGTH) {
+            throw new GlobalException(400,
+                    "Tiêu đề dự án phải có ít nhất " + TITLE_MIN_LENGTH + " ký tự");
         }
     }
 

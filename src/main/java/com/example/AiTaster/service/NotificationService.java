@@ -272,7 +272,7 @@ public class NotificationService implements INotificationService {
         String jobTitle =
                 safeText(
                         application.getJobpost().getTitle(),
-                        "job post của bạn"
+                        "bài đăng dự án của bạn"
                 );
 
         notify(
@@ -280,8 +280,8 @@ public class NotificationService implements INotificationService {
                 NotificationType.APPLICATION,
                 ReferenceType.APPLICATION,
                 application.getApplicationId(),
-                "Có expert mới ứng tuyển",
-                expertName + " đã ứng tuyển vào job post: " + jobTitle
+                "Có chuyên gia mới ứng tuyển",
+                expertName + " đã ứng tuyển vào bài đăng dự án: " + jobTitle
         );
         emailService.queueExpertApplied(clientUser, expertUser, jobTitle);
     }
@@ -332,7 +332,7 @@ public class NotificationService implements INotificationService {
                 ReferenceType.INVITATION,
                 invitation.getInvitationId(),
                 "Bạn nhận được lời mời dự án",
-                "Client đã gửi cho bạn lời mời tham gia dự án: " + projectTitle
+                "Khách hàng đã gửi cho bạn lời mời tham gia dự án: " + projectTitle
         );
         emailService.queueInvitationReceived(clientUser, expertUser, projectTitle);
     }
@@ -382,7 +382,7 @@ public class NotificationService implements INotificationService {
                 NotificationType.INVITATION,
                 ReferenceType.INVITATION,
                 invitation.getInvitationId(),
-                "Expert đã chấp nhận lời mời",
+                "Chuyên gia đã chấp nhận lời mời",
                 expertName + " đã chấp nhận lời mời dự án: " + projectTitle
         );
         emailService.queueInvitationAccepted(clientUser, expertUser, projectTitle);
@@ -433,7 +433,7 @@ public class NotificationService implements INotificationService {
                 NotificationType.INVITATION,
                 ReferenceType.INVITATION,
                 invitation.getInvitationId(),
-                "Expert đã từ chối lời mời",
+                "Chuyên gia đã từ chối lời mời",
                 expertName + " đã từ chối lời mời dự án: " + projectTitle
         );
     }
@@ -464,8 +464,8 @@ public class NotificationService implements INotificationService {
                 .getUser();
 
         String projectTitle = safeText(project.getTitle(), "dự án");
-        String title = "Project workspace is ready";
-        String content = "Escrow payment completed. Open workspace for: " + projectTitle;
+        String title = "Không gian làm việc của dự án đã sẵn sàng";
+        String content = "Thanh toán ký quỹ đã hoàn tất. Mở không gian làm việc của dự án: " + projectTitle;
 
         notify(
                 clientUser,
@@ -514,8 +514,8 @@ public class NotificationService implements INotificationService {
                     NotificationType.REPORT,
                     ReferenceType.REPORT,
                     report.getReportId(),
-                    "Có report mới",
-                    reporterName + " đã gửi một report mới: " + report.getReportTitle()
+                    "Có báo cáo mới",
+                    reporterName + " đã gửi một báo cáo mới: " + report.getReportTitle()
             );
         }
     }
@@ -537,10 +537,10 @@ public class NotificationService implements INotificationService {
                 NotificationType.REPORT,
                 ReferenceType.REPORT,
                 report.getReportId(),
-                "Report của bạn đã được xử lý",
+                "Báo cáo của bạn đã được xử lý",
                 safeText(
                         report.getAdminResponse(),
-                        "Admin đã xử lý report: " + report.getReportTitle()
+                        "Quản trị viên đã xử lý báo cáo: " + report.getReportTitle()
                 )
         );
     }
@@ -562,10 +562,10 @@ public class NotificationService implements INotificationService {
                 NotificationType.REPORT,
                 ReferenceType.REPORT,
                 report.getReportId(),
-                "Report của bạn đã bị từ chối",
+                "Báo cáo của bạn đã bị từ chối",
                 safeText(
                         report.getAdminResponse(),
-                        "Admin đã từ chối report: " + report.getReportTitle()
+                        "Quản trị viên đã từ chối báo cáo: " + report.getReportTitle()
                 )
         );
     }
@@ -580,9 +580,9 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service mới được tạo",
-                "Expert vừa tạo AI Service '" + expertService.getServiceName()
-                        + "'. Trạng thái hiện tại là DRAFT."
+                "Có dịch vụ AI mới",
+                "Chuyên gia vừa tạo dịch vụ AI '" + expertService.getServiceName()
+                        + "'. Trạng thái hiện tại là bản nháp."
         );
     }
 
@@ -596,9 +596,9 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service vừa được cập nhật",
-                "Expert vừa cập nhật AI Service '" + expertService.getServiceName()
-                        + "'. Service cần được kiểm tra nếu được submit lại."
+                "Dịch vụ AI vừa được cập nhật",
+                "Chuyên gia vừa cập nhật dịch vụ AI '" + expertService.getServiceName()
+                        + "'. Dịch vụ cần được kiểm tra khi gửi duyệt lại."
         );
     }
 
@@ -612,9 +612,9 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service chờ duyệt",
-                "Expert đã gửi AI Service '" + expertService.getServiceName()
-                        + "' để admin duyệt."
+                "Dịch vụ AI đang chờ duyệt",
+                "Chuyên gia đã gửi dịch vụ AI '" + expertService.getServiceName()
+                        + "' để quản trị viên duyệt."
         );
     }
 
@@ -631,9 +631,9 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service đã được duyệt",
-                "AI Service '" + expertService.getServiceName()
-                        + "' đã được admin duyệt và đang hiển thị công khai."
+                "Dịch vụ AI đã được duyệt",
+                "Dịch vụ AI '" + expertService.getServiceName()
+                        + "' đã được quản trị viên duyệt và đang hiển thị công khai."
         );
     }
 
@@ -648,7 +648,7 @@ public class NotificationService implements INotificationService {
         String reason = expertService.getRejectionReason();
 
         if (reason == null || reason.isBlank()) {
-            reason = "Admin đã từ chối AI Service của bạn. Vui lòng kiểm tra lại nội dung và resubmit.";
+            reason = "Quản trị viên đã từ chối dịch vụ AI của bạn. Vui lòng kiểm tra lại nội dung và gửi duyệt lại.";
         }
 
         notify(
@@ -656,9 +656,32 @@ public class NotificationService implements INotificationService {
                 NotificationType.EXPERT_SERVICE,
                 ReferenceType.EXPERT_SERVICE,
                 expertService.getServiceId(),
-                "AI Service bị từ chối",
-                "AI Service '" + expertService.getServiceName()
+                "Dịch vụ AI bị từ chối",
+                "Dịch vụ AI '" + expertService.getServiceName()
                         + "' bị từ chối. Lý do: " + reason
+        );
+    }
+
+    @Override
+    public void notifyAdminWithdrawalRequested(UserWallet wallet) {
+        if (wallet == null || wallet.getUserWalletId() == null || wallet.getUser() == null) {
+            return;
+        }
+
+        String requesterName = safeText(
+                wallet.getUser().getFullName(),
+                wallet.getUser().getUsername()
+        );
+        String amount = wallet.getAmountRequestWithdrawal() == null
+                ? "0"
+                : wallet.getAmountRequestWithdrawal().stripTrailingZeros().toPlainString();
+
+        notifyAllAdmins(
+                NotificationType.WITHDRAW,
+                ReferenceType.WITHDRAW,
+                wallet.getUserWalletId(),
+                "Có yêu cầu rút tiền mới",
+                requesterName + " vừa yêu cầu rút " + amount + " VND."
         );
     }
 

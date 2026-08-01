@@ -40,7 +40,7 @@ public class RatingService {
     public RatingResponse createExpertServiceRating(Long serviceId, RatingRequest request) {
         ClientProfile clientProfile = getCurrentClientProfile();
         ExpertService expertService = expertServiceRepo.findById(serviceId)
-                .orElseThrow(() -> new GlobalException(404, "Expert service not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ AI"));
 
         validateServicePurchased(clientProfile, serviceId);
 
@@ -48,7 +48,7 @@ public class RatingService {
                 clientProfile.getClientProfileId(),
                 serviceId
         )) {
-            throw new GlobalException(409, "You already rated this AI service");
+            throw new GlobalException(409, "Bạn đã đánh giá dịch vụ AI này");
         }
 
         Rating rating = Rating.builder()
@@ -62,6 +62,7 @@ public class RatingService {
 
         Rating saved = saveNewRating(rating);
         refreshExpertServiceRating(expertService);
+        refreshExpertProfileRating(expertService.getExpertProfile());
 
         return ratingMapper.toResponse(saved);
     }
@@ -70,7 +71,7 @@ public class RatingService {
     public RatingResponse createProjectExpertRating(Long projectId, RatingRequest request) {
         ClientProfile clientProfile = getCurrentClientProfile();
         Project project = projectRepo.findWithDetailByProjectId(projectId)
-                .orElseThrow(() -> new GlobalException(404, "Project not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy dự án"));
 
         validateProjectCanBeRatedByClient(clientProfile, project);
 
@@ -78,7 +79,7 @@ public class RatingService {
                 clientProfile.getClientProfileId(),
                 projectId
         )) {
-            throw new GlobalException(409, "You already rated this project");
+            throw new GlobalException(409, "Bạn đã đánh giá dự án này");
         }
 
         ExpertProfile expertProfile = resolveProjectExpertProfile(project);
@@ -109,7 +110,7 @@ public class RatingService {
         Rating rating = ratingRepo.findByClientProfile_ClientProfileIdAndExpertService_ServiceId(
                 clientProfile.getClientProfileId(),
                 serviceId
-        ).orElseThrow(() -> new GlobalException(404, "Rating not found"));
+        ).orElseThrow(() -> new GlobalException(404, "Không tìm thấy đánh giá"));
 
         return ratingMapper.toResponse(rating);
     }
@@ -121,7 +122,7 @@ public class RatingService {
         Rating rating = ratingRepo.findByClientProfile_ClientProfileIdAndProject_ProjectId(
                 clientProfile.getClientProfileId(),
                 projectId
-        ).orElseThrow(() -> new GlobalException(404, "Rating not found"));
+        ).orElseThrow(() -> new GlobalException(404, "Không tìm thấy đánh giá"));
 
         return ratingMapper.toResponse(rating);
     }
@@ -156,6 +157,7 @@ public class RatingService {
 
         if (RatingTargetType.EXPERT_SERVICE.equals(targetType) && expertService != null) {
             refreshExpertServiceRating(expertService);
+            refreshExpertProfileRating(expertProfile);
         }
 
         if (RatingTargetType.PROJECT_EXPERT.equals(targetType) && expertProfile != null) {
@@ -183,12 +185,12 @@ public class RatingService {
         User user = currentUserService.getCurrentUser();
 
         return clientProfileRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(403, "Only client can use this rating API"));
+                .orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể thực hiện đánh giá"));
     }
 
     private Rating getRatingById(Long ratingId) {
         return ratingRepo.findById(ratingId)
-                .orElseThrow(() -> new GlobalException(404, "Rating not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy đánh giá"));
     }
 
     private void validateServicePurchased(ClientProfile clientProfile, Long serviceId) {
@@ -202,7 +204,7 @@ public class RatingService {
                 );
 
         if (!purchased) {
-            throw new GlobalException(403, "You can only rate this AI service after purchase");
+            throw new GlobalException(403, "Bạn chỉ có thể đánh giá dịch vụ AI sau khi mua");
         }
     }
 
@@ -210,18 +212,18 @@ public class RatingService {
         Long projectClientProfileId = resolveProjectClientProfileId(project);
 
         if (!clientProfile.getClientProfileId().equals(projectClientProfileId)) {
-            throw new GlobalException(403, "You can only rate your own project");
+            throw new GlobalException(403, "Bạn chỉ có thể đánh giá dự án của mình");
         }
 
         if (!ProjectStatus.COMPLETED.equals(project.getProjectStatus())) {
-            throw new GlobalException(403, "You can only rate after project is completed");
+            throw new GlobalException(403, "Bạn chỉ có thể đánh giá sau khi dự án hoàn thành");
         }
     }
 
     private void ensureRatingOwner(ClientProfile clientProfile, Rating rating) {
         if (rating.getClientProfile() == null
                 || !clientProfile.getClientProfileId().equals(rating.getClientProfile().getClientProfileId())) {
-            throw new GlobalException(403, "You can only change your own rating");
+            throw new GlobalException(403, "Bạn chỉ có thể thay đổi đánh giá của chính mình");
         }
     }
 
@@ -230,7 +232,7 @@ public class RatingService {
                 || project.getInvitation().getExpertApplication() == null
                 || project.getInvitation().getExpertApplication().getJobpost() == null
                 || project.getInvitation().getExpertApplication().getJobpost().getClientProfile() == null) {
-            throw new GlobalException(400, "Project client information is incomplete");
+            throw new GlobalException(400, "Thông tin khách hàng của dự án chưa đầy đủ");
         }
 
         return project.getInvitation()
@@ -244,7 +246,7 @@ public class RatingService {
         if (project.getInvitation() == null
                 || project.getInvitation().getExpertApplication() == null
                 || project.getInvitation().getExpertApplication().getExpertProfile() == null) {
-            throw new GlobalException(400, "Project expert information is incomplete");
+            throw new GlobalException(400, "Thông tin chuyên gia của dự án chưa đầy đủ");
         }
 
         return project.getInvitation()
@@ -256,13 +258,14 @@ public class RatingService {
         try {
             return ratingRepo.save(rating);
         } catch (DataIntegrityViolationException exception) {
-            throw new GlobalException(409, "You already rated this item");
+            throw new GlobalException(409, "Bạn đã đánh giá nội dung này");
         }
     }
 
     private void refreshAggregateForRating(Rating rating) {
         if (RatingTargetType.EXPERT_SERVICE.equals(rating.getTargetType()) && rating.getExpertService() != null) {
             refreshExpertServiceRating(rating.getExpertService());
+            refreshExpertProfileRating(rating.getExpertProfile());
         }
 
         if (RatingTargetType.PROJECT_EXPERT.equals(rating.getTargetType()) && rating.getExpertProfile() != null) {
@@ -288,14 +291,8 @@ public class RatingService {
 
     private void refreshExpertProfileRating(ExpertProfile expertProfile) {
         Long expertProfileId = expertProfile.getExpertProfileId();
-        long count = ratingRepo.countByExpertProfile_ExpertProfileIdAndTargetType(
-                expertProfileId,
-                RatingTargetType.PROJECT_EXPERT
-        );
-        Double average = ratingRepo.averageByExpertProfileIdAndTargetType(
-                expertProfileId,
-                RatingTargetType.PROJECT_EXPERT
-        );
+        long count = ratingRepo.countByExpertProfile_ExpertProfileId(expertProfileId);
+        Double average = ratingRepo.averageByExpertProfileId(expertProfileId);
 
         expertProfile.setRating(toRatingAverage(average));
         expertProfile.setRatingCount(Math.toIntExact(count));
@@ -318,7 +315,7 @@ public class RatingService {
         if (normalized.getMinRating() != null
                 && normalized.getMaxRating() != null
                 && normalized.getMinRating() > normalized.getMaxRating()) {
-            throw new GlobalException(400, "minRating cannot be greater than maxRating");
+            throw new GlobalException(400, "Số sao tối thiểu không được lớn hơn số sao tối đa");
         }
 
         if (normalized.getPage() == null || normalized.getPage() < 0) {

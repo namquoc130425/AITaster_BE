@@ -1,10 +1,12 @@
 package com.example.AiTaster.service;
 
 import com.example.AiTaster.constant.PaymentReferenceType;
+import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.Role;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.constant.UserWalletStatus;
 import com.example.AiTaster.dto.request.UserWalletRequest;
+import com.example.AiTaster.dto.response.PageResponse;
 import com.example.AiTaster.dto.response.PaymentTransactionResponse;
 import com.example.AiTaster.dto.response.UserWalletResponse;
 import com.example.AiTaster.entity.PaymentTransaction;
@@ -17,6 +19,8 @@ import com.example.AiTaster.repository.PaymentTransactionRepo;
 import com.example.AiTaster.repository.UserWalletRepo;
 import com.example.AiTaster.service.imp.IUserWalletService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,13 +38,14 @@ public class UserWalletService implements IUserWalletService {
     private final UserBankAccountService userBankAccountService;
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final RealtimeService realtimeService;
+    private final NotificationService notificationService;
 
     @Override
     public UserWalletResponse createWallet(UserWalletRequest request) {
         User user = currentUserService.getCurrentUser();
 
         if (userWalletRepo.findByUser(user).isPresent()) {
-            throw new GlobalException(400, "Wallet already exists");
+            throw new GlobalException(400, "Ví đã tồn tại");
         }
 
         UserWallet wallet = UserWallet.builder()
@@ -60,7 +65,7 @@ public class UserWalletService implements IUserWalletService {
 
         UserWallet wallet = userWalletRepo.findByUser(user)
                 .orElseThrow(() ->
-                        new GlobalException(404, "Wallet not found"));
+                        new GlobalException(404, "Không tìm thấy ví"));
 
         return userWalletMapper.toResponse(wallet);
     }
@@ -70,7 +75,7 @@ public class UserWalletService implements IUserWalletService {
         User admin = currentUserService.getCurrentUser();
 
         if (!Role.ADMIN.equals(admin.getRole())) {
-            throw new GlobalException(403, "Only admin can view platform wallet balance");
+            throw new GlobalException(403, "Chỉ quản trị viên mới có thể xem số dư ví hệ thống");
         }
 
         UserWallet wallet = createWalletIfAbsent(admin);
@@ -107,15 +112,44 @@ public class UserWalletService implements IUserWalletService {
     public List<PaymentTransactionResponse> getMyTransactions() {
         User user = currentUserService.getCurrentUser();
         UserWallet wallet = userWalletRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(404, "Wallet not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ví"));
 
         return paymentTransactionRepo.findMyWalletTransactions(
                         user.getUserId(),
-                        wallet.getUserWalletId()
+                        wallet.getUserWalletId(),
+                        PaymentStatus.CANCELED
                 )
                 .stream()
                 .map(this::toTransactionResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<PaymentTransactionResponse> getAdminTransactions(
+            Integer page,
+            Integer size,
+            PaymentStatus paymentStatus,
+            TransactionType transactionType
+    ) {
+        User admin = currentUserService.getCurrentUser();
+
+        if (!Role.ADMIN.equals(admin.getRole())) {
+            throw new GlobalException(403, "Chỉ quản trị viên mới có thể xem lịch sử giao dịch hệ thống");
+        }
+
+        int safePage = Math.max(page == null ? 0 : page, 0);
+        int safeSize = Math.min(Math.max(size == null ? 20 : size, 1), 100);
+        Page<PaymentTransactionResponse> transactions = paymentTransactionRepo
+                .findAdminTransactions(
+                        PaymentStatus.CANCELED,
+                        paymentStatus,
+                        transactionType,
+                        PageRequest.of(safePage, safeSize)
+                )
+                .map(this::toTransactionResponse);
+
+        return PageResponse.fromPage(transactions);
     }
 
     @Override
@@ -146,7 +180,7 @@ public class UserWalletService implements IUserWalletService {
     @Override
     public UserWallet createdUserWallet(User user) {
         if (userWalletRepo.findByUser(user).isPresent()) {
-            throw new GlobalException(400, "User already has wallet");
+            throw new GlobalException(400, "Người dùng đã có ví");
         }
         UserWallet wallet = UserWallet.builder()
                 .user(user)
@@ -169,17 +203,17 @@ public class UserWalletService implements IUserWalletService {
                 .orElseThrow(() ->
                         new GlobalException(
                                 404,
-                                "Wallet not found"
+                                "Không tìm thấy ví"
                         ));
     }
 
     private void validateAmount(BigDecimal amount) {
         if (amount == null) {
-            throw new GlobalException(400, "Amount must not be null");
+            throw new GlobalException(400, "Số tiền không được để trống");
         }
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Amount must be greater than zero");
+            throw new GlobalException(400, "Số tiền phải lớn hơn 0");
         }
     }
     // Lưu yêu cầu rút tiền để admin duyệt, chưa trừ số dư ví.
@@ -191,19 +225,19 @@ public class UserWalletService implements IUserWalletService {
         UserWallet wallet = getWallet(walletId);
 
         if (!wallet.getUser().getUserId().equals(currentUser.getUserId())) {
-            throw new GlobalException(403, "You are not owner of this wallet");
+            throw new GlobalException(403, "Bạn không sở hữu ví này");
         }
 
         if (!UserWalletStatus.ACTIVE.equals(wallet.getStatus())) {
-            throw new GlobalException(400, "Wallet is not active");
+            throw new GlobalException(400, "Ví không ở trạng thái hoạt động");
         }
 
         if (Boolean.TRUE.equals(wallet.getRequestWithdrawal())) {
-            throw new GlobalException(400, "Withdrawal request already exists");
+            throw new GlobalException(400, "Yêu cầu rút tiền đã tồn tại");
         }
 
         if (wallet.getBalance().compareTo(amount) < 0) {
-            throw new GlobalException(400, "Insufficient balance");
+            throw new GlobalException(400, "Số dư không đủ");
         }
 
         userBankAccountService.getVerifiedBankAccountByUserId(currentUser.getUserId());
@@ -212,16 +246,17 @@ public class UserWalletService implements IUserWalletService {
         wallet.setAmountRequestWithdrawal(amount);
 
         UserWallet savedWallet = userWalletRepo.save(wallet);
+        notificationService.notifyAdminWithdrawalRequested(savedWallet);
         realtimeService.pushUserWalletEvent(
                 currentUser,
                 "WITHDRAWAL_REQUESTED",
                 savedWallet.getUserWalletId(),
-                "Withdrawal requested"
+                "Đã gửi yêu cầu rút tiền"
         );
         realtimeService.pushAdminWithdrawalEvent(
                 "WITHDRAWAL_REQUESTED",
                 savedWallet.getUserWalletId(),
-                "New withdrawal request"
+                "Có yêu cầu rút tiền mới"
         );
 
         return userWalletMapper.toResponse(savedWallet);
@@ -232,7 +267,7 @@ public class UserWalletService implements IUserWalletService {
         UserWallet wallet = getWallet(walletId);
 
         if (!Boolean.TRUE.equals(wallet.getRequestWithdrawal())) {
-            throw new GlobalException(400, "No withdrawal request");
+            throw new GlobalException(400, "Không có yêu cầu rút tiền");
         }
 
         BigDecimal amount = wallet.getAmountRequestWithdrawal();
@@ -266,12 +301,12 @@ public class UserWalletService implements IUserWalletService {
                 wallet.getUser(),
                 "WITHDRAWAL_APPROVED",
                 wallet.getUserWalletId(),
-                "Withdrawal approved"
+                "Yêu cầu rút tiền đã được duyệt"
         );
         realtimeService.pushAdminWithdrawalEvent(
                 "WITHDRAWAL_APPROVED",
                 wallet.getUserWalletId(),
-                "Withdrawal approved"
+                "Yêu cầu rút tiền đã được duyệt"
         );
 
         return transaction;
@@ -282,7 +317,7 @@ public class UserWalletService implements IUserWalletService {
         UserWallet wallet = getWallet(walletId);
 
         if (!Boolean.TRUE.equals(wallet.getRequestWithdrawal())) {
-            throw new GlobalException(400, "No withdrawal request");
+            throw new GlobalException(400, "Không có yêu cầu rút tiền");
         }
 
         wallet.setRequestWithdrawal(false);
@@ -293,12 +328,12 @@ public class UserWalletService implements IUserWalletService {
                 wallet.getUser(),
                 "WITHDRAWAL_REJECTED",
                 wallet.getUserWalletId(),
-                "Withdrawal rejected"
+                "Yêu cầu rút tiền đã bị từ chối"
         );
         realtimeService.pushAdminWithdrawalEvent(
                 "WITHDRAWAL_REJECTED",
                 wallet.getUserWalletId(),
-                "Withdrawal rejected"
+                "Yêu cầu rút tiền đã bị từ chối"
         );
 
         return userWalletMapper.toResponse(savedWallet);

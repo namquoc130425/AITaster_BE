@@ -67,13 +67,13 @@ public class ForgotPasswordService {
                 )
                 .orElseThrow(() -> new GlobalException(
                         ErrorCode.INVALID_TOKEN.getCode(),
-                        "Invalid OTP"
+                        "Mã OTP không hợp lệ"
                 ));
 
         if (resetOtp.getExpiredAt().isBefore(LocalDateTime.now())) {
             throw new GlobalException(
                     ErrorCode.INVALID_TOKEN.getCode(),
-                    "OTP expired"
+                    "Mã OTP đã hết hạn"
             );
         }
 

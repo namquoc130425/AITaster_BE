@@ -25,6 +25,8 @@ public interface ExpertServiceMapper {
     @Mapping(target = "serviceStatus",constant = "DRAFT")
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "skills", ignore = true)
+    @Mapping(target = "rating", ignore = true)
+    @Mapping(target = "ratingCount", ignore = true)
     @Mapping(target = "createAt", ignore = true)
     @Mapping(target = "updateAt", ignore = true)
     ExpertService toEntity(ExpertServiceRequest request,ExpertProfile expertProfile);

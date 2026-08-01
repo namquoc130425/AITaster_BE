@@ -63,37 +63,37 @@ public class WalletDepositService {
 
     private void checkWalletDeposit(UserWallet userWallet, User currentUser, WalletBalanceRequest request) {
         if (request == null || request.getAmount() == null) {
-            throw new GlobalException(400, "Amount is required");
+            throw new GlobalException(400, "Số tiền không được để trống");
         }
 
         if (!userWallet.getUser().getUserId().equals(currentUser.getUserId())) {
-            throw new GlobalException(403, "You are not owner of this wallet");
+            throw new GlobalException(403, "Bạn không sở hữu ví này");
         }
 
         if (userWallet.getStatus() != UserWalletStatus.ACTIVE) {
-            throw new GlobalException(400, "Wallet is not active");
+            throw new GlobalException(400, "Ví không ở trạng thái hoạt động");
         }
 
         if (!"VND".equalsIgnoreCase(userWallet.getCurrency())) {
-            throw new GlobalException(400, "Wallet currency is not supported");
+            throw new GlobalException(400, "Loại tiền tệ của ví không được hỗ trợ");
         }
 
         if (request.getAmount().compareTo(new BigDecimal("10000")) < 0) {
-            throw new GlobalException(400, "Minimum deposit must be 10.000d");
+            throw new GlobalException(400, "Số tiền nạp tối thiểu là 10.000 đồng");
         }
 
         if (request.getAmount().compareTo(new BigDecimal("50000000")) > 0) {
-            throw new GlobalException(400, "Maximum deposit is 50.000.000d");
+            throw new GlobalException(400, "Số tiền nạp tối đa là 50.000.000 đồng");
         }
 
         if (request.getAmount().stripTrailingZeros().scale() > 0) {
-            throw new GlobalException(400, "Amount must be integer");
+            throw new GlobalException(400, "Số tiền phải là số nguyên");
         }
     }
 
 
     private UserWallet findUserWalletById(Long userWalletId) {
         return userWalletRepo.findByUserWalletId(userWalletId)
-                .orElseThrow(() -> new GlobalException(404, "User wallet not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy ví người dùng"));
     }
 }

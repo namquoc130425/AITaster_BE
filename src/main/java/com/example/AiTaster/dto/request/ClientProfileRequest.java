@@ -24,7 +24,7 @@ public class ClientProfileRequest {
     String password;
 
     @NotBlank(message = "FIELD_REQUIRED")
-    @Size(max = 50, message = "fullName max 50 characters")
+    @Size(max = 50, message = "Họ và tên không được vượt quá 50 ký tự")
     String fullName;
 
     String username;

@@ -63,33 +63,48 @@ class JobPostAiServiceTest {
         JobPostAiRequest request = new JobPostAiRequest();
         request.setTitle(" ");
 
-        doThrow(new GlobalException(400, "Cannot be blank"))
+        doThrow(new GlobalException(400, "Tiêu đề dự án không được để trống"))
                 .when(contentManagerService)
                 .validateKeywordInput(" ");
 
         assertThatThrownBy(() -> jobPostAiService.creatJobPostByAi(request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessageContaining("Cannot be blank");
+                .hasMessageContaining("không được để trống");
 
         verify(skillVectorSearchService, never()).searchSkillResult(any(), any(Integer.class));
         verify(geminiClientService, never()).generateJobPost(any(), any());
     }
 
     @Test
-    void creatJobPostByAi_rejectsThinActualInputBeforeVectorSearch() {
-        User user = User.builder().userId(10L).build();
-        ClientProfile clientProfile = ClientProfile.builder().clientProfileId(20L).build();
+    void creatJobPostByAi_rejectsTitleWithLessThanTwentyCharacters() {
         JobPostAiRequest request = new JobPostAiRequest();
         request.setTitle("AI");
 
+        assertThatThrownBy(() -> jobPostAiService.creatJobPostByAi(request))
+                .isInstanceOf(GlobalException.class)
+                .hasMessageContaining("20 ký tự");
+
+        verify(skillVectorSearchService, never()).searchSkillResult(any(), any(Integer.class));
+        verify(geminiClientService, never()).generateJobPost(any(), any());
+    }
+
+    @Test
+    void creatJobPostByAi_allowsTwentyCharacterInputToReachVectorSearch() {
+        User user = User.builder().userId(10L).build();
+        ClientProfile clientProfile = ClientProfile.builder().clientProfileId(20L).build();
+        JobPostAiRequest request = new JobPostAiRequest();
+        request.setTitle("12345678901234567890");
+
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(clientProfileRepo.findByUser_UserId(10L)).thenReturn(Optional.of(clientProfile));
+        when(skillVectorSearchService.searchSkillResult(any(), any(Integer.class)))
+                .thenReturn(List.of());
 
         assertThatThrownBy(() -> jobPostAiService.creatJobPostByAi(request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessageContaining("45");
+                .hasMessageContaining("Không tìm thấy kỹ năng phù hợp");
 
-        verify(skillVectorSearchService, never()).searchSkillResult(any(), any(Integer.class));
+        verify(skillVectorSearchService).searchSkillResult(any(), any(Integer.class));
         verify(geminiClientService, never()).generateJobPost(any(), any());
     }
 

@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 public class CreateDisputeRequest {
     Long deliverableId;
 
-    @NotBlank(message = "Reason is required")
+    @NotBlank(message = "Lý do không được để trống")
     String reason;
 
     String evidence;

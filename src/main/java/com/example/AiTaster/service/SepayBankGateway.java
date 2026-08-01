@@ -43,7 +43,7 @@ public class SepayBankGateway {
             return SepayPayoutResult.builder()
                     .providerName("SEPAY_LOCAL_SANDBOX")
                     .providerTransactionCode("LOCAL-" + requestCode)
-                    .rawResponse("SePay payout endpoint is not configured")
+                    .rawResponse("Chưa cấu hình điểm cuối thanh toán SePay")
                     .build();
         }
 
@@ -59,7 +59,7 @@ public class SepayBankGateway {
         JsonNode response = postJson(payoutUrl, payload);
 
         if (!isSuccessfulResponse(response)) {
-            throw new GlobalException(400, "SePay payout request failed");
+            throw new GlobalException(400, "Yêu cầu chuyển tiền qua SePay thất bại");
         }
 
         return SepayPayoutResult.builder()
@@ -91,14 +91,14 @@ public class SepayBankGateway {
             );
 
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new GlobalException(400, "SePay request failed");
+                throw new GlobalException(400, "Yêu cầu đến SePay thất bại");
             }
 
             return objectMapper.readTree(response.body());
         } catch (GlobalException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new GlobalException(500, "Cannot call SePay bank API");
+            throw new GlobalException(500, "Không thể kết nối với dịch vụ ngân hàng SePay");
         }
     }
 

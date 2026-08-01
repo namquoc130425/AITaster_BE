@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ResolveDisputeRequest {
 
-    @NotNull(message = "Decision is required")
+    @NotNull(message = "Quyết định xử lý không được để trống")
     DisputeDecision decision;
 
     BigDecimal refundAmount;

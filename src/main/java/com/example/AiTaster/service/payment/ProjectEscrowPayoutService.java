@@ -37,16 +37,16 @@ public class ProjectEscrowPayoutService {
     // Release escrow cho expert, hoàn tất project, tạo invoice và gửi email invoice sau commit.
     @Transactional
     public ProjectEscrow releaseToExpert(Project project) {
-        ProjectEscrow escrow = projectEscrowRepo.findByProjectIdForUpdate(project.getProjectId()).orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+        ProjectEscrow escrow = projectEscrowRepo.findByProjectIdForUpdate(project.getProjectId()).orElseThrow(() -> new GlobalException(404, "Không tìm thấy khoản ký quỹ của dự án"));
 
         if (!EscrowStatus.HELD.equals(escrow.getEscrowStatus())) {
-            throw new GlobalException(400, "Escrow is not HELD");
+            throw new GlobalException(400, "Khoản ký quỹ không ở trạng thái đang giữ");
         }
 
         BigDecimal heldAmount = escrow.getHeldAmount();
 
         if (heldAmount == null || heldAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Escrow held amount is invalid");
+            throw new GlobalException(400, "Số tiền đang giữ trong ký quỹ không hợp lệ");
         }
 
         User expertUser = project.getInvitation().getExpertApplication().getExpertProfile().getUser();
@@ -56,7 +56,7 @@ public class ProjectEscrowPayoutService {
         BigDecimal platformFee = heldAmount.subtract(expertAmount);
 
         if (expertAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Expert amount is invalid");
+            throw new GlobalException(400, "Số tiền của chuyên gia không hợp lệ");
         }
 
        moneyMovementService.moneyTransactionManagement(
@@ -89,20 +89,20 @@ public class ProjectEscrowPayoutService {
                 expertUser,
                 "PROJECT_ESCROW_RELEASED",
                 null,
-                "Project escrow released: " + formatMoney(expertAmount)
+                "Đã giải ngân ký quỹ dự án: " + formatMoney(expertAmount)
         );
         realtimeService.pushProjectParticipants(
                 project,
                 "PROJECT_COMPLETED",
-                "Project completed"
+                "Dự án đã hoàn thành"
         );
         notificationService.notify(
                 expertUser,
                 NotificationType.ESCROW,
                 ReferenceType.PROJECT,
                 project.getProjectId(),
-                "Project payment received",
-                "You received " + formatMoney(expertAmount) + " for project: " + project.getTitle()
+                "Đã nhận thanh toán dự án",
+                "Bạn đã nhận được " + formatMoney(expertAmount) + " cho dự án: " + project.getTitle()
         );
 
         return savedEscrow;
@@ -110,16 +110,16 @@ public class ProjectEscrowPayoutService {
     // Hoàn tiền escrow cho client khi project bị hủy hoặc không đủ điều kiện release.
     @Transactional
     public ProjectEscrow refundToClient(Project project) {
-        ProjectEscrow escrow = projectEscrowRepo.findByProjectIdForUpdate(project.getProjectId()).orElseThrow(() -> new GlobalException(404, "Project escrow not found"));
+        ProjectEscrow escrow = projectEscrowRepo.findByProjectIdForUpdate(project.getProjectId()).orElseThrow(() -> new GlobalException(404, "Không tìm thấy khoản ký quỹ của dự án"));
 
         if (!EscrowStatus.HELD.equals(escrow.getEscrowStatus())) {
-            throw new GlobalException(400, "Escrow is not HELD");
+            throw new GlobalException(400, "Khoản ký quỹ không ở trạng thái đang giữ");
         }
 
         BigDecimal heldAmount = escrow.getHeldAmount();
 
         if (heldAmount == null || heldAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Escrow held amount is invalid");
+            throw new GlobalException(400, "Số tiền đang giữ trong ký quỹ không hợp lệ");
         }
 
         User clientUser = project.getInvitation().getExpertApplication().getJobpost().getClientProfile().getUser();
@@ -150,12 +150,12 @@ public class ProjectEscrowPayoutService {
                 clientUser,
                 "PROJECT_ESCROW_REFUNDED",
                 null,
-                "Project escrow refunded"
+                "Đã hoàn tiền ký quỹ dự án"
         );
         realtimeService.pushProjectParticipants(
                 project,
                 "PROJECT_CANCELED",
-                "Project canceled"
+                "Dự án đã bị hủy"
         );
 
         return savedEscrow;

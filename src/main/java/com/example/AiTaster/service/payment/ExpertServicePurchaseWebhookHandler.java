@@ -39,7 +39,7 @@ public class ExpertServicePurchaseWebhookHandler implements SepayPaymentHandler 
     // Xử lý webhook SePay thành công, chuyển tiền, tạo invoice và gửi email invoice sau commit.
     @Override
     public void handle(PaymentTransaction payment, SepayWebhookRequest request, String providerTransactionCode, String providerContent, LocalDateTime paidAt) {
-        ExpertService expertService = expertServiceRepo.findById(payment.getExpertServiceId()).orElseThrow(() -> new GlobalException(404, "Expert service not found"));
+        ExpertService expertService = expertServiceRepo.findById(payment.getExpertServiceId()).orElseThrow(() -> new GlobalException(404, "Không tìm thấy dịch vụ AI"));
 
         if (!ServiceStatus.OPEN.equals(expertService.getServiceStatus())) {
             markFailed(payment, providerTransactionCode, providerContent);

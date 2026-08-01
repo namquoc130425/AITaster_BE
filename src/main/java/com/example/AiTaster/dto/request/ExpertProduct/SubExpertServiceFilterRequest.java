@@ -27,8 +27,9 @@ public class SubExpertServiceFilterRequest {
 
     BigDecimal feeTo;
 
-    @Min(value = 0, message = "minRating must be between 0 and 5")
-    @Max(value = 5, message = "minRating must be between 0 and 5")
+    /** Selected whole-star bucket; the API field name is retained for compatibility. */
+    @Min(value = 0, message = "Số sao phải từ 0 đến 5")
+    @Max(value = 5, message = "Số sao phải từ 0 đến 5")
     Integer minRating;
 
 }

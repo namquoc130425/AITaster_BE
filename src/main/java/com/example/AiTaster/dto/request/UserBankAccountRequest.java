@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 public class UserBankAccountRequest {
-    @NotBlank(message = "Bank code is required")
+    @NotBlank(message = "Mã ngân hàng không được để trống")
     String bankCode;
 
-    @NotBlank(message = "Account number is required")
+    @NotBlank(message = "Số tài khoản không được để trống")
     String accountNumber;
 
-    @NotBlank(message = "Account holder name is required")
+    @NotBlank(message = "Tên chủ tài khoản không được để trống")
     String accountHolderName;
 }

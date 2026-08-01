@@ -160,7 +160,7 @@ class InvoiceEmailServiceTest {
 
         assertThatThrownBy(() -> invoiceEmailService.enqueueForInvoice(30L))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Only paid invoices can be emailed");
+                .hasMessage("Chỉ có thể gửi email cho hóa đơn đã thanh toán");
 
         verify(invoiceEmailLogRepo, never()).save(any(InvoiceEmailLog.class));
     }

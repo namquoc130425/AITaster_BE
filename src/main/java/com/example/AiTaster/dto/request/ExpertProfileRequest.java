@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,13 +19,13 @@ public class ExpertProfileRequest {
     @Email(message = "INVALID_FORMART")
     String email;
 
-    @NotBlank(message = "PASSWORD_REQUIRED")
-    @Size(min = 8, message = "INVALID_FORMART")
-    String password;
+    @NotBlank(message = "FIELD_REQUIRED")
+    @Size(max = 30, message = "Họ và tên không được vượt quá 30 ký tự")
+    String fullName;
 
     @NotBlank(message = "FIELD_REQUIRED")
-    @Size(max = 30, message = "fullName max 30 characters")
-    String fullName;
+    @Size(min = 5, max = 50, message = "Tên người dùng phải có từ 5 đến 50 ký tự")
+    String username;
 
     String avatarUrl;
 
@@ -32,17 +34,19 @@ public class ExpertProfileRequest {
     String phone;
 
     @NotBlank(message = "FIELD_REQUIRED")
-    @Size(max = 1000, message = "bio max 1000 characters")
+    @Size(max = 1000, message = "Phần giới thiệu không được vượt quá 1.000 ký tự")
     String bio;
 
-    @NotBlank(message = "FIELD_REQUIRED")
-    String category;
+    @NotNull(message = "FIELD_REQUIRED")
+    @Positive(message = "Danh mục không hợp lệ")
+    Long categoryId;
 
-    @NotBlank(message = "FIELD_REQUIRED")
-    @Size(max = 1000, message = "skills max 1000 characters")
-    String skills;
+    @NotEmpty(message = "Vui lòng chọn ít nhất một kỹ năng")
+    List<@Positive(message = "Kỹ năng không hợp lệ") Long> skillIds;
 
     @JsonAlias({"yearOfExperience", "yearsOfExperience"})
+    @NotNull(message = "FIELD_REQUIRED")
+    @Min(value = 0, message = "Số năm kinh nghiệm phải từ 0 trở lên")
     Integer yearOfExperience;
 
     String portfolioUrl;

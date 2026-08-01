@@ -61,4 +61,6 @@ public interface INotificationService {
     void notifyExpertAiServiceAccepted(ExpertService expertService);
 
     void notifyExpertAiServiceRejected(ExpertService expertService);
+
+    void notifyAdminWithdrawalRequested(UserWallet wallet);
 }

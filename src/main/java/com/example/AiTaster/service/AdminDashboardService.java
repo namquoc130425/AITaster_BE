@@ -63,8 +63,14 @@ public class AdminDashboardService implements IAdminDashboardService {
         YearMonth startMonth =
                 YearMonth.of(targetYear, 1);
 
+        int currentYear = Year.now().getValue();
+        int lastMonthIndex =
+                targetYear == currentYear
+                        ? YearMonth.now().getMonthValue()
+                        : 12;
+
         YearMonth endMonth =
-                YearMonth.of(targetYear, 12);
+                YearMonth.of(targetYear, lastMonthIndex);
 
         LocalDateTime startDate =
                 startMonth.atDay(1).atStartOfDay();
@@ -137,7 +143,7 @@ public class AdminDashboardService implements IAdminDashboardService {
         long runningExpertTotal =
                 expertsBeforeStart;
 
-        for (int monthIndex = 1; monthIndex <= 12; monthIndex++) {
+        for (int monthIndex = 1; monthIndex <= lastMonthIndex; monthIndex++) {
             YearMonth month =
                     YearMonth.of(targetYear, monthIndex);
 

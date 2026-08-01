@@ -43,7 +43,7 @@ public class ExpertProfileController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<APIResponse<CurrentUserResponse>> update(@Valid @PathVariable Long id, @RequestBody ExpertProfileRequest request
+    public ResponseEntity<APIResponse<CurrentUserResponse>> update(@PathVariable Long id, @Valid @RequestBody ExpertProfileRequest request
     ) {
         CurrentUserResponse response =  expertProfileService.update(id,request);
         return ResponseEntity.status(201).body(APIResponse.response(201,"Update Client successfully",response));

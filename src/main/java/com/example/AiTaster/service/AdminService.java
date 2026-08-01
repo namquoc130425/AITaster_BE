@@ -158,7 +158,7 @@ public class AdminService implements IAdminService {
     private User findUserById(Long userId) {
         return userRepo.findById(userId)
                 .orElseThrow(() ->
-                        new GlobalException(ErrorCode.NOT_FOUND.getCode(),"User " + ErrorCode.NOT_FOUND.getMessage())
+                        new GlobalException(ErrorCode.NOT_FOUND.getCode(), "Người dùng: " + ErrorCode.NOT_FOUND.getMessage())
                 );
     }
 }

@@ -64,8 +64,6 @@ class ExpertProductServiceSubmissionTest {
     void createService_rejectsSubmissionWhenRequiredFilesAreMissing() {
         User user = User.builder().userId(1L).build();
         ExpertProfile expertProfile = ExpertProfile.builder().expertProfileId(2L).user(user).build();
-        Category category = Category.builder().categoryId(3L).build();
-        Skill skill = Skill.builder().skillId(4L).build();
         ExpertService expertService = ExpertService.builder().expertProfile(expertProfile).build();
         ExpertServiceRequest request = new ExpertServiceRequest();
         request.setServiceName("AI chatbot");
@@ -76,14 +74,9 @@ class ExpertProductServiceSubmissionTest {
 
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(expertProfileRepo.findByUser(user)).thenReturn(Optional.of(expertProfile));
-        when(categoryRepo.getCategoriesByCategoryId(3L)).thenReturn(Optional.of(category));
-        when(skillRepo.findAllById(List.of(4L))).thenReturn(List.of(skill));
-        when(expertServiceMapper.toEntity(request, expertProfile)).thenReturn(expertService);
-        when(expertServiceRepo.save(expertService)).thenReturn(expertService);
-
         assertThatThrownBy(() -> expertProductService.CreatService(request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("Document file and source file are required before review");
+                .hasMessage("Phải có tệp tài liệu và mã nguồn trước khi gửi duyệt");
 
         verify(expertServiceRepo, never()).save(expertService);
     }

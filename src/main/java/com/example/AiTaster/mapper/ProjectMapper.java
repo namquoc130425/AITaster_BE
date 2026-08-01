@@ -171,7 +171,7 @@ public interface ProjectMapper {
             case ACCEPTED -> "Waiting for escrow payment";
             case PAYMENT_EXPIRED -> "Payment expired";
             case REJECTED -> "Invitation rejected";
-            case EXPIRED -> "Invitation expired";
+            case EXPIRED -> "Lời mời đã hết hạn";
         };
     }
 

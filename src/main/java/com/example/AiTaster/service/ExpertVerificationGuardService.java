@@ -17,7 +17,7 @@ public class ExpertVerificationGuardService {
     @Transactional(readOnly = true)
     public void ensureVerified(ExpertProfile expertProfile) {
         if (expertProfile == null || expertProfile.getExpertProfileId() == null) {
-            throw new GlobalException(403, "Only expert can use this API");
+            throw new GlobalException(403, "Chỉ chuyên gia mới có thể thực hiện thao tác này");
         }
 
         boolean verified =
@@ -27,7 +27,7 @@ public class ExpertVerificationGuardService {
                 );
 
         if (!verified) {
-            throw new GlobalException(403, "Expert must be verified by admin before using this feature");
+            throw new GlobalException(403, "Chuyên gia phải được quản trị viên xác minh trước khi sử dụng tính năng này");
         }
     }
 }

@@ -76,13 +76,25 @@ public static Specification<ExpertService> filter(ExpertServiceFillerRequest req
                 predicates.add(cb.lessThanOrEqualTo(root.get("serviceFee"),filter.getFeeTo()));
             }
 
-            // minRating null/0 nghĩa là không lọc. Khi lọc theo sao, loại service chưa có đánh giá.
+            // minRating null/0 nghĩa là không lọc; giá trị dương chọn một khoảng sao riêng.
             if(filter.getMinRating() != null && filter.getMinRating() > 0) {
+                int selectedRating = filter.getMinRating();
                 predicates.add(cb.greaterThan(root.<Integer>get("ratingCount"), 0));
                 predicates.add(cb.greaterThanOrEqualTo(
                         root.<BigDecimal>get("rating"),
-                        BigDecimal.valueOf(filter.getMinRating())
+                        BigDecimal.valueOf(selectedRating)
                 ));
+                if (selectedRating < 5) {
+                    predicates.add(cb.lessThan(
+                            root.<BigDecimal>get("rating"),
+                            BigDecimal.valueOf(selectedRating + 1L)
+                    ));
+                } else {
+                    predicates.add(cb.lessThanOrEqualTo(
+                            root.<BigDecimal>get("rating"),
+                            BigDecimal.valueOf(5)
+                    ));
+                }
             }
 
         }

@@ -10,8 +10,8 @@
 
     <p>Xin chào <b th:text="${recipientName}">bạn</b>,</p>
 
-    <p th:if="${recipientRole.name() == 'CLIENT'}">Dự án của bạn đã hoàn tất sau bước xác nhận cuối cùng. Hệ thống đã xử lý khoản escrow và phát hành hóa đơn hoàn tất dự án.</p>
-    <p th:if="${recipientRole.name() == 'EXPERT'}">Dự án đã được client xác nhận hoàn thành. Khoản thanh toán tương ứng đã được ghi nhận và chuyển theo luồng ví của hệ thống.</p>
+    <p th:if="${recipientRole.name() == 'CLIENT'}">Dự án của bạn đã hoàn tất sau bước xác nhận cuối cùng. Hệ thống đã xử lý khoản ký quỹ và phát hành hóa đơn hoàn tất dự án.</p>
+    <p th:if="${recipientRole.name() == 'EXPERT'}">Dự án đã được khách hàng xác nhận hoàn thành. Khoản thanh toán tương ứng đã được ghi nhận và chuyển theo luồng ví của hệ thống.</p>
 
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; margin: 20px 0;">
         <p style="margin: 6px 0;"><b>Mã hóa đơn:</b> <span th:text="${invoice.invoiceCode}">INV-20260713-ABC123</span></p>
@@ -23,7 +23,7 @@
 
     <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
         <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Số tiền expert nhận</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Số tiền chuyên gia nhận</td>
             <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;" th:text="${invoice.subtotalAmount + ' ' + invoice.currency}">900000 VND</td>
         </tr>
         <tr>

@@ -15,6 +15,11 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
 
     long countByProjectStatus(ProjectStatus projectStatus);
 
+    long countByInvitation_ExpertApplication_ExpertProfile_ExpertProfileIdAndProjectStatus(
+            Long expertProfileId,
+            ProjectStatus projectStatus
+    );
+
     boolean existsByInvitation(Invitation invitation);
 
     Optional<Project> findByProjectId(Long projectId);

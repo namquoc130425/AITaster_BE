@@ -40,7 +40,7 @@ public class AdminExpertVerificationService {
         ExpertVerification verification = getVerification(verificationId);
 
         if (verification.getVerificationStatus() != ExpertVerificationStatus.SUBMITTED) {
-            throw new GlobalException(400, "Only submitted verification can be approved");
+            throw new GlobalException(400, "Chỉ yêu cầu xác minh đã gửi mới có thể được phê duyệt");
         }
 
         verification.setVerificationStatus(ExpertVerificationStatus.VERIFIED);
@@ -52,8 +52,8 @@ public class AdminExpertVerificationService {
 
         notifyExpert(
                 saved,
-                "Certificate approved",
-                "Your expert certificate has been approved."
+                "Chứng chỉ đã được phê duyệt",
+                "Chứng chỉ chuyên gia của bạn đã được phê duyệt."
         );
 
         return expertVerificationMapper.toResponse(saved);
@@ -63,13 +63,13 @@ public class AdminExpertVerificationService {
     @Transactional
     public ExpertVerificationResponse reject(Long verificationId, String reason) {
         if (reason == null || reason.isBlank()) {
-            throw new GlobalException(400, "Reject reason is required");
+            throw new GlobalException(400, "Lý do từ chối không được để trống");
         }
 
         ExpertVerification verification = getVerification(verificationId);
 
         if (verification.getVerificationStatus() != ExpertVerificationStatus.SUBMITTED) {
-            throw new GlobalException(400, "Only submitted verification can be rejected");
+            throw new GlobalException(400, "Chỉ yêu cầu xác minh đã gửi mới có thể bị từ chối");
         }
 
         verification.setVerificationStatus(ExpertVerificationStatus.REJECTED);
@@ -81,8 +81,8 @@ public class AdminExpertVerificationService {
 
         notifyExpert(
                 saved,
-                "Certificate rejected",
-                "Your expert certificate was rejected. Reason: " + reason
+                "Chứng chỉ đã bị từ chối",
+                "Chứng chỉ chuyên gia của bạn đã bị từ chối. Lý do: " + reason
         );
 
         return expertVerificationMapper.toResponse(saved);
@@ -90,7 +90,7 @@ public class AdminExpertVerificationService {
 
     private ExpertVerification getVerification(Long verificationId) {
         return expertVerificationRepo.findById(verificationId)
-                .orElseThrow(() -> new GlobalException(404, "Verification not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy yêu cầu xác minh"));
     }
 
     private void notifyExpert(

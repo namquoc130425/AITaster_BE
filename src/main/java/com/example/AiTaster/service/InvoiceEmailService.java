@@ -34,10 +34,10 @@ public class InvoiceEmailService {
     @Transactional
     public List<InvoiceEmailLog> enqueueForInvoice(Long invoiceId) {
         Invoices invoice = invoicesRepo.findById(invoiceId)
-                .orElseThrow(() -> new GlobalException(404, "Invoice not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hóa đơn"));
 
         if (!InvoiceStatus.PAID.equals(invoice.getInvoiceStatus())) {
-            throw new GlobalException(400, "Only paid invoices can be emailed");
+            throw new GlobalException(400, "Chỉ có thể gửi email cho hóa đơn đã thanh toán");
         }
 
         List<InvoiceEmailLog> emailLogs = new ArrayList<>();
@@ -84,7 +84,7 @@ public class InvoiceEmailService {
     @Transactional
     public InvoiceEmailLog sendEmailLog(Long invoiceEmailLogId) {
         InvoiceEmailLog emailLog = invoiceEmailLogRepo.findById(invoiceEmailLogId)
-                .orElseThrow(() -> new GlobalException(404, "Invoice email log not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy lịch sử gửi email hóa đơn"));
 
         return sendEmailLog(emailLog);
     }
@@ -109,7 +109,7 @@ public class InvoiceEmailService {
         }
 
         User recipient = userRepo.findById(recipientUserId)
-                .orElseThrow(() -> new GlobalException(404, "Invoice email recipient not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy người nhận email hóa đơn"));
 
         return invoiceEmailLogRepo
                 .findByInvoiceIdAndRecipientUserIdAndRecipientRoleAndEmailType(
@@ -144,9 +144,9 @@ public class InvoiceEmailService {
 
         try {
             Invoices invoice = invoicesRepo.findById(emailLog.getInvoiceId())
-                    .orElseThrow(() -> new GlobalException(404, "Invoice not found"));
+                    .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hóa đơn"));
             User recipient = userRepo.findById(emailLog.getRecipientUserId())
-                    .orElseThrow(() -> new GlobalException(404, "Invoice email recipient not found"));
+                    .orElseThrow(() -> new GlobalException(404, "Không tìm thấy người nhận email hóa đơn"));
 
             emailService.sendInvoiceEmail(
                     emailLog.getRecipientEmail(),
@@ -154,7 +154,7 @@ public class InvoiceEmailService {
                     emailLog.getEmailType(),
                     invoice,
                     resolveRecipientName(recipient),
-                    resolveInvoiceDisplayName(invoice, "AI Service"),
+                    resolveInvoiceDisplayName(invoice, "Dịch vụ AI"),
                     resolveInvoiceDisplayName(invoice, "Dự án")
             );
 

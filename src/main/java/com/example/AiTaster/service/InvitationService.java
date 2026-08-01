@@ -63,13 +63,13 @@ public class InvitationService implements Iinvitation {
 
         if(invitationRepo.existsByExpertApplication_JobpostAndInvitationStatus(expertApplication.getJobpost(),InvitationStatus.ACCEPTED))
         {
-            throw new GlobalException(400,"Job post already has accepted invitation");
+            throw new GlobalException(400,"Bài đăng dự án đã có lời mời được chấp nhận");
         }
 
         boolean hasPendingIntrueFour = invitationRepo.existsByExpertApplication_JobpostAndInvitationStatusAndExpiresAtAfter(expertApplication.getJobpost(),InvitationStatus.PENDING,LocalDateTime.now());
 
         if (hasPendingIntrueFour) {
-            throw new GlobalException(400, "Job post already has an active pending invitation");
+            throw new GlobalException(400, "Bài đăng dự án đã có lời mời đang chờ phản hồi");
         }
 
         Invitation invitation = invitationMapper.toEntity(request,expertApplication);
@@ -88,7 +88,7 @@ public class InvitationService implements Iinvitation {
         realtimeService.pushInvitationParticipants(
                 saveInvitation,
                 "INVITATION_CREATED",
-                "Invitation created"
+                "Đã tạo lời mời"
         );
 
         return toInvitationResponse(saveInvitation);
@@ -134,7 +134,7 @@ public class InvitationService implements Iinvitation {
     @Override
     public InvitationResponse acceptInvitation(Long invitationId, InvitationAcceptRequest request) {
         if(request == null || !Boolean.TRUE.equals(request.getExpertAcceptedTerms())) {
-            throw new GlobalException(400,"Expert accepted terms are not set");
+            throw new GlobalException(400,"Chuyên gia chưa xác nhận đồng ý với điều khoản");
         }
         Invitation invitation = getInvitationWithDetail(invitationId);
 
@@ -160,7 +160,7 @@ public class InvitationService implements Iinvitation {
         realtimeService.pushInvitationParticipants(
                 saveInvitation,
                 "INVITATION_ACCEPTED",
-                "Invitation accepted"
+                "Đã chấp nhận lời mời"
         );
 
         return toInvitationResponse(saveInvitation);
@@ -174,7 +174,7 @@ public class InvitationService implements Iinvitation {
         expireIfNeeded(invitation);
 
         if (InvitationStatus.PENDING.equals(invitation.getInvitationStatus())) {
-            throw new GlobalException(400, "Pending invitation cannot be deleted");
+            throw new GlobalException(400, "Không thể xóa lời mời đang chờ phản hồi");
         }
 
         markInvitationDeletedForCurrentUser(invitation);
@@ -182,7 +182,7 @@ public class InvitationService implements Iinvitation {
         realtimeService.pushInvitationParticipants(
                 savedInvitation,
                 "INVITATION_DELETED",
-                "Invitation deleted"
+                "Đã xóa lời mời"
         );
     }
 
@@ -201,7 +201,7 @@ public class InvitationService implements Iinvitation {
         realtimeService.pushInvitationParticipants(
                 saveInvitation,
                 "INVITATION_REJECTED",
-                "Invitation rejected"
+                "Đã từ chối lời mời"
         );
 
         return toInvitationResponse(saveInvitation);
@@ -234,22 +234,22 @@ public class InvitationService implements Iinvitation {
         expireIfNeeded(invitation);
 
         if (!InvitationStatus.PENDING.equals(invitation.getInvitationStatus())) {
-            throw new GlobalException(400, "Invitation is not pending");
+            throw new GlobalException(400, "Lời mời không ở trạng thái chờ phản hồi");
         }
 
         if (invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
             invitation.setInvitationStatus(InvitationStatus.EXPIRED);
             invitationRepo.save(invitation);
-            throw new GlobalException(400, "Invitation expired");
+            throw new GlobalException(400, "Lời mời đã hết hạn");
         }
     }
     // Validate timeline có thể dùng để tính toán.
     private void  validateTimeLine(Integer value, TimelineUnit unit) {
         if(value == null || unit == null) {
-            throw new GlobalException(400,"Timeline is required");
+            throw new GlobalException(400,"Thời gian thực hiện không được để trống");
         }
         if(value <= 0 ) {
-            throw new GlobalException(400, "Timeline value must be greater than 0");
+            throw new GlobalException(400, "Thời gian thực hiện phải lớn hơn 0");
         }
     }
     // sinh text hiển thị timeLine từ value + unit
@@ -260,30 +260,30 @@ public class InvitationService implements Iinvitation {
     }
     // Tìm Expertapplication theo id, không có thì báo lỗi.
     private ExpertApplication getExpertApplication(Long applicationId) {
-        return expertApplicationRepo.findByApplicationId(applicationId) .orElseThrow(() -> new GlobalException(404, "Application not found"));
+        return expertApplicationRepo.findByApplicationId(applicationId) .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hồ sơ ứng tuyển"));
     }
     // Lấy ExpertProfile của user đang đăng nhập.
     private ExpertProfile getCurrentExpertProfile() {
         User user = currentUserService.getCurrentUser();
-        return expertProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Only expert can use this API"));
+        return expertProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Chỉ chuyên gia mới có thể thực hiện thao tác này"));
     }
 
     // Lấy ClientProfile của user đang đăng nhập.
     private ClientProfile getCurrentClientProfile() {
         User user = currentUserService.getCurrentUser();
-        return clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Only client can use this API"));
+        return clientProfileRepo.findByUser(user).orElseThrow(() -> new GlobalException(403, "Chỉ khách hàng mới có thể thực hiện thao tác này"));
     }
 
     // Check client hiện tại có phải owner của JobPost không.
     // Client chỉ được xem applications/unlock proposal của job do mình tạo.
     private void checkJobPostOwner(JobPost jobPost , ClientProfile clientProfile) {
         if(!jobPost.getClientProfile().getClientProfileId().equals(clientProfile.getClientProfileId())) {
-            throw new GlobalException(403, "You are not owner of this jobpost");
+            throw new GlobalException(403, "Bạn không sở hữu bài đăng dự án này");
         }
     }
     private void validateInvitationInput(InvitationCreateRequest request) {
         if (request == null) {
-            throw new GlobalException(400, "Invitation is required");
+            throw new GlobalException(400, "Thông tin lời mời không được để trống");
         }
         contentManagerService.validateKeywordInput(request.getProjectTitle());
         contentManagerService.validateKeywordInput(request.getFinalRequirement());
@@ -293,7 +293,7 @@ public class InvitationService implements Iinvitation {
         validateTimeLine(request.getFinalTimelineValue(), request.getFinalTimelineUnit());
 
         if (!Boolean.TRUE.equals(request.getClientAcceptedTerms())) {
-            throw new GlobalException(400, "Client must accept terms");
+            throw new GlobalException(400, "Khách hàng phải đồng ý với điều khoản");
         }
     }
     private void checkInvitationOwnerClient(Invitation invitation, ClientProfile clientProfile) {
@@ -303,7 +303,7 @@ public class InvitationService implements Iinvitation {
                 .getClientProfileId();
 
         if (!ownerClientId.equals(clientProfile.getClientProfileId())) {
-            throw new GlobalException(403, "You are not owner client of this invitation");
+            throw new GlobalException(403, "Bạn không phải khách hàng sở hữu lời mời này");
         }
     }
 
@@ -318,7 +318,7 @@ public class InvitationService implements Iinvitation {
         Long invitationExpertId = invitation.getExpertApplication().getExpertProfile().getExpertProfileId();
 
         if (!invitationExpertId.equals(expertProfile.getExpertProfileId())) {
-            throw new GlobalException(403, "You are not invited expert of this invitation");
+            throw new GlobalException(403, "Bạn không phải chuyên gia được mời");
         }
 
     }
@@ -342,7 +342,7 @@ public class InvitationService implements Iinvitation {
                 .orElse(false);
 
         if (!isOwnerClient && !isInvitedExpert) {
-            throw new GlobalException(403, "You are not allowed to delete this invitation");
+            throw new GlobalException(403, "Bạn không có quyền xóa lời mời này");
         }
 
         if (isOwnerClient) {
@@ -356,7 +356,7 @@ public class InvitationService implements Iinvitation {
 
     private Invitation getInvitationWithDetail(Long invitationId) {
         return invitationRepo.findWithDetailByInvitationId(invitationId)
-                .orElseThrow(() -> new GlobalException(404, "Invitation not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy lời mời"));
     }
 
     private InvitationResponse toInvitationResponse(Invitation invitation) {

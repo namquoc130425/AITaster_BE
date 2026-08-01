@@ -96,7 +96,7 @@ class RatingServiceTest {
                 RatingRequest.builder().rating(5).build()
         ))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("You can only rate this AI service after purchase");
+                .hasMessage("Bạn chỉ có thể đánh giá dịch vụ AI sau khi mua");
     }
 
     @Test
@@ -178,7 +178,7 @@ class RatingServiceTest {
                 RatingRequest.builder().rating(4).build()
         ))
                 .isInstanceOf(GlobalException.class)
-                .hasMessage("You can only rate after project is completed");
+                .hasMessage("Bạn chỉ có thể đánh giá sau khi dự án hoàn thành");
     }
 
     @Test

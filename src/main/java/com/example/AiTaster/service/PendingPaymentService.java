@@ -5,6 +5,7 @@ import com.example.AiTaster.constant.PaymentReferenceType;
 import com.example.AiTaster.constant.PaymentStatus;
 import com.example.AiTaster.constant.TransactionType;
 import com.example.AiTaster.entity.PaymentTransaction;
+import com.example.AiTaster.entity.User;
 import com.example.AiTaster.exception.GlobalException;
 import com.example.AiTaster.repository.PaymentTransactionRepo;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,38 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PendingPaymentService {
     private final PaymentTransactionRepo paymentTransactionRepo;
+    private final CurrentUserService currentUserService;
+
+    @Transactional
+    public void cancelPendingPayment(String paymentCode) {
+        if (paymentCode == null || paymentCode.isBlank()) {
+            throw new GlobalException(400, "Thiếu mã thanh toán SePay");
+        }
+
+        User currentUser = currentUserService.getCurrentUser();
+        PaymentTransaction paymentTransaction = paymentTransactionRepo
+                .findByPaymentCode(paymentCode.trim().toUpperCase())
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy giao dịch SePay"));
+
+        if (!currentUser.getUserId().equals(paymentTransaction.getSenderId())) {
+            throw new GlobalException(403, "Bạn không có quyền hủy giao dịch này");
+        }
+
+        if (!PaymentMethod.SEPAY.equals(paymentTransaction.getPaymentMethod())) {
+            throw new GlobalException(400, "Giao dịch này không sử dụng SePay");
+        }
+
+        if (PaymentStatus.CANCELED.equals(paymentTransaction.getPaymentStatus())) {
+            return;
+        }
+
+        if (!PaymentStatus.PENDING.equals(paymentTransaction.getPaymentStatus())) {
+            throw new GlobalException(409, "Chỉ có thể hủy giao dịch đang chờ thanh toán");
+        }
+
+        paymentTransaction.setPaymentStatus(PaymentStatus.CANCELED);
+        paymentTransactionRepo.save(paymentTransaction);
+    }
 
     @Transactional
     public PaymentTransaction createPendingPaymentTransaction(
@@ -171,11 +204,11 @@ public class PendingPaymentService {
 
     private void validatePendingAmount(BigDecimal amount) {
         if (amount == null) {
-            throw new GlobalException(400, "Amount must not be null");
+            throw new GlobalException(400, "Số tiền không được để trống");
         }
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GlobalException(400, "Amount must be greater than zero");
+            throw new GlobalException(400, "Số tiền phải lớn hơn 0");
         }
     }
 }

@@ -131,7 +131,7 @@ public class SepayWebhookService {
         try {
             return objectMapper.readValue(rawBody, SepayWebhookRequest.class);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid webhook body");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dữ liệu webhook không hợp lệ");
         }
     }
 
@@ -142,11 +142,11 @@ public class SepayWebhookService {
         }
 
         if (secretKey == null || secretKey.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing SePay secret key");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Thiếu khóa bí mật SePay");
         }
 
         if (!webhookSecret.equals(secretKey)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid SePay secret key");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Khóa bí mật SePay không hợp lệ");
         }
     }
 

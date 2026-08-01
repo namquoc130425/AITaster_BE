@@ -191,7 +191,7 @@ public class MessageService implements IMessageService {
                 "MESSAGE_SENT",
                 ReferenceType.CONVERSATION,
                 conversation.getConversationId(),
-                "Message sent"
+                "Đã gửi tin nhắn"
         );
         realtimeService.pushUserMessage(receiver, response);
         notificationService.notify(
@@ -199,7 +199,7 @@ public class MessageService implements IMessageService {
                 NotificationType.SYSTEM,
                 ReferenceType.CONVERSATION,
                 conversation.getConversationId(),
-                "New message",
+                "Bạn có tin nhắn mới",
                 buildMessageNotificationContent(sender, response.getContent())
         );
 
@@ -248,7 +248,7 @@ public class MessageService implements IMessageService {
                     "CONVERSATION_READ",
                     ReferenceType.CONVERSATION,
                     conversation.getConversationId(),
-                    "Conversation read"
+                    "Đã đọc cuộc trò chuyện"
             );
         }
 
@@ -297,7 +297,7 @@ public class MessageService implements IMessageService {
                     "CONVERSATION_READ",
                     ReferenceType.CONVERSATION,
                     conversation.getConversationId(),
-                    "Conversation read"
+                    "Đã đọc cuộc trò chuyện"
             );
         }
 
@@ -346,7 +346,7 @@ public class MessageService implements IMessageService {
                     "CONVERSATION_READ",
                     ReferenceType.CONVERSATION,
                     conversation.getConversationId(),
-                    "Conversation read"
+                    "Đã đọc cuộc trò chuyện"
             );
         }
 
@@ -482,11 +482,11 @@ public class MessageService implements IMessageService {
         Project project = projectRepo.findById(projectId).orElse(null);
 
         if (project != null && ProjectStatus.DISPUTED.equals(project.getProjectStatus())) {
-            throw new GlobalException(400, "Messaging is paused while project is under dispute");
+            throw new GlobalException(400, "Cuộc trò chuyện tạm dừng trong thời gian dự án có tranh chấp");
         }
 
         if (project != null && ProjectStatus.CANCELED.equals(project.getProjectStatus())) {
-            throw new GlobalException(400, "Messaging is closed because the project has been resolved");
+            throw new GlobalException(400, "Cuộc trò chuyện đã đóng vì dự án đã được xử lý xong");
         }
     }
 
@@ -506,7 +506,7 @@ public class MessageService implements IMessageService {
 
     private String safeName(User user) {
         if (user == null) {
-            return "User";
+            return "Người dùng";
         }
 
         if (user.getFullName() != null && !user.getFullName().isBlank()) {
@@ -517,6 +517,6 @@ public class MessageService implements IMessageService {
             return user.getUsername();
         }
 
-        return "User";
+        return "Người dùng";
     }
 }

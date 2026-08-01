@@ -494,16 +494,16 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
 
     private Category getCategoryByCategoryId(Long categoryId) {
         if (categoryId == null || categoryId <= 0) {
-            throw new GlobalException(400, "Category is required");
+            throw new GlobalException(400, "Danh mục không được để trống");
         }
 
         return categoryRepo.getCategoriesByCategoryId(categoryId)
-                .orElseThrow(() -> new GlobalException(400, "Category Not Found"));
+                .orElseThrow(() -> new GlobalException(400, "Không tìm thấy danh mục"));
     }
 
     private List<Skill> getSkillBySkillId(List<Long> selectedSkillIds) {
         if (selectedSkillIds == null || selectedSkillIds.isEmpty()) {
-            throw new GlobalException(400, "selectedSkillIds is required");
+            throw new GlobalException(400, "Vui lòng chọn ít nhất một kỹ năng");
         }
 
         List<Long> checkSkillIds = new ArrayList<>();
@@ -523,13 +523,13 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
 
         if (checkSkillIds.isEmpty()) {
-            throw new GlobalException(400, "Skill is required");
+            throw new GlobalException(400, "Kỹ năng không được để trống");
         }
 
         List<Skill> skills = skillRepo.findAllById(checkSkillIds);
 
         if (skills.size() != checkSkillIds.size()) {
-            throw new GlobalException(400, "Some skills not found");
+            throw new GlobalException(400, "Không tìm thấy một số kỹ năng đã chọn");
         }
 
         return skills;
@@ -545,11 +545,11 @@ public class AuthenticationService implements UserDetailsService, IAuthenticatio
         }
 
         if (phone == null || phone.isBlank()) {
-            throw new GlobalException(400, "Phone is required");
+            throw new GlobalException(400, "Số điện thoại không được để trống");
         }
 
         if (username == null || username.isBlank()) {
-            throw new GlobalException(400, "Username is required");
+            throw new GlobalException(400, "Tên đăng nhập không được để trống");
         }
 
         if (userRepo.existsByEmail(email)) {

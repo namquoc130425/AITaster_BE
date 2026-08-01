@@ -7,6 +7,7 @@ import com.example.AiTaster.exception.GlobalException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 import javax.crypto.spec.SecretKeySpec;
 
 import javax.crypto.Mac;
@@ -74,7 +75,7 @@ public class SepayGateway {
         fields.put("error_url", errorUrl);
 
         // URL SePay redirect về khi user hủy checkout.
-        fields.put("cancel_url", cancelUrl);
+        fields.put("cancel_url", buildCancelUrl(paymentCode));
 
         // Tạo chữ ký từ đúng các field phía trên.
         String signature = signFields(fields);
@@ -89,6 +90,15 @@ public class SepayGateway {
                 .fields(fields)
                 .build();
     }
+
+    private String buildCancelUrl(String paymentCode) {
+        return UriComponentsBuilder.fromUriString(cancelUrl)
+                .queryParam("paymentCode", paymentCode)
+                .build()
+                .encode()
+                .toUriString();
+    }
+
     private String signFields(Map<String, String> fields) {
         // Thứ tự field phải đúng yêu cầu SePay, không sort alphabet.
         List<String> allowedFields = List.of(
@@ -145,7 +155,7 @@ public class SepayGateway {
             return Base64.getEncoder().encodeToString(digest);
 
         } catch (Exception e) {
-            throw new GlobalException(500, "Cannot sign SePay checkout form");
+            throw new GlobalException(500, "Không thể ký biểu mẫu thanh toán SePay");
         }
     }
 

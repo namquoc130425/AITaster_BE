@@ -47,9 +47,9 @@ class JobPostServiceTest {
     private JobPostService jobPostService;
 
     @Test
-    void createJobPost_rejectsTitleWithLessThanTenWords() {
+    void createJobPost_rejectsTitleWithLessThanTwentyCharacters() {
         JobPostRequest request = new JobPostRequest();
-        request.setTitle("Build AI chatbot for ecommerce");
+        request.setTitle("Chatbot AI");
         request.setRequirementDescription("Build a chatbot for product support and order tracking.");
         request.setBusinessGoal("Reduce support workload and improve conversion.");
         request.setMainFeatures("Chat, FAQ, product suggestions, and dashboard.");
@@ -58,7 +58,7 @@ class JobPostServiceTest {
 
         assertThatThrownBy(() -> jobPostService.createJobPost(request))
                 .isInstanceOf(GlobalException.class)
-                .hasMessageContaining("at least 10 words");
+                .hasMessageContaining("ít nhất 20 ký tự");
 
         verify(currentUserService, never()).getCurrentUser();
     }

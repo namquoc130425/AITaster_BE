@@ -58,6 +58,6 @@ class JobPostControllerNotFoundTest {
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.messages").value("Job Post Not Found"));
+                .andExpect(jsonPath("$.messages").value("Không tìm thấy bài đăng dự án"));
     }
 }

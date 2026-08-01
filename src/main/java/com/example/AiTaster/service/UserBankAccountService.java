@@ -71,18 +71,18 @@ public class UserBankAccountService {
         String otp = request.getOtp() == null ? "" : request.getOtp().trim();
 
         UserBankAccount account = userBankAccountRepo.findByUser(user)
-                .orElseThrow(() -> new GlobalException(404, "Bank account request not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy yêu cầu cập nhật tài khoản ngân hàng"));
 
         if (account.getOtpCode() == null || account.getOtpExpiredAt() == null) {
-            throw new GlobalException(400, "Bank account OTP was not requested");
+            throw new GlobalException(400, "Chưa có yêu cầu gửi mã OTP xác thực tài khoản ngân hàng");
         }
 
         if (account.getOtpExpiredAt().isBefore(LocalDateTime.now())) {
-            throw new GlobalException(400, "Bank account OTP expired");
+            throw new GlobalException(400, "Mã OTP xác thực tài khoản ngân hàng đã hết hạn");
         }
 
         if (!account.getOtpCode().equals(otp)) {
-            throw new GlobalException(400, "Invalid bank account OTP");
+            throw new GlobalException(400, "Mã OTP xác thực tài khoản ngân hàng không chính xác");
         }
 
         account.setVerified(true);
@@ -94,10 +94,10 @@ public class UserBankAccountService {
 
     public UserBankAccount getVerifiedBankAccountByUserId(Long userId) {
         UserBankAccount account = userBankAccountRepo.findByUser_UserId(userId)
-                .orElseThrow(() -> new GlobalException(400, "User has no payout bank account"));
+                .orElseThrow(() -> new GlobalException(400, "Người dùng chưa có tài khoản ngân hàng nhận tiền"));
 
         if (!Boolean.TRUE.equals(account.getVerified())) {
-            throw new GlobalException(400, "Payout bank account is not verified");
+            throw new GlobalException(400, "Tài khoản ngân hàng nhận tiền chưa được xác minh");
         }
 
         return account;
@@ -110,13 +110,13 @@ public class UserBankAccountService {
 
     private void validateRequest(UserBankAccountRequest request) {
         if (request == null) {
-            throw new GlobalException(400, "Bank account request is required");
+            throw new GlobalException(400, "Thông tin tài khoản ngân hàng không được để trống");
         }
 
         if (isBlank(request.getBankCode())
                 || isBlank(request.getAccountNumber())
                 || isBlank(request.getAccountHolderName())) {
-            throw new GlobalException(400, "Bank account information is required");
+            throw new GlobalException(400, "Thông tin tài khoản ngân hàng không được để trống");
         }
     }
 

@@ -22,7 +22,7 @@ public class GlobalExceptionHander {
         return ResponseEntity.badRequest()
                 .body(APIResponse.response(
                         HttpStatus.BAD_REQUEST.value(),
-                        "Invalid request body",
+                        "Dữ liệu yêu cầu không hợp lệ",
                         null
                 ));
     }
@@ -32,7 +32,7 @@ public class GlobalExceptionHander {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(APIResponse.response(
                         HttpStatus.FORBIDDEN.value(),
-                        "You do not have permission to perform this action",
+                        "Bạn không có quyền thực hiện thao tác này",
                         null
                 ));
     }
@@ -59,23 +59,20 @@ public class GlobalExceptionHander {
                 .stream()  // Chuyển list thành Stream để xử lý.
                 .map( error -> {  // Duyệt từng lỗi.
                             String enumKey = error.getDefaultMessage(); // enumKey là thông báo đã set, ví dụ @NotBlank(message = "FIELD_REQUIRED").
-                            ErrorCode errorCode;
                             // Tìm enum ErrorCode.FIELD_REQUIRED.
                             // Lấy .getMessage() tương ứng.
                             try {
-                                errorCode = ErrorCode.valueOf(enumKey);
+                                return ErrorCode.valueOf(enumKey).getMessage();
                             } catch (IllegalArgumentException e) {
-                                errorCode = ErrorCode.FIELD_REQUIRED;
-
+                                return enumKey;
                             }
-                            return  error.getField() + "" +  errorCode.getMessage(); // Ví dụ: "userName Cannot be blank".
                         }
                 ).toList();
         // Trả về FE bằng ResponseEntity.
         // badRequest() là lỗi 400.
         // errors là tất cả mã lỗi đã được chuyển đổi.
 
-        return ResponseEntity.badRequest().body(APIResponse.response(400, "Validation Failed", errors)); // Ví dụ: { code: 400, messages: "Validation Failed", result: [...] }.
+        return ResponseEntity.badRequest().body(APIResponse.response(400, "Dữ liệu không hợp lệ", errors));
     }
 }
 

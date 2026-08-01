@@ -39,7 +39,7 @@ public class ProposalPurchaseWebhookHandler  implements SepayPaymentHandler {
     @Override
     public void handle(PaymentTransaction payment, SepayWebhookRequest request, String providerTransactionCode, String providerContent, LocalDateTime paidAt) {
         ExpertProposal proposal = expertProposalRepo.findExpertProposalByProposalId(payment.getReferenceId())
-                .orElseThrow(() -> new GlobalException(404, "Proposal not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy đề xuất"));
 
         if (Boolean.TRUE.equals(proposal.getIsDeleted())) {
             markFailed(payment, providerTransactionCode, providerContent);
@@ -47,7 +47,7 @@ public class ProposalPurchaseWebhookHandler  implements SepayPaymentHandler {
         }
 
         ClientProfile clientProfile = clientProfileRepo.findByUser_UserId(payment.getSenderId())
-                .orElseThrow(() -> new GlobalException(404, "Client profile not found"));
+                .orElseThrow(() -> new GlobalException(404, "Không tìm thấy hồ sơ khách hàng"));
 
         boolean alreadyUnlocked = proposalUnlockRepo
                 .existsByProposalAndClientProfileAndIsUnlockedTrue(proposal, clientProfile);

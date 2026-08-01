@@ -39,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -46,11 +47,20 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ExpertProductService implements IExpertService {
+
+    private static final int SERVICE_NAME_MIN_LENGTH = 5;
+    private static final int SERVICE_NAME_MAX_LENGTH = 100;
+    private static final int SERVICE_DESCRIPTION_MIN_LENGTH = 20;
+    private static final int SERVICE_DESCRIPTION_MAX_LENGTH = 2000;
+    private static final long MAX_DOCUMENT_SIZE = 20L * 1024 * 1024;
+    private static final long MAX_SOURCE_SIZE = 100L * 1024 * 1024;
+    private static final BigDecimal MAX_SERVICE_FEE = new BigDecimal("1000000000");
 
     private final ContentManagerService contentManagerService;
     private final ExpertServiceMapper expertServiceMapper;
@@ -83,6 +93,7 @@ public class ExpertProductService implements IExpertService {
 
         validateInputContent(request);
         validateRequiredSubmissionFiles(request);
+        validateRequiredMedia(request);
 
         Category category =
                 getCategoryByCategoryId(
@@ -377,7 +388,7 @@ public class ExpertProductService implements IExpertService {
                         .orElseThrow(() ->
                                 new GlobalException(
                                         403,
-                                        "Only client can view purchased services"
+                                        "Chỉ khách hàng mới có thể xem dịch vụ đã mua"
                                 )
                         );
 
@@ -486,7 +497,7 @@ public class ExpertProductService implements IExpertService {
 
         if (serviceFile == null
                 || !serviceFileId.equals(serviceFile.getServiceFileId())) {
-            throw new GlobalException(404, "Service file not found");
+            throw new GlobalException(404, "Không tìm thấy tệp dịch vụ");
         }
 
         checkCanDownloadServiceFile(expertService);
@@ -497,20 +508,20 @@ public class ExpertProductService implements IExpertService {
         String filePathValue = switch (requestedKind) {
             case "instruction" -> serviceFile.getFileContent();
             case "product" -> serviceFile.getProductFile();
-            default -> throw new GlobalException(400, "Unsupported service file kind");
+            default -> throw new GlobalException(400, "Loại tệp dịch vụ không được hỗ trợ");
         };
 
         Path filePath =
                 resolveLocalUploadPath(filePathValue);
         if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
-            throw new GlobalException(404, "Service file not found on server");
+            throw new GlobalException(404, "Không tìm thấy tệp dịch vụ trên máy chủ");
         }
 
         try {
             Resource resource =
                     new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                throw new GlobalException(404, "Service file is not readable");
+                throw new GlobalException(404, "Không thể đọc tệp dịch vụ");
             }
 
             String contentType =
@@ -524,7 +535,7 @@ public class ExpertProductService implements IExpertService {
         } catch (GlobalException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new GlobalException(500, "Cannot download service file");
+            throw new GlobalException(500, "Không thể tải tệp dịch vụ");
         }
     }
 
@@ -532,21 +543,64 @@ public class ExpertProductService implements IExpertService {
         if (request == null) {
             throw new GlobalException(
                     400,
-                    "request is required"
+                    "Dữ liệu yêu cầu không được để trống"
             );
         }
 
-        contentManagerService.validateKeywordInput(
-                request.getServiceName()
-        );
+        String serviceName = request.getServiceName() == null
+                ? ""
+                : request.getServiceName().trim();
+        String serviceDescription = request.getServiceDescription() == null
+                ? ""
+                : request.getServiceDescription().trim();
 
-        contentManagerService.validateKeywordInput(
-                request.getServiceDescription()
-        );
+        if (serviceName.length() < SERVICE_NAME_MIN_LENGTH
+                || serviceName.length() > SERVICE_NAME_MAX_LENGTH) {
+            throw new GlobalException(400, "Tên dịch vụ phải có từ 5 đến 100 ký tự");
+        }
+
+        if (serviceDescription.length() < SERVICE_DESCRIPTION_MIN_LENGTH
+                || serviceDescription.length() > SERVICE_DESCRIPTION_MAX_LENGTH) {
+            throw new GlobalException(400, "Mô tả dịch vụ phải có từ 20 đến 2.000 ký tự");
+        }
+
+        request.setServiceName(serviceName);
+        request.setServiceDescription(serviceDescription);
+
+        contentManagerService.validateKeywordInput(serviceName);
+
+        contentManagerService.validateKeywordInput(serviceDescription);
 
         if (request.getServiceFee() == null
                 || request.getServiceFee().signum() <= 0) {
             throw new GlobalException(ErrorCode.SERVICE_FEE_INVALID);
+        }
+
+        if (request.getServiceFee().compareTo(MAX_SERVICE_FEE) > 0) {
+            throw new GlobalException(400, "Phí dịch vụ không được vượt quá 1.000.000.000 VND");
+        }
+
+        validateSubmissionFile(
+                request.getDocFile(),
+                List.of(".doc", ".docx", ".pdf"),
+                MAX_DOCUMENT_SIZE,
+                "Tệp tài liệu phải có định dạng DOC, DOCX hoặc PDF và không vượt quá 20 MB"
+        );
+        validateSubmissionFile(
+                request.getSourceFile(),
+                List.of(".zip", ".rar"),
+                MAX_SOURCE_SIZE,
+                "Tệp nguồn phải có định dạng ZIP hoặc RAR và không vượt quá 100 MB"
+        );
+    }
+
+    private void validateRequiredMedia(ExpertServiceRequest request) {
+        if (request.getServiceImage() == null || request.getServiceImage().isBlank()) {
+            throw new GlobalException(400, "Ảnh dịch vụ không được để trống");
+        }
+
+        if (request.getVideoDemo() == null || request.getVideoDemo().isBlank()) {
+            throw new GlobalException(400, "Video giới thiệu không được để trống");
         }
     }
 
@@ -556,6 +610,28 @@ public class ExpertProductService implements IExpertService {
                 || request.getSourceFile() == null
                 || request.getSourceFile().isEmpty()) {
             throw new GlobalException(ErrorCode.SERVICE_FILE_REQUIRED);
+        }
+    }
+
+    private void validateSubmissionFile(
+            MultipartFile file,
+            List<String> allowedExtensions,
+            long maxSize,
+            String errorMessage
+    ) {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+
+        String fileName = file.getOriginalFilename();
+        String normalizedFileName = fileName == null
+                ? ""
+                : fileName.toLowerCase(Locale.ROOT);
+        boolean validExtension = allowedExtensions.stream()
+                .anyMatch(normalizedFileName::endsWith);
+
+        if (!validExtension || file.getSize() > maxSize) {
+            throw new GlobalException(400, errorMessage);
         }
     }
 
@@ -617,7 +693,7 @@ public class ExpertProductService implements IExpertService {
                         );
 
         if (!isExpertOwner && !isPurchasedClient) {
-            throw new GlobalException(403, "You cannot download this service file");
+            throw new GlobalException(403, "Bạn không có quyền tải tệp dịch vụ này");
         }
     }
 
@@ -665,11 +741,11 @@ public class ExpertProductService implements IExpertService {
 
     private Path resolveLocalUploadPath(String filePathValue) {
         if (filePathValue == null || filePathValue.isBlank()) {
-            throw new GlobalException(404, "Service file path is empty");
+            throw new GlobalException(404, "Đường dẫn tệp dịch vụ đang trống");
         }
 
         if (filePathValue.matches("(?i)^https?://.*")) {
-            throw new GlobalException(400, "External service file is not supported");
+            throw new GlobalException(400, "Không hỗ trợ tệp dịch vụ từ đường dẫn bên ngoài");
         }
 
         String relativePath =
@@ -685,7 +761,7 @@ public class ExpertProductService implements IExpertService {
                 Path.of(relativePath).toAbsolutePath().normalize();
 
         if (!filePath.startsWith(uploadsRoot)) {
-            throw new GlobalException(403, "Invalid service file path");
+            throw new GlobalException(403, "Đường dẫn tệp dịch vụ không hợp lệ");
         }
 
         return filePath;
@@ -781,7 +857,7 @@ public class ExpertProductService implements IExpertService {
         if (skills.size() != checkSkillIds.size()) {
             throw new GlobalException(
                     400,
-                    "Some skills not found"
+                    "Không tìm thấy một số kỹ năng đã chọn"
             );
         }
 
@@ -798,7 +874,7 @@ public class ExpertProductService implements IExpertService {
                 .orElseThrow(() ->
                         new GlobalException(
                                 400,
-                                "Category Not Found"
+                                "Không tìm thấy danh mục"
                         )
                 );
     }
@@ -813,7 +889,7 @@ public class ExpertProductService implements IExpertService {
                 .equals(expertProfile.getExpertProfileId())) {
             throw new GlobalException(
                     403,
-                    "You are not owner of this AI service"
+                    "Bạn không sở hữu dịch vụ AI này"
             );
         }
     }
@@ -838,7 +914,7 @@ public class ExpertProductService implements IExpertService {
                 .orElseThrow(() ->
                         new GlobalException(
                                 400,
-                                "User Not Found"
+                                "Không tìm thấy người dùng"
                         )
                 );
     }

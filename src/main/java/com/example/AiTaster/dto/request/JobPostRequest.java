@@ -3,6 +3,7 @@ package com.example.AiTaster.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,6 +17,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JobPostRequest {
     @NotBlank(message = "FIELD_REQUIRED")
+    @Size(min = 20, message = "TITLE_MIN_LENGTH")
     String title;
 
     @NotBlank(message = "FIELD_REQUIRED")

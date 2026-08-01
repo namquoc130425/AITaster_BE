@@ -9,6 +9,8 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -73,15 +75,34 @@ WHERE pt.paymentReferenceType = :paymentReferenceType
     @Query("""
             SELECT pt
             FROM PaymentTransaction pt
-            WHERE pt.senderId = :userId
-               OR pt.receiverId = :userId
-               OR pt.sourceWalletId = :walletId
-               OR pt.targetWalletId = :walletId
+            WHERE (
+                    pt.senderId = :userId
+                    OR pt.receiverId = :userId
+                    OR pt.sourceWalletId = :walletId
+                    OR pt.targetWalletId = :walletId
+                  )
+              AND pt.paymentStatus <> :excludedStatus
             ORDER BY pt.createAt DESC
             """)
     List<PaymentTransaction> findMyWalletTransactions(
             @Param("userId") Long userId,
-            @Param("walletId") Long walletId
+            @Param("walletId") Long walletId,
+            @Param("excludedStatus") PaymentStatus excludedStatus
+    );
+
+    @Query("""
+            SELECT pt
+            FROM PaymentTransaction pt
+            WHERE pt.paymentStatus <> :excludedStatus
+              AND (:paymentStatus IS NULL OR pt.paymentStatus = :paymentStatus)
+              AND (:transactionType IS NULL OR pt.transactionType = :transactionType)
+            ORDER BY pt.createAt DESC
+            """)
+    Page<PaymentTransaction> findAdminTransactions(
+            @Param("excludedStatus") PaymentStatus excludedStatus,
+            @Param("paymentStatus") PaymentStatus paymentStatus,
+            @Param("transactionType") TransactionType transactionType,
+            Pageable pageable
     );
 
     List<PaymentTransaction> findByPaymentReferenceTypeAndReferenceIdInAndTransactionTypeAndPaymentStatusAndPaymentMethod(
